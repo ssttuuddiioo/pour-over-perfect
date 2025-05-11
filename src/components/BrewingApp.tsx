@@ -4,9 +4,9 @@ import BrewingTimer from './BrewingTimer';
 import { Notes } from './Notes';
 import { BrewingPhase, CoffeeSettings } from '../types/brewing';
 import { calculateBrewTiming } from '../utils/brewingCalculations';
-import { ClipboardList } from 'lucide-react';
+import { ClipboardList, Info } from 'lucide-react';
 
-const BrewingApp: React.FC = () => {
+const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => {
   const [grindSize, setGrindSize] = useState<number>(6);
   const [isBrewActive, setIsBrewActive] = useState<boolean>(false);
   const [currentPhase, setCurrentPhase] = useState<BrewingPhase | null>(null);
@@ -76,12 +76,22 @@ const BrewingApp: React.FC = () => {
           <>
             <div className="flex justify-between items-center">
               <h1 className="text-xl font-semibold">Pour Perfect</h1>
-              <button 
-                onClick={() => setShowNotes(true)}
-                className="btn btn-secondary p-2"
-              >
-                <ClipboardList size={20} />
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setShowNotes(true)}
+                  className="btn btn-secondary p-2"
+                >
+                  <ClipboardList size={20} />
+                </button>
+                <button
+                  onClick={onShowAbout}
+                  className="btn btn-secondary p-2"
+                  type="button"
+                  aria-label="About"
+                >
+                  <Info size={20} />
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
