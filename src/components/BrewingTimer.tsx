@@ -22,15 +22,19 @@ const BrewingTimer: React.FC<BrewingTimerProps> = ({
   const [isPaused, setIsPaused] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [phaseSeconds, setPhaseSeconds] = useState(0);
+  const [lastPhase, setLastPhase] = useState<BrewingPhase | null>(null);
   const timerRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const softAudioRef = useRef<HTMLAudioElement | null>(null);
+  const startTimeRef = useRef<number | null>(null);
+  const phaseStartTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
     audioRef.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2870/2870.wav');
+    softAudioRef.current = new Audio('https://cdn.pixabay.com/audio/2022/10/16/audio_12b6b9b6b2.mp3'); // Example soft chime
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-      }
+      if (audioRef.current) audioRef.current.pause();
+      if (softAudioRef.current) softAudioRef.current.pause();
     };
   }, []);
 
@@ -38,6 +42,12 @@ const BrewingTimer: React.FC<BrewingTimerProps> = ({
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
       audioRef.current.play().catch(e => console.error("Error playing sound:", e));
+    }
+  };
+  const playSoftSound = () => {
+    if (softAudioRef.current) {
+      softAudioRef.current.currentTime = 0;
+      softAudioRef.current.play().catch(e => console.error("Error playing soft sound:", e));
     }
   };
 
@@ -64,50 +74,57 @@ const BrewingTimer: React.FC<BrewingTimerProps> = ({
     }
   };
 
+  // requestAnimationFrame timer logic
   useEffect(() => {
+    let raf: number;
+    let lastFrame: number | null = null;
     if (currentPhase && !isPaused) {
-      timerRef.current = window.setInterval(() => {
-        setSeconds(prev => prev + 1);
-        setPhaseSeconds(prev => prev + 1);
-        
-        if (phaseSeconds >= getCurrentPhaseDuration() - 1) {
-          playSound();
-
+      if (!startTimeRef.current) startTimeRef.current = performance.now() - seconds * 1000;
+      if (!phaseStartTimeRef.current) phaseStartTimeRef.current = performance.now() - phaseSeconds * 1000;
+      const tick = (now: number) => {
+        if (!lastFrame) lastFrame = now;
+        const elapsed = now - startTimeRef.current!;
+        const phaseElapsed = now - phaseStartTimeRef.current!;
+        setSeconds(Math.floor(elapsed / 1000));
+        setPhaseSeconds(Math.floor(phaseElapsed / 1000));
+        if (phaseElapsed >= getCurrentPhaseDuration() * 1000) {
+          // Play chime depending on next phase
+          let nextPhase: BrewingPhase | null = null;
           switch (currentPhase) {
-            case 'bloom':
-              onPhaseChange('firstPour');
-              break;
-            case 'firstPour':
-              onPhaseChange('rest');
-              break;
-            case 'rest':
-              onPhaseChange('secondPour');
-              break;
-            case 'secondPour':
-              onPhaseChange('secondRest');
-              break;
-            case 'secondRest':
-              onPhaseChange('thirdPour');
-              break;
-            case 'thirdPour':
-              onPhaseChange('drawdown');
-              break;
-            case 'drawdown':
-              onPhaseChange(null);
-              clearInterval(timerRef.current!);
-              break;
+            case 'bloom': nextPhase = 'firstPour'; break;
+            case 'firstPour': nextPhase = 'rest'; break;
+            case 'rest': nextPhase = 'secondPour'; break;
+            case 'secondPour': nextPhase = 'secondRest'; break;
+            case 'secondRest': nextPhase = 'thirdPour'; break;
+            case 'thirdPour': nextPhase = 'drawdown'; break;
+            case 'drawdown': nextPhase = null; break;
           }
+          if (nextPhase === 'rest' || nextPhase === 'secondRest') {
+            playSoftSound();
+          } else {
+            playSound();
+          }
+          setLastPhase(currentPhase);
           setPhaseSeconds(0);
+          phaseStartTimeRef.current = now;
+          onPhaseChange(nextPhase);
+          if (!nextPhase) {
+            startTimeRef.current = null;
+            phaseStartTimeRef.current = null;
+            return;
+          }
+        } else {
+          raf = requestAnimationFrame(tick);
         }
-      }, 1000);
+      };
+      raf = requestAnimationFrame(tick);
     }
-
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
+      if (raf) cancelAnimationFrame(raf);
+      startTimeRef.current = null;
+      phaseStartTimeRef.current = null;
     };
-  }, [currentPhase, isPaused, phaseSeconds, brewingTimings, onPhaseChange]);
+  }, [currentPhase, isPaused, brewingTimings, onPhaseChange]);
 
   const togglePause = () => {
     setIsPaused(!isPaused);

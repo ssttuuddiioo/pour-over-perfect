@@ -11,6 +11,7 @@ interface NotesDB extends DBSchema {
       isFavorite: boolean;
       createdAt: Date;
       updatedAt: Date;
+      photo?: string; // data URL
     };
     indexes: { 
       'by-date': Date;
