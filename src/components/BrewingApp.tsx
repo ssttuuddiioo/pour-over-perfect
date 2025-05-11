@@ -40,7 +40,7 @@ function InfoPage({ onBack }: { onBack: () => void }) {
           {/* Custom Buy Me a Coffee Button */}
           <div className="pt-4">
             <a
-              href="YOUR_STRIPE_PAYMENT_LINK"
+              href="https://buy.stripe.com/aEU8zk2NocfZ7sIaEF"
               target="_blank"
               rel="noopener noreferrer"
               className="btn btn-primary w-full flex items-center justify-center gap-2"
