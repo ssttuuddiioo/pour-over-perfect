@@ -152,6 +152,7 @@ export function Notes({ brewingSettings, onBack }: NotesProps) {
                 onChange={(e) => setNewNote({ ...newNote, coffeeName: e.target.value })}
                 placeholder="Enter coffee name..."
                 className="w-full p-2 border rounded bg-gray-800 text-gray-100 border-gray-700"
+                inputMode="text"
               />
             </div>
 
@@ -172,6 +173,7 @@ export function Notes({ brewingSettings, onBack }: NotesProps) {
                 placeholder="Add your brewing notes here..."
                 className="w-full p-2 border rounded bg-gray-800 text-gray-100 border-gray-700"
                 rows={4}
+                inputMode="text"
               />
             </div>
 

@@ -4,7 +4,7 @@ import BrewingTimer from './BrewingTimer';
 import { Notes } from './Notes';
 import { BrewingPhase, CoffeeSettings } from '../types/brewing';
 import { calculateBrewTiming } from '../utils/brewingCalculations';
-import { ClipboardList, Info, Settings as SettingsIcon, X } from 'lucide-react';
+import { ClipboardList, Info, Settings as SettingsIcon, X, Coffee } from 'lucide-react';
 
 const defaultCoffeeOptions = [15, 20, 25, 30];
 const defaultRatioOptions = [15, 16, 17, 18];
@@ -35,7 +35,19 @@ function InfoPage({ onBack }: { onBack: () => void }) {
           <div className="pt-2 border-t border-gray-700">
             <h3 className="text-lg font-semibold mb-1">Why I made this</h3>
             <p className="text-sm mb-3">I wanted a simple, beautiful way to track and improve my home coffee brewing—without logins, ads, or distractions. I hope it helps you enjoy your coffee ritual even more!</p>
-            <a href="https://github.com/ssttuuddiioo/pour-over-perfect" target="_blank" rel="noopener noreferrer" className="text-blue-400 underline text-sm">View on GitHub / Roadmap</a>
+          </div>
+
+          {/* Custom Buy Me a Coffee Button */}
+          <div className="pt-4">
+            <a
+              href="YOUR_STRIPE_PAYMENT_LINK"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-primary w-full flex items-center justify-center gap-2"
+            >
+              <Coffee size={20} />
+              Buy me a coffee
+            </a>
           </div>
         </div>
       </div>
@@ -83,6 +95,8 @@ function SettingsPage({
                       }));
                     }}
                     className="w-16 bg-gray-800 text-gray-100 border border-gray-700 rounded"
+                    inputMode="decimal"
+                    pattern="[0-9]*"
                   />
                   <button type="button" aria-label="Remove" onClick={() => setSettingsDraft((d: any) => ({ ...d, coffeeOptions: d.coffeeOptions.filter((_: any, i: number) => i !== idx) }))}>
                     <X size={14} />
@@ -111,6 +125,8 @@ function SettingsPage({
                       }));
                     }}
                     className="w-16 bg-gray-800 text-gray-100 border border-gray-700 rounded"
+                    inputMode="decimal"
+                    pattern="[0-9]*"
                   />
                   <button type="button" aria-label="Remove" onClick={() => setSettingsDraft((d: any) => ({ ...d, ratioOptions: d.ratioOptions.filter((_: any, i: number) => i !== idx) }))}>
                     <X size={14} />
