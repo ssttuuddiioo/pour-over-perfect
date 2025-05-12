@@ -112,10 +112,10 @@ const BrewingTimer: React.FC<BrewingTimerProps> = ({
             startTimeRef.current = null;
             phaseStartTimeRef.current = null;
             return;
-          }
+        }
         } else {
           raf = requestAnimationFrame(tick);
-        }
+    }
       };
       raf = requestAnimationFrame(tick);
     }

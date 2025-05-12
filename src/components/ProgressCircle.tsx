@@ -1,12 +1,12 @@
 import React from 'react';
-import { BrewingPhase } from '../types/brewing';
 
 interface ProgressCircleProps {
   progress: number;
-  phase: BrewingPhase | 'complete';
+  phase?: string;
+  children?: React.ReactNode;
 }
 
-const ProgressCircle: React.FC<ProgressCircleProps> = ({ progress, phase }) => {
+const ProgressCircle: React.FC<ProgressCircleProps> = ({ progress, phase, children }) => {
   const size = 200;
   const strokeWidth = 12;
   const radius = (size - strokeWidth) / 2;
@@ -14,19 +14,8 @@ const ProgressCircle: React.FC<ProgressCircleProps> = ({ progress, phase }) => {
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   const getPhaseColor = () => {
-    switch (phase) {
-      case 'bloom':
-      case 'firstPour':
-      case 'secondPour':
-      case 'thirdPour':
-        return 'rgb(var(--color-gray-100))';
-      case 'rest':
-      case 'secondRest':
-      case 'drawdown':
-        return 'rgb(var(--color-gray-300))';
-      case 'complete':
-        return 'rgb(var(--color-gray-400))';
-    }
+    if (phase === 'complete') return 'rgb(var(--color-gray-400))';
+    return 'rgb(var(--color-gray-100))';
   };
 
   return (
@@ -69,9 +58,9 @@ const ProgressCircle: React.FC<ProgressCircleProps> = ({ progress, phase }) => {
         />
       </svg>
 
-      {/* Center content */}
+      {/* Center content (timer, etc.) */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <div className="text-4xl font-light">{Math.round(progress)}%</div>
+        {children}
       </div>
     </div>
   );

@@ -3,8 +3,9 @@ import GrindSelector from './GrindSelector';
 import BrewingTimer from './BrewingTimer';
 import { Notes } from './Notes';
 import { BrewingPhase, CoffeeSettings } from '../types/brewing';
-import { calculateBrewTiming } from '../utils/brewingCalculations';
+import { calculateBrewTiming, formatTime } from '../utils/brewingCalculations';
 import { ClipboardList, Info, Settings as SettingsIcon, X, Coffee } from 'lucide-react';
+import ProPours from './ProPours';
 
 const defaultCoffeeOptions = [15, 20, 25, 30];
 const defaultRatioOptions = [15, 16, 17, 18];
@@ -78,62 +79,102 @@ function SettingsPage({
         <form onSubmit={handleSettingsSave} className="flex flex-col gap-4">
           <div>
             <label className="block text-xs font-medium text-gray-400 mb-1">Coffee options</label>
-            <div className="flex flex-wrap gap-2 mb-2">
+            <div className="grid grid-cols-2 gap-2 mb-2">
               {settingsDraft.coffeeOptions.map((val: number, idx: number) => (
-                <div key={idx} className="flex items-center gap-1 bg-gray-800 px-2 py-1 rounded">
-                  <input
-                    type="number"
-                    min={10}
-                    max={40}
-                    step={0.1}
-                    value={val}
-                    onChange={e => {
-                      const v = parseFloat(e.target.value);
-                      setSettingsDraft((d: any) => ({
+                <div key={idx} className="relative flex items-center">
+                  <div className="amount-btn amount-btn-inactive w-full flex items-center justify-between pr-6">
+                    <button
+                      type="button"
+                      aria-label="Decrease grams"
+                      className="text-xl font-bold text-white px-2 focus:outline-none focus:ring-2 focus:ring-white"
+                      onClick={() => setSettingsDraft((d: any) => ({
                         ...d,
-                        coffeeOptions: d.coffeeOptions.map((x: number, i: number) => i === idx ? v : x)
-                      }));
-                    }}
-                    className="w-16 bg-gray-800 text-gray-100 border border-gray-700 rounded"
-                    inputMode="decimal"
-                    pattern="[0-9]*"
-                  />
-                  <button type="button" aria-label="Remove" onClick={() => setSettingsDraft((d: any) => ({ ...d, coffeeOptions: d.coffeeOptions.filter((_: any, i: number) => i !== idx) }))}>
-                    <X size={14} />
+                        coffeeOptions: d.coffeeOptions.map((x: number, i: number) => i === idx ? Math.max(10, parseFloat((x - 0.1).toFixed(1))) : x)
+                      }))}
+                    >
+                      &minus;
+                    </button>
+                    <span className="text-lg font-bold text-white select-none">{val}g</span>
+                    <button
+                      type="button"
+                      aria-label="Increase grams"
+                      className="text-xl font-bold text-white px-2 focus:outline-none focus:ring-2 focus:ring-white"
+                      onClick={() => setSettingsDraft((d: any) => ({
+                        ...d,
+                        coffeeOptions: d.coffeeOptions.map((x: number, i: number) => i === idx ? Math.min(40, parseFloat((x + 0.1).toFixed(1))) : x)
+                      }))}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Remove option"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 text-red-400 hover:text-red-500 text-lg px-1"
+                    onClick={() => setSettingsDraft((d: any) => ({ ...d, coffeeOptions: d.coffeeOptions.filter((_: any, i: number) => i !== idx) }))}
+                  >
+                    &times;
                   </button>
                 </div>
               ))}
-              <button type="button" className="btn btn-secondary px-2 py-1" onClick={() => setSettingsDraft((d: any) => ({ ...d, coffeeOptions: [...d.coffeeOptions, 15] }))}>+</button>
+              <button
+                type="button"
+                className="amount-btn amount-btn-inactive flex items-center justify-center"
+                onClick={() => setSettingsDraft((d: any) => ({ ...d, coffeeOptions: [...d.coffeeOptions, 15] }))}
+                aria-label="Add coffee option"
+              >
+                +
+              </button>
             </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-400 mb-1">Ratio options</label>
-            <div className="flex flex-wrap gap-2 mb-2">
+            <div className="grid grid-cols-2 gap-2 mb-2">
               {settingsDraft.ratioOptions.map((val: number, idx: number) => (
-                <div key={idx} className="flex items-center gap-1 bg-gray-800 px-2 py-1 rounded">
-                  <input
-                    type="number"
-                    min={14}
-                    max={20}
-                    step={0.1}
-                    value={val}
-                    onChange={e => {
-                      const v = parseFloat(e.target.value);
-                      setSettingsDraft((d: any) => ({
+                <div key={idx} className="relative flex items-center">
+                  <div className="amount-btn amount-btn-inactive w-full flex items-center justify-between pr-6">
+                    <button
+                      type="button"
+                      aria-label="Decrease ratio"
+                      className="text-xl font-bold text-white px-2 focus:outline-none focus:ring-2 focus:ring-white"
+                      onClick={() => setSettingsDraft((d: any) => ({
                         ...d,
-                        ratioOptions: d.ratioOptions.map((x: number, i: number) => i === idx ? v : x)
-                      }));
-                    }}
-                    className="w-16 bg-gray-800 text-gray-100 border border-gray-700 rounded"
-                    inputMode="decimal"
-                    pattern="[0-9]*"
-                  />
-                  <button type="button" aria-label="Remove" onClick={() => setSettingsDraft((d: any) => ({ ...d, ratioOptions: d.ratioOptions.filter((_: any, i: number) => i !== idx) }))}>
-                    <X size={14} />
+                        ratioOptions: d.ratioOptions.map((x: number, i: number) => i === idx ? Math.max(14, parseFloat((x - 0.1).toFixed(1))) : x)
+                      }))}
+                    >
+                      &minus;
+                    </button>
+                    <span className="text-lg font-bold text-white select-none">1:{val}</span>
+                    <button
+                      type="button"
+                      aria-label="Increase ratio"
+                      className="text-xl font-bold text-white px-2 focus:outline-none focus:ring-2 focus:ring-white"
+                      onClick={() => setSettingsDraft((d: any) => ({
+                        ...d,
+                        ratioOptions: d.ratioOptions.map((x: number, i: number) => i === idx ? Math.min(20, parseFloat((x + 0.1).toFixed(1))) : x)
+                      }))}
+                    >
+                      +
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Remove ratio option"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 text-red-400 hover:text-red-500 text-lg px-1"
+                    onClick={() => setSettingsDraft((d: any) => ({ ...d, ratioOptions: d.ratioOptions.filter((_: any, i: number) => i !== idx) }))}
+                  >
+                    &times;
                   </button>
                 </div>
               ))}
-              <button type="button" className="btn btn-secondary px-2 py-1" onClick={() => setSettingsDraft((d: any) => ({ ...d, ratioOptions: [...d.ratioOptions, 15] }))}>+</button>
+              <button
+                type="button"
+                className="amount-btn amount-btn-inactive flex items-center justify-center"
+                onClick={() => setSettingsDraft((d: any) => ({ ...d, ratioOptions: [...d.ratioOptions, 15] }))}
+                aria-label="Add ratio option"
+              >
+                +
+              </button>
             </div>
           </div>
           <div className="flex gap-4 mt-2">
@@ -170,6 +211,79 @@ function mapGrindStringToValue(grind?: string): number {
   return 6;
 }
 
+// Add BrewTimerPage component for the timer, instruction, step list, and progress bars
+function BrewTimerPage({
+  elapsed,
+  getStepInstruction,
+  fullStepSequence,
+  fullCurrentStep,
+  fullStepEndTimes,
+  progressBarData,
+  handlePause,
+  handleResume,
+  handleReset,
+  timerActive,
+  timerPaused,
+  finished,
+  formatTime,
+  onBack
+}: any) {
+  const isRest = getStepInstruction().toLowerCase().includes('rest') || getStepInstruction().toLowerCase().includes('drawdown');
+  return (
+    <div className="w-full max-w-sm mx-auto">
+      <div className="card p-4">
+        {/* Top bar: Back/Stop button */}
+        <div className="flex justify-between items-center mb-3">
+          <button className="btn btn-secondary" onClick={onBack}>Back</button>
+        </div>
+        {/* Timer and instruction in a rectangle, instruction left, timer right */}
+        <div className={`flex items-center justify-between mb-3 rounded-[4px] px-4 py-2 ${isRest ? 'bg-red-900' : 'bg-green-900'}`} style={{ minHeight: 48 }}>
+          <span className={`text-sm font-semibold min-w-0 truncate ${isRest ? 'text-red-100' : 'text-green-100'}`}>{getStepInstruction()}</span>
+          <span className={`text-2xl font-mono font-bold ml-4 ${isRest ? 'text-red-200' : 'text-green-200'}`}>{formatTime(elapsed)}</span>
+        </div>
+        {/* Brew Steps List (animated, all steps) */}
+        <div className="flex flex-col gap-2 mt-2">
+          {fullStepSequence.map((step: any, i: number) => {
+            const { opacity, progress } = progressBarData(i);
+            return (
+              <div
+                key={i}
+                className={`flex flex-col bg-gray-800 rounded-[4px] px-4 py-2 font-bold transition-all duration-300 ${step.color} ${opacity}`}
+                style={{ minHeight: 40 }}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span>{step.label} {step.emoji && <span role="img" aria-label={step.label}>{step.emoji}</span>}</span>
+                  <span>{step.water}</span>
+                  <span>{formatTime(i === fullStepSequence.length - 1 ? fullStepEndTimes[fullStepEndTimes.length - 1] : fullStepEndTimes[i])}</span>
+                </div>
+                {/* Progress bar */}
+                <div className="w-full h-1 mt-2 bg-gray-700 rounded-[4px] overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 ${step.label === 'Rest' || step.label === 'Drawdown' ? 'bg-red-400' : 'bg-green-400'}`}
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {/* Timer Controls */}
+        <div className="flex gap-2 mt-4">
+          {timerActive && !timerPaused && (
+            <button className="btn btn-secondary flex-1" onClick={handlePause}>Pause</button>
+          )}
+          {timerActive && timerPaused && (
+            <button className="btn btn-primary flex-1" onClick={handleResume}>Resume</button>
+          )}
+          {(timerActive || elapsed > 0) && (
+            <button className="btn btn-secondary flex-1" onClick={handleReset}>Reset</button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => {
   const [grindSize, setGrindSize] = useState<number>(6);
   const [isBrewActive, setIsBrewActive] = useState<boolean>(false);
@@ -189,6 +303,8 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   const [showNotes, setShowNotes] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [showProPours, setShowProPours] = useState(false);
+  const [showBrewTimer, setShowBrewTimer] = useState(false);
   const [settingsDraft, setSettingsDraft] = useState({
     amount: coffeeSettings.amount,
     ratio: coffeeSettings.ratio,
@@ -196,8 +312,67 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     ratioOptions: [...ratioOptions],
   });
   const settingsRef = useRef<HTMLDivElement>(null);
-
+  const [timerActive, setTimerActive] = useState(false);
+  const [timerPaused, setTimerPaused] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [finished, setFinished] = useState(false);
+  
   const brewingTimings = calculateBrewTiming(grindSize, coffeeSettings.amount, coffeeSettings.ratio);
+
+  // For timer/instruction logic, keep the full step sequence
+  const fullStepSequence = [
+    { label: 'Bloom', color: 'text-green-200', water: `${brewingTimings.bloomWater}ml`, duration: brewingTimings.bloomDuration },
+    { label: 'Pour to', color: 'text-green-200', water: `${brewingTimings.firstPourTarget}ml`, duration: brewingTimings.firstPourDuration },
+    { label: 'Rest', color: 'text-red-300', water: '', duration: brewingTimings.restDuration, emoji: '🧘' },
+    { label: 'Pour to', color: 'text-green-200', water: `${brewingTimings.secondPourTarget}ml`, duration: brewingTimings.secondPourDuration },
+    { label: 'Rest', color: 'text-red-300', water: '', duration: brewingTimings.secondRestDuration, emoji: '🧘' },
+    { label: 'Pour to', color: 'text-green-200', water: `${brewingTimings.thirdPourTarget}ml`, duration: brewingTimings.thirdPourDuration },
+    { label: 'Drawdown', color: 'text-red-300', water: '', duration: brewingTimings.drawdownDuration, emoji: '🧘' },
+    { label: 'Total', color: 'text-gray-200', water: '', duration: 0, emoji: '☕' },
+  ];
+  const fullStepEndTimes = fullStepSequence.reduce((arr, step, i) => {
+    arr.push((arr[i - 1] || 0) + (step.duration || 0));
+    return arr;
+  }, [] as number[]);
+  const fullCurrentStepIdx = fullStepEndTimes.findIndex(end => elapsed < end);
+  const fullCurrentStep = fullCurrentStepIdx === -1 ? fullStepSequence.length - 1 : fullCurrentStepIdx;
+
+  // Timer effect
+  useEffect(() => {
+    if (timerActive && !timerPaused && !finished) {
+      timerRef.current = setInterval(() => {
+        setElapsed(prev => {
+          if (prev < fullStepEndTimes[fullStepEndTimes.length - 1]) {
+            return prev + 1;
+          } else {
+            setTimerActive(false);
+            setFinished(true);
+            return prev;
+          }
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [timerActive, timerPaused, fullStepEndTimes, finished]);
+
+  const handleStart = () => {
+    setTimerActive(true);
+    setTimerPaused(false);
+    setElapsed(0);
+    setFinished(false);
+    setShowBrewTimer(true);
+  };
+  const handlePause = () => setTimerPaused(true);
+  const handleResume = () => setTimerPaused(false);
+  const handleReset = () => {
+    setTimerActive(false);
+    setTimerPaused(false);
+    setElapsed(0);
+    setFinished(false);
+  };
 
   useEffect(() => {
     if (showSettings && settingsRef.current) {
@@ -214,17 +389,17 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     }
     return () => window.removeEventListener('keydown', handleKey);
   }, [showSettings]);
-
+  
   const startBrewing = () => {
     setIsBrewActive(true);
     setCurrentPhase('bloom');
   };
-
+  
   const stopBrewing = () => {
     setIsBrewActive(false);
     setCurrentPhase(null);
   };
-
+  
   const handlePhaseChange = (phase: BrewingPhase | null) => {
     setCurrentPhase(phase);
     if (phase === null) {
@@ -298,6 +473,45 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     return () => window.removeEventListener('keydown', trapFocus);
   }, [showSettings]);
 
+  // Update getStepInstruction to use fullStepSequence
+  const getStepInstruction = () => {
+    if (finished) return 'Finished! Enjoy your coffee ☕';
+    const step = fullStepSequence[fullCurrentStep];
+    if (step.label === 'Rest' || step.label === 'Drawdown') {
+      return `${step.label} ${step.emoji || ''} until ${formatTime(fullStepEndTimes[fullCurrentStep])}`;
+    }
+    if (step.label === 'Total') {
+      return `Done! Total time: ${formatTime(fullStepEndTimes[fullStepEndTimes.length - 1])}`;
+    }
+    if (step.label === 'Bloom') {
+      return `Bloom with ${step.water}`;
+    }
+    if (step.label === 'Pour to') {
+      return `Pour to ${step.water} by ${formatTime(fullStepEndTimes[fullCurrentStep])}`;
+    }
+    return '';
+  };
+
+  // Progress bar data helper (update for all steps)
+  const progressBarData = (i: number) => {
+    let opacity = 'opacity-60';
+    if (i < fullCurrentStep) opacity = 'opacity-40';
+    if (i === fullCurrentStep) opacity = 'opacity-100 animate-fade-in-scale';
+    let progress = 0;
+    if (i < fullCurrentStep) progress = 100;
+    else if (i === fullCurrentStep) {
+      const stepStart = i === 0 ? 0 : fullStepEndTimes[i - 1];
+      const stepEnd = fullStepEndTimes[i];
+      progress = Math.min(100, ((elapsed - stepStart) / (stepEnd - stepStart)) * 100);
+    }
+    return { opacity, progress };
+  };
+
+  const handleBack = () => {
+    setShowBrewTimer(false);
+    handleReset();
+  };
+
   if (showInfo) {
     return <InfoPage onBack={() => setShowInfo(false)} />;
   }
@@ -321,14 +535,52 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
           </div>
           <Notes 
             brewingSettings={{
-              grindSize,
-              coffeeAmount: coffeeSettings.amount,
-              waterRatio: coffeeSettings.ratio,
-              totalWater: brewingTimings.thirdPourTarget
+            grindSize,
+            coffeeAmount: coffeeSettings.amount,
+            waterRatio: coffeeSettings.ratio,
+            totalWater: brewingTimings.thirdPourTarget
             }}
           />
         </div>
       </div>
+    );
+  }
+
+  if (showProPours) {
+    return (
+      <div className="w-full max-w-sm mx-auto">
+        <div className="card p-6">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex flex-col pl-0">
+              <span className="text-lg font-bold leading-tight">Tetsu Kasuya</span>
+              <span className="text-sm font-normal leading-tight">4:6 Method</span>
+            </div>
+            <button onClick={() => setShowProPours(false)} className="btn btn-secondary">Back</button>
+          </div>
+          <ProPours />
+        </div>
+      </div>
+    );
+  }
+  
+  if (showBrewTimer) {
+    return (
+      <BrewTimerPage
+        elapsed={elapsed}
+        getStepInstruction={getStepInstruction}
+        fullStepSequence={fullStepSequence}
+        fullCurrentStep={fullCurrentStep}
+        fullStepEndTimes={fullStepEndTimes}
+        progressBarData={progressBarData}
+        handlePause={handlePause}
+        handleResume={handleResume}
+        handleReset={handleReset}
+        timerActive={timerActive}
+        timerPaused={timerPaused}
+        finished={finished}
+        formatTime={formatTime}
+        onBack={handleBack}
+      />
     );
   }
   
@@ -337,7 +589,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
       <div className="card space-y-6">
         {!isBrewActive ? (
           <>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-4">
               <h1 className="text-xl font-semibold">Pour Perfect</h1>
               <div className="flex gap-2">
                 <button 
@@ -345,7 +597,14 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
                   className="btn btn-secondary p-2"
                   aria-label="Notes"
                 >
-                  Notes
+                  <span role="img" aria-label="Notes" className="text-lg">🗒️</span>
+                </button>
+                <button
+                  onClick={() => setShowProPours(true)}
+                  className="btn btn-secondary p-2"
+                  aria-label="Pro Pours"
+                >
+                  <span role="img" aria-label="Pro Pours" className="text-lg">🏆</span>
                 </button>
                 <button
                   onClick={openSettings}
@@ -353,28 +612,27 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
                   type="button"
                   aria-label="Settings"
                 >
-                  <SettingsIcon size={20} />
+                  <span role="img" aria-label="Settings" className="text-lg">⚙️</span>
                 </button>
-                <button
+              <button 
                   onClick={() => setShowInfo(true)}
-                  className="btn btn-secondary p-2"
+                className="btn btn-secondary p-2"
                   type="button"
                   aria-label="Info"
-                >
-                  <Info size={20} />
-                </button>
+              >
+                  <span role="img" aria-label="Info" className="text-lg">ℹ️</span>
+              </button>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <h3 className="text-xs font-medium text-gray-400 mb-2">Coffee</h3>
-                <div className="grid grid-cols-2 gap-1">
+            {/* Coffee and Ratio Selectors */}
+            <div className="flex gap-2 mb-3">
+              <div className="flex-1 flex flex-col gap-1">
+                <span className="text-xs font-medium text-gray-400 mb-1 ml-1">Coffee</span>
+                <div className="grid grid-cols-2 gap-2">
                   {coffeeOptions.map(amount => (
                     <button
                       key={amount}
-                      className={`amount-btn ${
-                        coffeeSettings.amount === amount ? 'amount-btn-active' : 'amount-btn-inactive'
-                      }`}
+                      className={`w-full px-0 py-2 rounded-[4px] text-sm font-semibold transition-colors bg-gray-800 ${coffeeSettings.amount === amount ? 'text-white border-2 border-green-400' : 'text-gray-300 border border-transparent'}`}
                       onClick={() => handleCoffeeAmountChange(amount)}
                     >
                       {amount}g
@@ -382,15 +640,13 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
                   ))}
                 </div>
               </div>
-              <div>
-                <h3 className="text-xs font-medium text-gray-400 mb-2">Ratio</h3>
-                <div className="grid grid-cols-2 gap-1">
+              <div className="flex-1 flex flex-col gap-1">
+                <span className="text-xs font-medium text-gray-400 mb-1 ml-1">Ratio</span>
+                <div className="grid grid-cols-2 gap-2">
                   {ratioOptions.map(ratio => (
                     <button
                       key={ratio}
-                      className={`amount-btn ${
-                        coffeeSettings.ratio === ratio ? 'amount-btn-active' : 'amount-btn-inactive'
-                      }`}
+                      className={`w-full px-0 py-2 rounded-[4px] text-sm font-semibold transition-colors bg-gray-800 ${coffeeSettings.ratio === ratio ? 'text-white border-2 border-green-400' : 'text-gray-300 border border-transparent'}`}
                       onClick={() => handleRatioChange(ratio)}
                     >
                       1:{ratio}
@@ -399,54 +655,47 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
                 </div>
               </div>
             </div>
-            <div className="text-center text-sm text-gray-400">
-              Total water: {brewingTimings.thirdPourTarget}ml
-            </div>
-            <GrindSelector 
-              grindSize={grindSize} 
-              setGrindSize={setGrindSize} 
-            />
-            <div className="space-y-1.5 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Bloom ({brewingTimings.bloomWater}ml)</span> 
-                <span>{brewingTimings.bloomDuration}s</span>
+            {/* Grind Selector */}
+            <div className="mb-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm font-medium text-gray-300">Grind</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">First Pour ({brewingTimings.pourVolume}ml)</span> 
-                <span>{brewingTimings.firstPourDuration}s</span>
+              <div className="flex gap-2">
+                {['Fine', 'Medium', 'Medium-coarse', 'Coarse'].map((label, idx) => {
+                  const grindMap = [3, 6, 7, 9];
+                  return (
+                    <button
+                      key={label}
+                      className={`flex-1 px-0 py-2 rounded-[4px] text-sm font-semibold transition-colors bg-gray-800 ${grindSize === grindMap[idx] ? 'text-white border-2 border-green-400' : 'text-gray-300 border border-transparent'}`}
+                      onClick={() => setGrindSize(grindMap[idx])}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">First Rest</span> 
-                <span>{brewingTimings.restDuration}s</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Second Pour ({brewingTimings.pourVolume}ml)</span> 
-                <span>{brewingTimings.secondPourDuration}s</span>
+            {/* Brew Time and Total Water - compact row */}
+            <div className="flex gap-2 mb-3">
+              <div className="flex-1 flex flex-col items-center">
+                <span className="text-xs font-medium text-gray-400 mb-1">Brew Time</span>
+                <div className="w-full bg-gray-800 rounded-[4px] px-0 py-2 text-base font-bold text-center text-white">{formatTime(brewingTimings.totalTime)}</div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Second Rest</span> 
-                <span>{brewingTimings.secondRestDuration}s</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Third Pour ({brewingTimings.pourVolume}ml)</span> 
-                <span>{brewingTimings.thirdPourDuration}s</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Drawdown</span> 
-                <span>{brewingTimings.drawdownDuration}s</span>
-              </div>
-              <div className="flex justify-between pt-2 border-t border-gray-700">
-                <span>Total Time</span> 
-                <span>{brewingTimings.totalTime}s</span>
+              <div className="flex-1 flex flex-col items-center">
+                <span className="text-xs font-medium text-gray-400 mb-1">Total Water</span>
+                <div className="w-full bg-gray-800 rounded-[4px] px-0 py-2 text-base font-bold text-center text-white">{brewingTimings.thirdPourTarget}ml</div>
               </div>
             </div>
-            
-            <button 
-              className="btn btn-primary w-full"
-              onClick={startBrewing}
-            >
-              Start
-            </button>
+            {/* Timer and instruction in a rectangle, instruction left, timer right */}
+            <div className="flex items-center justify-between mb-3 bg-green-900 rounded-[4px] px-4 py-2" style={{ minHeight: 48 }}>
+              <span className="text-sm text-green-100 font-semibold min-w-0 truncate">{getStepInstruction()}</span>
+              <span className="text-2xl font-mono font-bold text-green-200 ml-4">{formatTime(elapsed)}</span>
+            </div>
+            {!showBrewTimer && (
+              <button className="btn btn-primary w-full mt-4" onClick={handleStart}>
+                Start
+              </button>
+            )}
           </>
         ) : (
           <BrewingTimer 
@@ -458,6 +707,16 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
           />
         )}
       </div>
+      {/* Add fade-in-scale animation */}
+      <style>{`
+        .animate-fade-in-scale {
+          animation: fadeInScale 0.5s cubic-bezier(0.4,0,0.2,1);
+        }
+        @keyframes fadeInScale {
+          0% { opacity: 0; transform: scale(0.95); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+      `}</style>
     </div>
   );
 };
