@@ -15,6 +15,17 @@ const chimeUrl = 'https://assets.mixkit.co/active_storage/sfx/2870/2870.wav';
 const softChimeUrl = 'https://cdn.pixabay.com/audio/2022/10/16/audio_12b6b9b6b2.mp3';
 
 function InfoPage({ onBack }: { onBack: () => void }) {
+  useEffect(() => {
+    // @ts-ignore
+    if (window.kofiWidgetOverlay) {
+      window.kofiWidgetOverlay.draw('origen', {
+        'type': 'floating-chat',
+        'floating-chat.donateButton.text': 'Tip Me',
+        'floating-chat.donateButton.background-color': '#323842',
+        'floating-chat.donateButton.text-color': '#fff'
+      });
+    }
+  }, []);
   return (
     <div className="w-full max-w-sm mx-auto">
       <div className="card">
@@ -40,19 +51,6 @@ function InfoPage({ onBack }: { onBack: () => void }) {
           <div className="pt-2 border-t border-gray-700">
             <h3 className="text-lg font-semibold mb-1">Why I made this</h3>
             <p className="text-sm mb-3">I wanted a simple, beautiful way to track and improve my home coffee brewing—without logins, ads, or distractions. I hope it helps you enjoy your coffee ritual even more!</p>
-          </div>
-
-          {/* Custom Buy Me a Coffee Button */}
-          <div className="pt-4">
-            <a
-              href="https://buy.stripe.com/aEU8zk2NocfZ7sIaEF"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-primary w-full flex items-center justify-center gap-2"
-            >
-              <Coffee size={20} />
-              Buy me a coffee
-            </a>
           </div>
         </div>
       </div>
@@ -272,27 +270,62 @@ function BrewTimerPage({
         {/* Brew Steps List (animated, all steps) */}
         <div className="flex flex-col gap-2 mt-2">
           {fullStepSequence.map((step: any, i: number) => {
-            const isRest = step.label === 'Rest' || step.label === 'Drawdown';
-            return (
-              <div
-                key={i}
-                className={`flex flex-col bg-gray-800 rounded-[4px] px-4 py-2 font-bold transition-all duration-300 ${isRest ? 'text-red-200' : step.color}`}
-                style={{ minHeight: 40 }}
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span>{isRest ? `${step.label} ${step.emoji ? step.emoji : ''}` : step.label} {(!isRest && step.emoji) && <span role="img" aria-label={step.label}>{step.emoji}</span>}</span>
-                  <span>{isRest ? formatTime(step.duration) : step.water}</span>
-                  <span>{formatTime(i === fullStepSequence.length - 1 ? fullStepEndTimes[fullStepEndTimes.length - 1] : fullStepEndTimes[i])}</span>
-                </div>
-                {/* Progress bar */}
-                <div className="w-full h-1 mt-2 bg-gray-700 rounded-[4px] overflow-hidden">
+            let opacity = 'opacity-60';
+            if (i < fullCurrentStep) opacity = 'opacity-40';
+            if (i === fullCurrentStep) opacity = 'opacity-100 animate-fade-in-scale';
+
+            // Progress bar logic
+            let progress = 0;
+            if (i < fullCurrentStep) progress = 100;
+            else if (i === fullCurrentStep) {
+              const stepStart = i === 0 ? 0 : fullStepEndTimes[i - 1];
+              const stepEnd = fullStepEndTimes[i];
+              progress = Math.min(100, ((elapsed - stepStart) / (stepEnd - stepStart)) * 100);
+            }
+
+            // For rest bar: find the corresponding rest step in fullStepSequence
+            let restBar = null;
+            // Only add a rest bar after a Pour to step, except the last
+            if (step.label === 'Pour to' && i < fullStepSequence.length - 2) {
+              // The rest step in fullStepSequence is always after the pour step
+              const restStepIdx = fullStepSequence.findIndex((s, idx) => s.label === 'Pour to' && s.water === step.water) + 1;
+              const restStep = fullStepSequence[restStepIdx];
+              const restStart = fullStepEndTimes[restStepIdx - 1];
+              const restEnd = fullStepEndTimes[restStepIdx];
+              let restProgress = 0;
+              if (elapsed >= restEnd) restProgress = 100;
+              else if (elapsed >= restStart && elapsed < restEnd) restProgress = ((elapsed - restStart) / (restEnd - restStart)) * 100;
+              restBar = (
+                <div className="w-full h-1 bg-red-500 rounded-[4px] overflow-hidden mt-1 mb-1">
                   <div
-                    ref={el => barRefs.current[i] = el}
-                    className={`h-full ${isRest ? 'bg-red-400' : 'bg-green-400'}`}
-                    style={{ width: '0%' }}
+                    className="h-full bg-red-400 transition-all duration-300"
+                    style={{ width: `${restProgress}%` }}
                   />
                 </div>
-              </div>
+              );
+            }
+
+            return (
+              <React.Fragment key={i}>
+                <div
+                  className={`flex flex-col bg-gray-800 rounded-[4px] px-4 py-2 font-bold transition-all duration-300 ${step.color} ${opacity}`}
+                  style={{ minHeight: 40 }}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span>{step.label} {step.emoji && <span role="img" aria-label={step.label}>{step.emoji}</span>}</span>
+                    <span>{step.water}</span>
+                    <span>{formatTime(i === fullStepSequence.length - 1 ? fullStepEndTimes[fullStepEndTimes.length - 1] : fullStepEndTimes[i])}</span>
+                  </div>
+                  {/* Progress bar */}
+                  <div className="w-full h-1 mt-2 bg-gray-700 rounded-[4px] overflow-hidden">
+                    <div
+                      className="h-full bg-green-400 transition-all duration-300"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+                {restBar}
+              </React.Fragment>
             );
           })}
         </div>
