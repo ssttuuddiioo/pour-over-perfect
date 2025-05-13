@@ -229,31 +229,7 @@ function BrewTimerPage({
   formatTime,
   onBack
 }: any) {
-  const isRest = getStepInstruction().toLowerCase().includes('rest') || getStepInstruction().toLowerCase().includes('drawdown');
-  // --- Ultra-smooth progress bar refs ---
-  const barRefs = React.useRef<(HTMLDivElement | null)[]>([]);
-
-  // Animate progress bars directly
-  React.useEffect(() => {
-    let raf: number;
-    function animate() {
-      for (let i = 0; i < fullStepSequence.length; i++) {
-        const bar = barRefs.current[i];
-        if (!bar) continue;
-        const stepStart = i === 0 ? 0 : fullStepEndTimes[i - 1];
-        const stepEnd = fullStepEndTimes[i];
-        let progress = 0;
-        if (elapsed >= stepEnd) progress = 100;
-        else if (elapsed > stepStart) progress = Math.min(100, ((elapsed - stepStart) / (stepEnd - stepStart)) * 100);
-        else progress = 0;
-        bar.style.width = progress + '%';
-      }
-      raf = requestAnimationFrame(animate);
-    }
-    raf = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(raf);
-  }, [elapsed, fullStepSequence, fullStepEndTimes]);
-  // --- End ultra-smooth progress bar refs ---
+  const isWait = getStepInstruction().toLowerCase().includes('rest') || getStepInstruction().toLowerCase().includes('drawdown');
 
   return (
     <div className="w-full max-w-sm mx-auto">
@@ -263,9 +239,9 @@ function BrewTimerPage({
           <button className="btn btn-secondary" onClick={onBack}>Back</button>
         </div>
         {/* Timer and instruction in a rectangle, instruction left, timer right */}
-        <div className={`flex items-center justify-between mb-3 rounded-[4px] px-4 py-2 ${isRest ? 'bg-red-900' : 'bg-green-900'}`} style={{ minHeight: 48 }}>
-          <span className={`text-sm font-semibold min-w-0 truncate ${isRest ? 'text-red-100' : 'text-green-100'}`}>{getStepInstruction()}</span>
-          <span className={`text-2xl font-mono font-bold ml-4 ${isRest ? 'text-red-200' : 'text-green-200'}`}>{formatTime(Math.floor(elapsed))}</span>
+        <div className={`flex items-center justify-between mb-3 rounded-[4px] px-4 py-2 ${isWait ? 'bg-amber-900' : 'bg-sky-900'}`} style={{ minHeight: 48 }}>
+          <span className={`text-sm font-semibold min-w-0 truncate ${isWait ? 'text-amber-100' : 'text-sky-100'}`}>{getStepInstruction()}</span>
+          <span className={`text-2xl font-mono font-bold g-4 ${isWait ? 'text-amber-200' : 'text-sky-400'}`}>{formatTime(Math.floor(elapsed))}</span>
         </div>
         {/* Brew Steps List (animated, all steps) */}
         <div className="flex flex-col gap-2 mt-2">
@@ -283,49 +259,35 @@ function BrewTimerPage({
               progress = Math.min(100, ((elapsed - stepStart) / (stepEnd - stepStart)) * 100);
             }
 
-            // For rest bar: find the corresponding rest step in fullStepSequence
-            let restBar = null;
-            // Only add a rest bar after a Pour to step, except the last
-            if (step.label === 'Pour to' && i < fullStepSequence.length - 2) {
-              // The rest step in fullStepSequence is always after the pour step
-              const restStepIdx = fullStepSequence.findIndex((s, idx) => s.label === 'Pour to' && s.water === step.water) + 1;
-              const restStep = fullStepSequence[restStepIdx];
-              const restStart = fullStepEndTimes[restStepIdx - 1];
-              const restEnd = fullStepEndTimes[restStepIdx];
-              let restProgress = 0;
-              if (elapsed >= restEnd) restProgress = 100;
-              else if (elapsed >= restStart && elapsed < restEnd) restProgress = ((elapsed - restStart) / (restEnd - restStart)) * 100;
-              restBar = (
-                <div className="w-full h-1 bg-red-500 rounded-[4px] overflow-hidden mt-1 mb-1">
+            return (
+              <div
+                key={i}
+                className={`flex flex-col bg-gray-800 rounded-[4px] px-4 py-2 font-bold transition-all duration-300 ${step.color} ${opacity}`}
+                style={{ minHeight: 40 }}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-2">
+                    <span>
+                      {step.label === 'Pour to' 
+                        ? `Pour to ${step.water}`
+                        : step.label === 'Wait'
+                        ? 'Wait'
+                        : step.label === 'Drawdown'
+                        ? 'Drawdown'
+                        : step.label}
+                    </span>
+                    {step.emoji && <span role="img" aria-label={step.label}>{step.emoji}</span>}
+                  </div>
+                  <span>{formatTime(i === fullStepSequence.length - 1 ? fullStepEndTimes[fullStepEndTimes.length - 1] : fullStepEndTimes[i])}</span>
+                </div>
+                {/* Progress bar */}
+                <div className="w-full h-1 mt-2 bg-gray-700 rounded-[4px] overflow-hidden">
                   <div
-                    className="h-full bg-red-400 transition-all duration-300"
-                    style={{ width: `${restProgress}%` }}
+                    className={`h-full ${step.label === 'Wait' || step.label === 'Drawdown' ? 'bg-amber-400' : 'bg-sky-400'}`}
+                    style={{ width: `${progress}%` }}
                   />
                 </div>
-              );
-            }
-
-            return (
-              <React.Fragment key={i}>
-                <div
-                  className={`flex flex-col bg-gray-800 rounded-[4px] px-4 py-2 font-bold transition-all duration-300 ${step.color} ${opacity}`}
-                  style={{ minHeight: 40 }}
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <span>{step.label} {step.emoji && <span role="img" aria-label={step.label}>{step.emoji}</span>}</span>
-                    <span>{step.water}</span>
-                    <span>{formatTime(i === fullStepSequence.length - 1 ? fullStepEndTimes[fullStepEndTimes.length - 1] : fullStepEndTimes[i])}</span>
-                  </div>
-                  {/* Progress bar */}
-                  <div className="w-full h-1 mt-2 bg-gray-700 rounded-[4px] overflow-hidden">
-                    <div
-                      className="h-full bg-green-400 transition-all duration-300"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                </div>
-                {restBar}
-              </React.Fragment>
+              </div>
             );
           })}
         </div>
@@ -389,13 +351,13 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
 
   // For timer/instruction logic, keep the full step sequence
   const fullStepSequence = [
-    { label: 'Bloom', color: 'text-green-200', water: `${brewingTimings.bloomWater}ml`, duration: brewingTimings.bloomDuration },
-    { label: 'Pour to', color: 'text-green-200', water: `${brewingTimings.firstPourTarget}ml`, duration: brewingTimings.firstPourDuration },
-    { label: 'Rest', color: 'text-red-300', water: '', duration: brewingTimings.restDuration, emoji: '🧘' },
-    { label: 'Pour to', color: 'text-green-200', water: `${brewingTimings.secondPourTarget}ml`, duration: brewingTimings.secondPourDuration },
-    { label: 'Rest', color: 'text-red-300', water: '', duration: brewingTimings.secondRestDuration, emoji: '🧘' },
-    { label: 'Pour to', color: 'text-green-200', water: `${brewingTimings.thirdPourTarget}ml`, duration: brewingTimings.thirdPourDuration },
-    { label: 'Drawdown', color: 'text-red-300', water: '', duration: brewingTimings.drawdownDuration, emoji: '🧘' },
+    { label: 'Bloom with', color: 'text-sky-400', water: `${brewingTimings.bloomWater}g`, duration: brewingTimings.bloomDuration },
+    { label: 'Pour to', color: 'text-sky-400', water: `${brewingTimings.firstPourTarget}g`, duration: brewingTimings.firstPourDuration },
+    { label: 'Wait', color: 'text-amber-500', water: '', duration: brewingTimings.restDuration },
+    { label: 'Pour to', color: 'text-sky-400', water: `${brewingTimings.secondPourTarget}g`, duration: brewingTimings.secondPourDuration },
+    { label: 'Wait', color: 'text-amber-500', water: '', duration: brewingTimings.secondRestDuration },
+    { label: 'Pour to', color: 'text-sky-400', water: `${brewingTimings.thirdPourTarget}g`, duration: brewingTimings.thirdPourDuration },
+    { label: 'Drawdown', color: 'text-amber-500', water: '', duration: brewingTimings.drawdownDuration },
     { label: 'Total', color: 'text-gray-200', water: '', duration: 0, emoji: '☕' },
   ];
   const fullStepEndTimes = fullStepSequence.reduce((arr, step, i) => {
@@ -565,8 +527,8 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   const getStepInstruction = () => {
     if (finished) return 'Finished! Enjoy your coffee ☕';
     const step = fullStepSequence[fullCurrentStep];
-    if (step.label === 'Rest' || step.label === 'Drawdown') {
-      return `${step.label} ${step.emoji || ''} until ${formatTime(fullStepEndTimes[fullCurrentStep])}`;
+    if (step.label === 'Wait' || step.label === 'Drawdown') {
+      return `${step.label} ${step.emoji || ''}`;
     }
     if (step.label === 'Total') {
       return `Done! Total time: ${formatTime(fullStepEndTimes[fullStepEndTimes.length - 1])}`;
@@ -575,7 +537,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
       return `Bloom with ${step.water}`;
     }
     if (step.label === 'Pour to') {
-      return `Pour to ${step.water} by ${formatTime(fullStepEndTimes[fullCurrentStep])}`;
+      return `Pour to ${step.water}`;
     }
     return '';
   };
@@ -699,7 +661,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
             {/* Coffee and Ratio Selectors */}
             <div className="flex gap-2 mb-3">
               <div className="flex-1 flex flex-col gap-1">
-                <span className="text-xs font-medium text-gray-400 mb-1 ml-1">Coffee</span>
+                <span className="text-xs font-medium text-gray-400 mb-1 g-1">Coffee</span>
                 <div className="grid grid-cols-2 gap-2">
                   {coffeeOptions.map(amount => (
                     <button
@@ -713,7 +675,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
                 </div>
               </div>
               <div className="flex-1 flex flex-col gap-1">
-                <span className="text-xs font-medium text-gray-400 mb-1 ml-1">Ratio</span>
+                <span className="text-xs font-medium text-gray-400 mb-1 g-1">Ratio</span>
                 <div className="grid grid-cols-2 gap-2">
                   {ratioOptions.map(ratio => (
                     <button
@@ -755,13 +717,13 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
               </div>
               <div className="flex-1 flex flex-col items-center">
                 <span className="text-xs font-medium text-gray-400 mb-1">Total Water</span>
-                <div className="w-full bg-gray-800 rounded-[4px] px-0 py-2 text-base font-bold text-center text-white">{brewingTimings.thirdPourTarget}ml</div>
+                <div className="w-full bg-gray-800 rounded-[4px] px-0 py-2 text-base font-bold text-center text-white">{brewingTimings.thirdPourTarget}g</div>
               </div>
             </div>
             {/* Timer and instruction in a rectangle, instruction left, timer right */}
             <div className="flex items-center justify-between mb-3 bg-green-900 rounded-[4px] px-4 py-2" style={{ minHeight: 48 }}>
               <span className="text-sm text-green-100 font-semibold min-w-0 truncate">{getStepInstruction()}</span>
-              <span className="text-2xl font-mono font-bold text-green-200 ml-4">{formatTime(Math.floor(elapsed))}</span>
+              <span className="text-2xl font-mono font-bold text-sky-400 g-4">{formatTime(Math.floor(elapsed))}</span>
             </div>
             {!showBrewTimer && (
               <button className="btn btn-primary w-full mt-4" onClick={handleStart}>
