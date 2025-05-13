@@ -10,6 +10,10 @@ import ProPours from './ProPours';
 const defaultCoffeeOptions = [15, 20, 25, 30];
 const defaultRatioOptions = [15, 16, 17, 18];
 
+// Add chime audio refs at the top of BrewingApp
+const chimeUrl = 'https://assets.mixkit.co/active_storage/sfx/2870/2870.wav';
+const softChimeUrl = 'https://cdn.pixabay.com/audio/2022/10/16/audio_12b6b9b6b2.mp3';
+
 function InfoPage({ onBack }: { onBack: () => void }) {
   return (
     <div className="w-full max-w-sm mx-auto">
@@ -218,7 +222,6 @@ function BrewTimerPage({
   fullStepSequence,
   fullCurrentStep,
   fullStepEndTimes,
-  progressBarData,
   handlePause,
   handleResume,
   handleReset,
@@ -229,6 +232,31 @@ function BrewTimerPage({
   onBack
 }: any) {
   const isRest = getStepInstruction().toLowerCase().includes('rest') || getStepInstruction().toLowerCase().includes('drawdown');
+  // --- Ultra-smooth progress bar refs ---
+  const barRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+
+  // Animate progress bars directly
+  React.useEffect(() => {
+    let raf: number;
+    function animate() {
+      for (let i = 0; i < fullStepSequence.length; i++) {
+        const bar = barRefs.current[i];
+        if (!bar) continue;
+        const stepStart = i === 0 ? 0 : fullStepEndTimes[i - 1];
+        const stepEnd = fullStepEndTimes[i];
+        let progress = 0;
+        if (elapsed >= stepEnd) progress = 100;
+        else if (elapsed > stepStart) progress = Math.min(100, ((elapsed - stepStart) / (stepEnd - stepStart)) * 100);
+        else progress = 0;
+        bar.style.width = progress + '%';
+      }
+      raf = requestAnimationFrame(animate);
+    }
+    raf = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf);
+  }, [elapsed, fullStepSequence, fullStepEndTimes]);
+  // --- End ultra-smooth progress bar refs ---
+
   return (
     <div className="w-full max-w-sm mx-auto">
       <div className="card p-4">
@@ -239,28 +267,29 @@ function BrewTimerPage({
         {/* Timer and instruction in a rectangle, instruction left, timer right */}
         <div className={`flex items-center justify-between mb-3 rounded-[4px] px-4 py-2 ${isRest ? 'bg-red-900' : 'bg-green-900'}`} style={{ minHeight: 48 }}>
           <span className={`text-sm font-semibold min-w-0 truncate ${isRest ? 'text-red-100' : 'text-green-100'}`}>{getStepInstruction()}</span>
-          <span className={`text-2xl font-mono font-bold ml-4 ${isRest ? 'text-red-200' : 'text-green-200'}`}>{formatTime(elapsed)}</span>
+          <span className={`text-2xl font-mono font-bold ml-4 ${isRest ? 'text-red-200' : 'text-green-200'}`}>{formatTime(Math.floor(elapsed))}</span>
         </div>
         {/* Brew Steps List (animated, all steps) */}
         <div className="flex flex-col gap-2 mt-2">
           {fullStepSequence.map((step: any, i: number) => {
-            const { opacity, progress } = progressBarData(i);
+            const isRest = step.label === 'Rest' || step.label === 'Drawdown';
             return (
               <div
                 key={i}
-                className={`flex flex-col bg-gray-800 rounded-[4px] px-4 py-2 font-bold transition-all duration-300 ${step.color} ${opacity}`}
+                className={`flex flex-col bg-gray-800 rounded-[4px] px-4 py-2 font-bold transition-all duration-300 ${isRest ? 'text-red-200' : step.color}`}
                 style={{ minHeight: 40 }}
               >
                 <div className="flex items-center justify-between w-full">
-                  <span>{step.label} {step.emoji && <span role="img" aria-label={step.label}>{step.emoji}</span>}</span>
-                  <span>{step.water}</span>
+                  <span>{isRest ? `${step.label} ${step.emoji ? step.emoji : ''}` : step.label} {(!isRest && step.emoji) && <span role="img" aria-label={step.label}>{step.emoji}</span>}</span>
+                  <span>{isRest ? formatTime(step.duration) : step.water}</span>
                   <span>{formatTime(i === fullStepSequence.length - 1 ? fullStepEndTimes[fullStepEndTimes.length - 1] : fullStepEndTimes[i])}</span>
                 </div>
                 {/* Progress bar */}
                 <div className="w-full h-1 mt-2 bg-gray-700 rounded-[4px] overflow-hidden">
                   <div
-                    className={`h-full transition-all duration-300 ${step.label === 'Rest' || step.label === 'Drawdown' ? 'bg-red-400' : 'bg-green-400'}`}
-                    style={{ width: `${progress}%` }}
+                    ref={el => barRefs.current[i] = el}
+                    className={`h-full ${isRest ? 'bg-red-400' : 'bg-green-400'}`}
+                    style={{ width: '0%' }}
                   />
                 </div>
               </div>
@@ -317,6 +346,11 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   const [elapsed, setElapsed] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [finished, setFinished] = useState(false);
+  const chimeRef = useRef<HTMLAudioElement | null>(null);
+  const softChimeRef = useRef<HTMLAudioElement | null>(null);
+  const prevStepRef = useRef<number>(0);
+  const startTimeRef = useRef<number | null>(null);
+  const accumulatedElapsedRef = useRef<number>(0);
   
   const brewingTimings = calculateBrewTiming(grindSize, coffeeSettings.amount, coffeeSettings.ratio);
 
@@ -338,40 +372,61 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   const fullCurrentStepIdx = fullStepEndTimes.findIndex(end => elapsed < end);
   const fullCurrentStep = fullCurrentStepIdx === -1 ? fullStepSequence.length - 1 : fullCurrentStepIdx;
 
-  // Timer effect
+  // Timer effect (real-world clock for perfect accuracy)
   useEffect(() => {
+    let raf: number;
+    function animate() {
+      if (timerActive && !timerPaused && !finished && startTimeRef.current !== null) {
+        const now = Date.now();
+        const elapsedSec = accumulatedElapsedRef.current + (now - startTimeRef.current) / 1000;
+        if (elapsedSec < fullStepEndTimes[fullStepEndTimes.length - 1]) {
+          setElapsed(elapsedSec);
+          raf = requestAnimationFrame(animate);
+        } else {
+          setElapsed(fullStepEndTimes[fullStepEndTimes.length - 1]);
+          setTimerActive(false);
+          setFinished(true);
+        }
+      }
+    }
     if (timerActive && !timerPaused && !finished) {
-      timerRef.current = setInterval(() => {
-        setElapsed(prev => {
-          if (prev < fullStepEndTimes[fullStepEndTimes.length - 1]) {
-            return prev + 1;
-          } else {
-            setTimerActive(false);
-            setFinished(true);
-            return prev;
-          }
-        });
-      }, 1000);
+      raf = requestAnimationFrame(animate);
     }
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (raf) cancelAnimationFrame(raf);
     };
   }, [timerActive, timerPaused, fullStepEndTimes, finished]);
 
+  // Start, Pause, Resume, Reset logic for real-world clock
   const handleStart = () => {
     setTimerActive(true);
     setTimerPaused(false);
-    setElapsed(0);
     setFinished(false);
+    setElapsed(0);
+    accumulatedElapsedRef.current = 0;
+    startTimeRef.current = Date.now();
     setShowBrewTimer(true);
   };
-  const handlePause = () => setTimerPaused(true);
-  const handleResume = () => setTimerPaused(false);
+  const handlePause = () => {
+    setTimerPaused(true);
+    setTimerActive(false);
+    if (startTimeRef.current !== null) {
+      accumulatedElapsedRef.current += (Date.now() - startTimeRef.current) / 1000;
+      startTimeRef.current = null;
+    }
+  };
+  const handleResume = () => {
+    setTimerPaused(false);
+    setTimerActive(true);
+    startTimeRef.current = Date.now();
+  };
   const handleReset = () => {
     setTimerActive(false);
     setTimerPaused(false);
     setElapsed(0);
     setFinished(false);
+    accumulatedElapsedRef.current = 0;
+    startTimeRef.current = null;
   };
 
   useEffect(() => {
@@ -492,21 +547,6 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     return '';
   };
 
-  // Progress bar data helper (update for all steps)
-  const progressBarData = (i: number) => {
-    let opacity = 'opacity-60';
-    if (i < fullCurrentStep) opacity = 'opacity-40';
-    if (i === fullCurrentStep) opacity = 'opacity-100 animate-fade-in-scale';
-    let progress = 0;
-    if (i < fullCurrentStep) progress = 100;
-    else if (i === fullCurrentStep) {
-      const stepStart = i === 0 ? 0 : fullStepEndTimes[i - 1];
-      const stepEnd = fullStepEndTimes[i];
-      progress = Math.min(100, ((elapsed - stepStart) / (stepEnd - stepStart)) * 100);
-    }
-    return { opacity, progress };
-  };
-
   const handleBack = () => {
     setShowBrewTimer(false);
     handleReset();
@@ -571,7 +611,6 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
         fullStepSequence={fullStepSequence}
         fullCurrentStep={fullCurrentStep}
         fullStepEndTimes={fullStepEndTimes}
-        progressBarData={progressBarData}
         handlePause={handlePause}
         handleResume={handleResume}
         handleReset={handleReset}
@@ -689,7 +728,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
             {/* Timer and instruction in a rectangle, instruction left, timer right */}
             <div className="flex items-center justify-between mb-3 bg-green-900 rounded-[4px] px-4 py-2" style={{ minHeight: 48 }}>
               <span className="text-sm text-green-100 font-semibold min-w-0 truncate">{getStepInstruction()}</span>
-              <span className="text-2xl font-mono font-bold text-green-200 ml-4">{formatTime(elapsed)}</span>
+              <span className="text-2xl font-mono font-bold text-green-200 ml-4">{formatTime(Math.floor(elapsed))}</span>
             </div>
             {!showBrewTimer && (
               <button className="btn btn-primary w-full mt-4" onClick={handleStart}>
