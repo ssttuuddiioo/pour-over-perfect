@@ -1,4 +1,4 @@
-import { CoffeeSettings, GrindSize } from '../types/brewing';
+import { CoffeeSettings } from '../types/brewing';
 
 export interface BrewingTimings {
   bloomDuration: number;
@@ -31,7 +31,7 @@ const calculatePhaseDurations = (targetTime: number) => {
 };
 
 export const calculateBrewTiming = (
-  grindSize: GrindSize,
+  grindSize: number,
   coffeeAmount: number = 15,
   waterRatio: number = 15,
   bloomRatio: number = 2 // Default to 2x coffee weight for bloom
