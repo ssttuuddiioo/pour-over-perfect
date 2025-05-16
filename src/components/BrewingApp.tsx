@@ -4,7 +4,7 @@ import GrindSelector from './GrindSelector';
 import { Notes } from './Notes';
 import { BrewingPhase, CoffeeSettings } from '../types/brewing';
 import { calculateBrewTiming, formatTime } from '../utils/brewingCalculations';
-import { ClipboardList, Info, Settings as SettingsIcon, X, Coffee } from 'lucide-react';
+import { ClipboardList, Info, Settings as SettingsIcon, X, Coffee, Sliders, SlidersHorizontal } from 'lucide-react';
 import ProPours from './ProPours';
 import FlavorEQ from './FlavorEQ';
 
@@ -859,9 +859,12 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
           {/* Flavor EQ Status Indicator */}
           {isFlavorEQActive && (
             <div className="p-2 bg-blue-900/30 rounded-md mb-2 flex items-center justify-between">
-              <div>
-                <span className="text-xs font-medium text-blue-300">Flavor EQ Active</span>
-                <div className="text-xs text-gray-400">Custom flavor profile applied</div>
+              <div className="flex items-center gap-2">
+                <Sliders size={16} className="text-blue-300" />
+                <div>
+                  <span className="text-xs font-medium text-blue-300">Flavor EQ Active</span>
+                  <div className="text-xs text-gray-400">Custom flavor profile applied</div>
+                </div>
               </div>
               <button 
                 className="text-xs text-blue-300 underline"
@@ -880,10 +883,19 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
               </button>
             )}
             <button 
-              className={`btn ${isFlavorEQActive ? 'btn-primary' : 'btn-secondary'} flex-1`}
+              className={`btn ${isFlavorEQActive ? 'btn-primary' : 'btn-secondary'} flex-1 flex items-center justify-center gap-2`}
               onClick={isFlavorEQActive ? toggleFlavorEQ : () => setShowFlavorEQ(true)}
             >
-              {isFlavorEQActive ? 'Flavor EQ: ON' : 'Flavor EQ'}
+              {isFlavorEQActive ? 
+                <>
+                  <Sliders size={18} />
+                  <span>Flavor EQ</span>
+                </> : 
+                <>
+                  <SlidersHorizontal size={18} />
+                  <span>Flavor EQ</span>
+                </>
+              }
             </button>
           </div>
         </>
