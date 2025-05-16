@@ -227,7 +227,8 @@ function BrewTimerPage({
   timerPaused,
   finished,
   formatTime,
-  onBack
+  onBack,
+  isFlavorEQActive
 }: any) {
   // Get contextual instructions based on current step
   const getContextualInstructions = () => {
@@ -267,8 +268,11 @@ function BrewTimerPage({
               </svg>
             </button>
             
-            <div className="text-xl font-mono font-bold text-sky-400">
+            <div className={`text-xl font-mono font-bold ${isFlavorEQActive ? 'text-green-400' : 'text-blue-500'}`}>
               {formatTime(Math.floor(elapsed))}
+              {isFlavorEQActive && (
+                <span className="text-[10px] font-normal ml-1 px-1 py-0.5 rounded bg-green-900/40 text-green-300">EQ</span>
+              )}
             </div>
             
             <div className="text-sm font-medium text-gray-200 flex-1 text-right truncate ml-3">
@@ -297,8 +301,8 @@ function BrewTimerPage({
       
         {/* Instruction Card (shows at top after starting) */}
         {timerActive && (
-          <div className="bg-gray-800 rounded-[4px] p-3 mb-4 sticky top-0 z-10">
-            <h3 className="text-sm font-medium text-gray-400 mb-1">Instructions</h3>
+          <div className={`${isFlavorEQActive ? 'bg-gradient-to-r from-gray-800 to-green-900/40' : 'bg-gray-800'} rounded-[4px] p-3 mb-4 sticky top-0 z-10`}>
+            <h3 className={`text-sm font-medium ${isFlavorEQActive ? 'text-green-300' : 'text-gray-400'} mb-1`}>Instructions</h3>
             <p className="text-white">{getContextualInstructions()}</p>
           </div>
         )}
@@ -316,17 +320,19 @@ function BrewTimerPage({
             // Determine background color based on step type
             let bgColorClass = 'bg-gray-800';
             if (step.label.includes('Pour') || step.label.includes('Bloom')) {
-              bgColorClass = 'bg-blue-500';
+              bgColorClass = isFlavorEQActive 
+                ? 'bg-gradient-to-r from-blue-900 to-green-900' 
+                : 'bg-blue-900/60';
             } else if (step.label === 'Wait' || step.label === 'Drawdown') {
               bgColorClass = 'bg-amber-500';
             }
             
             // Determine progress bar color
             const progressBarColor = step.label.includes('Pour') || step.label.includes('Bloom') 
-              ? 'bg-sky-400' 
+              ? isFlavorEQActive ? 'bg-gradient-to-r from-blue-400 to-green-400' : 'bg-blue-500' 
               : step.label === 'Wait' || step.label === 'Drawdown' 
                 ? 'bg-amber-400' 
-                : 'bg-sky-400';
+                : 'bg-blue-500';
             
             // Add opacity classes with transition
             const opacityClass = isCurrentStep ? 'opacity-100' : 'opacity-75';
@@ -369,7 +375,7 @@ function BrewTimerPage({
         <div className="flex gap-2">
           <button 
             className={`btn flex-1 flex items-center justify-center gap-2 ${
-              timerActive && !timerPaused ? 'btn-primary' : 'btn-secondary'
+              timerActive && !timerPaused ? (isFlavorEQActive ? 'bg-green-600 hover:bg-green-700 text-white' : 'btn-primary') : 'btn-secondary'
             }`}
             onClick={handlePause}
             disabled={!timerActive || timerPaused}
@@ -382,7 +388,7 @@ function BrewTimerPage({
           </button>
           <button 
             className={`btn flex-1 flex items-center justify-center gap-2 ${
-              timerPaused ? 'btn-primary' : 'btn-secondary'
+              timerPaused ? (isFlavorEQActive ? 'bg-green-600 hover:bg-green-700 text-white' : 'btn-primary') : 'btn-secondary'
             }`}
             onClick={handleResume}
             disabled={!timerPaused}
@@ -416,6 +422,12 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
       return { ...parsed, bloomRatio: parsed.bloomRatio || 2 }; 
     }
     return { amount: 15, ratio: 15, bloomRatio: 2 }; // Added bloomRatio
+  });
+  // Keep track of original settings separately from flavor-adjusted settings
+  const [originalSettings, setOriginalSettings] = useState<CoffeeSettings>({
+    amount: coffeeSettings.amount,
+    ratio: coffeeSettings.ratio,
+    bloomRatio: 2
   });
   const [showNotes, setShowNotes] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -454,11 +466,21 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   const brewingTimings = calculateBrewTiming(
     grindSize, 
     coffeeSettings.amount, 
-    coffeeSettings.ratio, 
-    coffeeSettings.bloomRatio,
+    isFlavorEQActive ? coffeeSettings.ratio : originalSettings.ratio, 
+    isFlavorEQActive ? coffeeSettings.bloomRatio : originalSettings.bloomRatio,
     isFlavorEQActive ? flavorPrefs.acidity : 50,
     isFlavorEQActive ? flavorPrefs.fruitiness : 50
   );
+
+  // Calculate original brew timings for comparison when EQ is active
+  const originalBrewingTimings = isFlavorEQActive ? calculateBrewTiming(
+    grindSize,
+    coffeeSettings.amount,
+    originalSettings.ratio,
+    originalSettings.bloomRatio,
+    50, // default acidity
+    50  // default fruitiness
+  ) : brewingTimings;
 
   // For timer/instruction logic, keep the full step sequence
   const fullStepSequence = [
@@ -554,26 +576,55 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   
   const handleCoffeeAmountChange = (amount: number) => {
     setCoffeeSettings(prev => ({ ...prev, amount, bloomRatio: prev.bloomRatio || 2 }));
+    setOriginalSettings(prev => ({ ...prev, amount }));
     localStorage.setItem('coffeeSettings', JSON.stringify({ ...coffeeSettings, amount, bloomRatio: coffeeSettings.bloomRatio || 2 }));
   };
 
   const handleRatioChange = (ratio: number) => {
     setCoffeeSettings(prev => ({ ...prev, ratio, bloomRatio: prev.bloomRatio || 2 }));
+    
+    // When flavor EQ is off, set the original ratio too 
+    if (!isFlavorEQActive) {
+      setOriginalSettings(prev => ({ ...prev, ratio }));
+    }
+    
     localStorage.setItem('coffeeSettings', JSON.stringify({ ...coffeeSettings, ratio, bloomRatio: coffeeSettings.bloomRatio || 2 }));
   };
 
   const handleApplyFlavorSettings = (newSettings: CoffeeSettings, newPrefs: any) => {
+    // Store the original values before applying EQ changes
+    setOriginalSettings({
+      amount: coffeeSettings.amount,
+      ratio: coffeeSettings.ratio,
+      bloomRatio: 2 // Default bloom ratio
+    });
+    
     setCoffeeSettings(newSettings);
     setFlavorPrefs(newPrefs);
     setIsFlavorEQActive(true);
     localStorage.setItem('coffeeSettings', JSON.stringify(newSettings));
     localStorage.setItem('flavorPrefs', JSON.stringify(newPrefs));
     localStorage.setItem('isFlavorEQActive', JSON.stringify(true));
+    localStorage.setItem('originalSettings', JSON.stringify({
+      amount: coffeeSettings.amount,
+      ratio: coffeeSettings.ratio,
+      bloomRatio: 2
+    }));
   };
 
   const toggleFlavorEQ = () => {
     const newStatus = !isFlavorEQActive;
     setIsFlavorEQActive(newStatus);
+    
+    if (!newStatus) {
+      // When turning off, we keep the adjusted settings in storage but use original values for calculation
+      setOriginalSettings({
+        amount: coffeeSettings.amount,
+        ratio: originalSettings.ratio, // Keep original ratio
+        bloomRatio: 2 // Reset to default
+      });
+    }
+    
     localStorage.setItem('isFlavorEQActive', JSON.stringify(newStatus));
   };
 
@@ -743,6 +794,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
         finished={finished}
         formatTime={formatTime}
         onBack={handleBack}
+        isFlavorEQActive={isFlavorEQActive}
       />
     );
   }
@@ -791,29 +843,55 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
             <div className="flex-1 flex flex-col gap-1">
               <span className="text-xs font-medium text-gray-400 mb-1 g-1">Coffee</span>
               <div className="grid grid-cols-2 gap-2">
-                {coffeeOptions.map(amount => (
-                  <button
-                    key={amount}
-                    className={`w-full px-0 py-2 rounded-[4px] text-sm font-semibold transition-colors bg-gray-800 ${coffeeSettings.amount === amount ? 'text-white border-2 border-blue-500' : 'text-gray-300 border border-transparent'}`}
-                    onClick={() => handleCoffeeAmountChange(amount)}
-                  >
-                    {amount}g
-                  </button>
-                ))}
+                {coffeeOptions.map(amount => {
+                  // Show both original and EQ values when EQ is active
+                  const isOriginalAmount = originalSettings.amount === amount;
+                  const isEQAmount = coffeeSettings.amount === amount;
+                  const isSelected = isFlavorEQActive ? isEQAmount : isOriginalAmount;
+
+                  return (
+                    <button
+                      key={amount}
+                      className={`relative w-full px-0 py-2 rounded-[4px] text-sm font-semibold transition-colors ${
+                        isSelected ? (isFlavorEQActive ? 'border-2 border-green-500 text-white' : 'border-2 border-blue-500 text-white') : 'text-gray-300 border border-transparent'
+                      } ${!isSelected ? 'bg-gray-800' : (isFlavorEQActive ? 'bg-green-900/60' : 'bg-blue-900/60')}`}
+                      onClick={() => handleCoffeeAmountChange(amount)}
+                    >
+                      {/* Show original value as blue overlay when EQ is active */}
+                      {isFlavorEQActive && isOriginalAmount && !isEQAmount && (
+                        <div className="absolute inset-0 border-2 border-blue-500 opacity-30 rounded-[3px] bg-blue-900/30"></div>
+                      )}
+                      {amount}g
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <div className="flex-1 flex flex-col gap-1">
               <span className="text-xs font-medium text-gray-400 mb-1 g-1">Ratio</span>
               <div className="grid grid-cols-2 gap-2">
-                {ratioOptions.map(ratio => (
-                  <button
-                    key={ratio}
-                    className={`w-full px-0 py-2 rounded-[4px] text-sm font-semibold transition-colors bg-gray-800 ${coffeeSettings.ratio === ratio ? 'text-white border-2 border-blue-500' : 'text-gray-300 border border-transparent'}`}
-                    onClick={() => handleRatioChange(ratio)}
-                  >
-                    1:{ratio}
-                  </button>
-                ))}
+                {ratioOptions.map(ratio => {
+                  // Show both original and EQ values when EQ is active
+                  const isOriginalRatio = originalSettings.ratio === ratio;
+                  const isEQRatio = coffeeSettings.ratio === ratio;
+                  const isSelected = isFlavorEQActive ? isEQRatio : isOriginalRatio;
+
+                  return (
+                    <button
+                      key={ratio}
+                      className={`relative w-full px-0 py-2 rounded-[4px] text-sm font-semibold transition-colors ${
+                        isSelected ? (isFlavorEQActive ? 'border-2 border-green-500 text-white' : 'border-2 border-blue-500 text-white') : 'text-gray-300 border border-transparent'
+                      } ${!isSelected ? 'bg-gray-800' : (isFlavorEQActive ? 'bg-green-900/60' : 'bg-blue-900/60')}`}
+                      onClick={() => handleRatioChange(ratio)}
+                    >
+                      {/* Show original value as blue overlay when EQ is active */}
+                      {isFlavorEQActive && isOriginalRatio && !isEQRatio && (
+                        <div className="absolute inset-0 border-2 border-blue-500 opacity-30 rounded-[3px] bg-blue-900/30"></div>
+                      )}
+                      1:{ratio}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -841,62 +919,80 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
           <div className="flex gap-2 mb-3">
             <div className="flex-1 flex flex-col items-center">
               <span className="text-xs font-medium text-gray-400 mb-1">Brew Time</span>
-              <div className="w-full bg-gray-800 rounded-[4px] px-0 py-2 text-base font-bold text-center text-white">
+              <div className={`w-full relative rounded-[4px] px-0 py-2 text-base font-bold text-center text-white ${isFlavorEQActive ? 'bg-green-900/60 border-2 border-green-500' : 'bg-blue-900/60 border-2 border-blue-500'}`}>
                 {formatTime(brewingTimings.totalTime)}
+                
+                {/* Show original brew time as overlay when EQ is active */}
+                {isFlavorEQActive && originalBrewingTimings.totalTime !== brewingTimings.totalTime && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-blue-900/30 border-2 border-blue-500 opacity-30 rounded-[3px]">
+                    {formatTime(originalBrewingTimings.totalTime)}
+                  </div>
+                )}
               </div>
               <div className="text-xs text-gray-500 mt-1">
-                {coffeeSettings.amount}g • 1:{coffeeSettings.ratio}
+                {coffeeSettings.amount}g • 1:{isFlavorEQActive ? coffeeSettings.ratio : originalSettings.ratio}
               </div>
             </div>
             <div className="flex-1 flex flex-col items-center">
               <span className="text-xs font-medium text-gray-400 mb-1">Total Water</span>
-              <div className="w-full bg-gray-800 rounded-[4px] px-0 py-2 text-base font-bold text-center text-white">{brewingTimings.thirdPourTarget}g</div>
+              <div className={`w-full relative rounded-[4px] px-0 py-2 text-base font-bold text-center text-white ${isFlavorEQActive ? 'bg-green-900/60 border-2 border-green-500' : 'bg-blue-900/60 border-2 border-blue-500'}`}>
+                {brewingTimings.thirdPourTarget}g
+                
+                {/* Show original water amount as overlay when EQ is active */}
+                {isFlavorEQActive && originalBrewingTimings.thirdPourTarget !== brewingTimings.thirdPourTarget && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-blue-900/30 border-2 border-blue-500 opacity-30 rounded-[3px]">
+                    {originalBrewingTimings.thirdPourTarget}g
+                  </div>
+                )}
+              </div>
               <div className="text-xs text-gray-500 mt-1">
                 {Math.round(brewingTimings.pourVolume)}g per pour
+                {isFlavorEQActive && originalBrewingTimings.pourVolume !== brewingTimings.pourVolume && (
+                  <span className="text-blue-400 opacity-30 ml-1">({Math.round(originalBrewingTimings.pourVolume)}g)</span>
+                )}
               </div>
             </div>
           </div>
-          {/* Flavor EQ Status Indicator */}
-          {isFlavorEQActive && (
-            <div className="p-2 bg-blue-900/30 rounded-md mb-2 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sliders size={16} className="text-blue-300" />
-                <div>
-                  <span className="text-xs font-medium text-blue-300">Flavor EQ Active</span>
-                  <div className="text-xs text-gray-400">Custom flavor profile applied</div>
+          {/* Flavor EQ Status Indicator - always visible */}
+          <div className={`p-2 ${isFlavorEQActive ? 'bg-green-900/30' : 'bg-gray-800'} rounded-md mb-2 flex items-center justify-between`}>
+            <div className="flex items-center gap-2">
+              <Sliders size={16} className={isFlavorEQActive ? "text-green-300" : "text-gray-400"} />
+              <div>
+                <span className={`text-xs font-medium ${isFlavorEQActive ? 'text-green-300' : 'text-gray-300'}`}>
+                  Flavor EQ {isFlavorEQActive ? 'Active' : 'Inactive'}
+                </span>
+                <div className="text-xs text-gray-400">
+                  {isFlavorEQActive ? 'Custom flavor profile applied' : 'Standard brewing parameters'}
                 </div>
               </div>
-              <button 
-                className="text-xs text-blue-300 underline"
-                onClick={() => setShowFlavorEQ(true)}
-              >
-                Edit
-              </button>
             </div>
-          )}
+            <button 
+              className="text-xs text-green-300 underline"
+              onClick={() => setShowFlavorEQ(true)}
+            >
+              Edit
+            </button>
+          </div>
           
           {/* Buttons */}
           <div className="flex gap-2">
+            <button 
+              className="btn btn-secondary flex items-center justify-between gap-3 px-3 py-2 flex-1"
+              onClick={toggleFlavorEQ}
+            >
+              <span className="font-medium">EQ</span>
+              {/* Slider toggle */}
+              <div className={`w-10 h-5 rounded-full relative ${isFlavorEQActive ? 'bg-green-500' : 'bg-gray-600'} transition-colors duration-200`}>
+                <div 
+                  className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-transform duration-200 ${isFlavorEQActive ? 'translate-x-5' : 'translate-x-0.5'}`}
+                ></div>
+              </div>
+            </button>
             {!showBrewTimer && (
               <button className="btn btn-primary flex-1" onClick={handleStart}>
                 Ready
               </button>
             )}
-            <button 
-              className={`btn ${isFlavorEQActive ? 'btn-primary' : 'btn-secondary'} flex-1 flex items-center justify-center gap-2`}
-              onClick={isFlavorEQActive ? toggleFlavorEQ : () => setShowFlavorEQ(true)}
-            >
-              {isFlavorEQActive ? 
-                <>
-                  <Sliders size={18} />
-                  <span>Flavor EQ</span>
-                </> : 
-                <>
-                  <SlidersHorizontal size={18} />
-                  <span>Flavor EQ</span>
-                </>
-              }
-            </button>
           </div>
         </>
       </div>
