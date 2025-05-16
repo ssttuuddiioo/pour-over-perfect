@@ -6,6 +6,7 @@ import { BrewingPhase, CoffeeSettings } from '../types/brewing';
 import { calculateBrewTiming, formatTime } from '../utils/brewingCalculations';
 import { ClipboardList, Info, Settings as SettingsIcon, X, Coffee } from 'lucide-react';
 import ProPours from './ProPours';
+import FlavorEQ from './FlavorEQ';
 
 const defaultCoffeeOptions = [15, 20, 25, 30];
 const defaultRatioOptions = [15, 16, 17, 18];
@@ -421,6 +422,17 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   const [showInfo, setShowInfo] = useState(false);
   const [showProPours, setShowProPours] = useState(false);
   const [showBrewTimer, setShowBrewTimer] = useState(false);
+  const [showFlavorEQ, setShowFlavorEQ] = useState(false);
+  const [isFlavorEQActive, setIsFlavorEQActive] = useState<boolean>(() => {
+    const saved = localStorage.getItem('isFlavorEQActive');
+    return saved ? JSON.parse(saved) : false;
+  });
+  const [flavorPrefs, setFlavorPrefs] = useState({
+    floral: 50,
+    acidity: 50,
+    fruitiness: 50,
+    bitterness: 50
+  });
   const [settingsDraft, setSettingsDraft] = useState({
     amount: coffeeSettings.amount,
     ratio: coffeeSettings.ratio,
@@ -439,7 +451,14 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   const startTimeRef = useRef<number | null>(null);
   const accumulatedElapsedRef = useRef<number>(0);
   
-  const brewingTimings = calculateBrewTiming(grindSize, coffeeSettings.amount, coffeeSettings.ratio, coffeeSettings.bloomRatio);
+  const brewingTimings = calculateBrewTiming(
+    grindSize, 
+    coffeeSettings.amount, 
+    coffeeSettings.ratio, 
+    coffeeSettings.bloomRatio,
+    isFlavorEQActive ? flavorPrefs.acidity : 50,
+    isFlavorEQActive ? flavorPrefs.fruitiness : 50
+  );
 
   // For timer/instruction logic, keep the full step sequence
   const fullStepSequence = [
@@ -543,6 +562,21 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     localStorage.setItem('coffeeSettings', JSON.stringify({ ...coffeeSettings, ratio, bloomRatio: coffeeSettings.bloomRatio || 2 }));
   };
 
+  const handleApplyFlavorSettings = (newSettings: CoffeeSettings, newPrefs: any) => {
+    setCoffeeSettings(newSettings);
+    setFlavorPrefs(newPrefs);
+    setIsFlavorEQActive(true);
+    localStorage.setItem('coffeeSettings', JSON.stringify(newSettings));
+    localStorage.setItem('flavorPrefs', JSON.stringify(newPrefs));
+    localStorage.setItem('isFlavorEQActive', JSON.stringify(true));
+  };
+
+  const toggleFlavorEQ = () => {
+    const newStatus = !isFlavorEQActive;
+    setIsFlavorEQActive(newStatus);
+    localStorage.setItem('isFlavorEQActive', JSON.stringify(newStatus));
+  };
+
   const openSettings = () => {
     setSettingsDraft({
       amount: coffeeSettings.amount,
@@ -638,6 +672,18 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     return <SettingsPage onBack={closeSettings} settingsDraft={settingsDraft} setSettingsDraft={setSettingsDraft} handleSettingsSave={handleSettingsSave} closeSettings={closeSettings} />;
   }
 
+  if (showFlavorEQ) {
+    return (
+      <FlavorEQ 
+        onBack={() => setShowFlavorEQ(false)}
+        coffeeSettings={coffeeSettings}
+        grindSize={grindSize}
+        onApplySettings={handleApplyFlavorSettings}
+        initialPrefs={flavorPrefs}
+      />
+    );
+  }
+
   if (showNotes) {
     return (
       <div className="w-full max-w-sm">
@@ -730,14 +776,14 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
               >
                 <span role="img" aria-label="Settings" className="text-lg">⚙️</span>
               </button>
-            <button 
+              <button 
                 onClick={() => setShowInfo(true)}
-              className="btn btn-secondary p-2"
+                className="btn btn-secondary p-2"
                 type="button"
                 aria-label="Info"
-            >
+              >
                 <span role="img" aria-label="Info" className="text-lg">ℹ️</span>
-            </button>
+              </button>
             </div>
           </div>
           {/* Coffee and Ratio Selectors */}
@@ -810,11 +856,36 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
               </div>
             </div>
           </div>
-          {!showBrewTimer && (
-            <button className="btn btn-primary w-full mt-4" onClick={handleStart}>
-              Ready
-            </button>
+          {/* Flavor EQ Status Indicator */}
+          {isFlavorEQActive && (
+            <div className="p-2 bg-blue-900/30 rounded-md mb-2 flex items-center justify-between">
+              <div>
+                <span className="text-xs font-medium text-blue-300">Flavor EQ Active</span>
+                <div className="text-xs text-gray-400">Custom flavor profile applied</div>
+              </div>
+              <button 
+                className="text-xs text-blue-300 underline"
+                onClick={() => setShowFlavorEQ(true)}
+              >
+                Edit
+              </button>
+            </div>
           )}
+          
+          {/* Buttons */}
+          <div className="flex gap-2">
+            {!showBrewTimer && (
+              <button className="btn btn-primary flex-1" onClick={handleStart}>
+                Ready
+              </button>
+            )}
+            <button 
+              className={`btn ${isFlavorEQActive ? 'btn-primary' : 'btn-secondary'} flex-1`}
+              onClick={isFlavorEQActive ? toggleFlavorEQ : () => setShowFlavorEQ(true)}
+            >
+              {isFlavorEQActive ? 'Flavor EQ: ON' : 'Flavor EQ'}
+            </button>
+          </div>
         </>
       </div>
     </div>

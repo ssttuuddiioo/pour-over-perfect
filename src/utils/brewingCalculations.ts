@@ -14,6 +14,7 @@ export interface BrewingTimings {
   thirdPourTarget: number;
   totalTime: number;
   pourVolume: number;
+  pulseCount?: number; // For fruitiness adjustment
 }
 
 // Calculate phase durations based on total target time
@@ -30,17 +31,45 @@ const calculatePhaseDurations = (targetTime: number) => {
   };
 };
 
+// Acidity affects pour speed (pour duration)
+// Higher acidity = faster pour = shorter pour duration
+const adjustPourDurationForAcidity = (
+  duration: number, 
+  acidityLevel: number = 50 // Default to middle value
+): number => {
+  // At acidity 50, no change
+  // At acidity 100, 20% faster pour
+  // At acidity 0, 20% slower pour
+  const acidityAdjustment = 1 - ((acidityLevel - 50) / 250); // Range: 0.8 to 1.2
+  return Math.round(duration * acidityAdjustment);
+};
+
+// Fruitiness affects number of pulse pours 
+// Higher fruitiness = more pulse pours
+const calculatePulseCount = (
+  fruitinessLevel: number = 50 // Default to middle value
+): number => {
+  // At fruitiness 0: minimum 1 pulse
+  // At fruitiness 100: maximum 3 pulses
+  return Math.max(1, Math.min(3, Math.ceil(1 + fruitinessLevel / 50)));
+};
+
 export const calculateBrewTiming = (
   grindSize: number,
   coffeeAmount: number = 15,
   waterRatio: number = 15,
-  bloomRatio: number = 2 // Default to 2x coffee weight for bloom
+  bloomRatio: number = 2, // Default to 2x coffee weight for bloom
+  acidityLevel: number = 50, // Optional acidity level for pour speed
+  fruitinessLevel: number = 50 // Optional fruitiness level for pulse count
 ): BrewingTimings => {
   // Calculate water amounts (independent of grind size)
   const totalWater = coffeeAmount * waterRatio;
   const bloomWater = Math.round(coffeeAmount * bloomRatio);
   const remainingWater = totalWater - bloomWater;
-  const pourVolume = Math.round(remainingWater / 3);
+  
+  // Determine number of pulses based on fruitiness (default behavior is 3 pours)
+  const pulseCount = calculatePulseCount(fruitinessLevel);
+  const pourVolume = Math.round(remainingWater / pulseCount);
   
   // Calculate target amounts for each phase
   const firstPourTarget = bloomWater + pourVolume;
@@ -73,13 +102,19 @@ export const calculateBrewTiming = (
   const totalPourTime = targetTime * 0.35; // 35% of total time for all pours
   const pourRate = totalWater / totalPourTime; // g/s pour rate
 
-  // Calculate individual pour durations based on volume
-  const firstPourDuration = Math.round((firstPourTarget - bloomWater) / pourRate);
-  const secondPourDuration = Math.round((secondPourTarget - firstPourTarget) / pourRate);
-  const thirdPourDuration = Math.round((thirdPourTarget - secondPourTarget) / pourRate);
+  // Calculate individual pour durations based on volume and adjust for acidity
+  let firstPourDuration = Math.round((firstPourTarget - bloomWater) / pourRate);
+  let secondPourDuration = Math.round((secondPourTarget - firstPourTarget) / pourRate);
+  let thirdPourDuration = Math.round((thirdPourTarget - secondPourTarget) / pourRate);
+  
+  // Apply acidity adjustment to pour durations
+  firstPourDuration = adjustPourDurationForAcidity(firstPourDuration, acidityLevel);
+  secondPourDuration = adjustPourDurationForAcidity(secondPourDuration, acidityLevel);
+  thirdPourDuration = adjustPourDurationForAcidity(thirdPourDuration, acidityLevel);
 
   // Calculate remaining time for other phases
-  const remainingTime = targetTime - (firstPourDuration + secondPourDuration + thirdPourDuration);
+  const totalPourDuration = firstPourDuration + secondPourDuration + thirdPourDuration;
+  const remainingTime = targetTime - totalPourDuration;
   
   // Adjusted phase splits for better balance
   const durations = {
@@ -105,6 +140,10 @@ export const calculateBrewTiming = (
     coffeeAmount,
     waterRatio,
     grindSize,
+    bloomRatio,
+    acidityLevel,
+    fruitinessLevel,
+    pulseCount,
     pourRate: `${pourRate.toFixed(1)}g/s`,
     phaseSplits: {
       bloom: `${Math.round(durations.bloomDuration / targetTime * 100)}%`,
@@ -127,7 +166,8 @@ export const calculateBrewTiming = (
     secondPourTarget,
     thirdPourTarget,
     totalTime: targetTime,
-    pourVolume
+    pourVolume,
+    pulseCount
   };
 };
 
