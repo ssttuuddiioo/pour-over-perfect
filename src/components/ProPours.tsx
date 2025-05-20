@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import ProgressCircle from './ProgressCircle';
 
 // Simple SVG pour-over dripper icon
 const DripperIcon = () => (
@@ -99,11 +98,15 @@ const ProPours: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
   const currentStep = steps[stepIdx];
   const phaseNumber = currentStep.phase;
   const isPour = currentStep.color === 'green';
-  const colorClass = isPour ? 'text-green-200' : 'text-red-300';
+  const isRest = currentStep.color === 'red';
+  const colorClass = isPour ? 'text-green-200' : isRest ? 'text-yellow-200' : '';
+  const barColorClass = (color: string) => color === 'red' ? 'bg-yellow-400' : 'bg-green-400';
+  const timerBgClass = isPour ? 'bg-green-900' : isRest ? 'bg-yellow-900' : '';
+  const timerTextClass = isPour ? 'text-green-200' : isRest ? 'text-yellow-200' : '';
 
   return (
     <div className="w-full">
-      <div className="card w-full mb-6">
+      <div className="card w-full mb-6 px-4 py-4">
         <div className="flex flex-col items-start mb-2">
           <div className="text-xs text-gray-400 mb-2">
             <span>Method by Philocoffea, founded by World Brewers Cup Champion Tetsu Kasuya. <a href="https://en.philocoffea.com/" target="_blank" rel="noopener noreferrer" className="underline hover:text-blue-300">Learn more</a>.</span>
@@ -111,29 +114,32 @@ const ProPours: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
           <div className="text-sm text-gray-300 mb-2 text-left">
             Tetsu Kasuya's 4:6 method uses 5 pours: the first <b>2 pours</b> build sweetness and acidity, the last <b>3 pours</b> adjust body and strength.
           </div>
-        </div>
-        {/* Info Grid - each item on its own line, full width rectangles */}
-        <div className="flex flex-col gap-2 text-sm mb-4 w-full">
-          <div className="bg-gray-700 rounded px-2 py-1 flex items-center w-full justify-between whitespace-nowrap">
-            <span>Coffee:</span> <span className="ml-1">20g</span>
-          </div>
-          <div className="bg-gray-700 rounded px-2 py-1 flex items-center w-full justify-between whitespace-nowrap">
-            <span>Water:</span> <span className="ml-1">300ml</span>
-          </div>
-          <div className="bg-gray-700 rounded px-2 py-1 flex items-center w-full justify-between whitespace-nowrap">
-            <span>Grind:</span> <span className="ml-1">Medium-coarse</span>
-          </div>
-          <div className="bg-gray-700 rounded px-2 py-1 flex items-center w-full justify-between whitespace-nowrap">
-            <span>Brew Time:</span> <span className="ml-1">3:30</span>
+          {/* Original info grid */}
+          <div className="flex flex-col gap-1 w-full mb-2">
+            <div className="flex gap-2 w-full">
+              <div className="flex-1 bg-gray-700 rounded px-2 py-1 flex items-center justify-between whitespace-nowrap">
+                <span>Coffee</span> <span className="ml-1">20g</span>
+              </div>
+              <div className="flex-1 bg-gray-700 rounded px-2 py-1 flex items-center justify-between whitespace-nowrap">
+                <span>Water</span> <span className="ml-1">300ml</span>
+              </div>
+            </div>
+            <div className="flex gap-2 w-full">
+              <div className="flex-1 bg-gray-700 rounded px-2 py-1 flex items-center justify-between whitespace-nowrap">
+                <span>Grind</span> <span className="ml-1">Medium-coarse</span>
+              </div>
+              <div className="flex-1 bg-gray-700 rounded px-2 py-1 flex items-center justify-between whitespace-nowrap">
+                <span>Brew Time</span> <span className="ml-1">3:30</span>
+              </div>
+            </div>
+            <div className="text-xs text-gray-400 mt-1 pl-0">5 pours, 20g coffee, 300ml water</div>
           </div>
         </div>
         {/* Timer/Phase Interface - both in one rectangle, no parens or 'hot water', not bold */}
-        <div className="flex flex-row items-center justify-center gap-0 mb-6 w-full">
-          <div className="bg-gray-800 rounded-lg px-4 py-2 flex items-center justify-between w-full min-w-0">
-            <span className="bg-gray-600 rounded-md px-2 py-0.5 text-sm text-white mr-4" style={{ minWidth: 20, textAlign: 'center' }}>{phaseNumber}</span>
-            <span className="text-sm font-mono text-white mx-auto" style={{ minWidth: 48, textAlign: 'center' }}>{formatTime(timeLeft)}</span>
-            <span className={`text-sm truncate ${colorClass} ml-4`}>{currentStep.label.replace(/\(.+?\)/g, '').replace('hot water', '').trim()}</span>
-          </div>
+        <div className={`flex flex-row items-center justify-center gap-0 mb-6 w-full ${timerBgClass} rounded-lg px-4 py-2`}>
+          <span className="bg-gray-600 rounded-md px-2 py-0.5 text-sm text-white mr-4" style={{ minWidth: 20, textAlign: 'center' }}>{phaseNumber}</span>
+          <span className={`text-sm font-mono text-white mx-auto`} style={{ minWidth: 48, textAlign: 'center' }}>{formatTime(timeLeft)}</span>
+          <span className={`text-sm truncate ${colorClass} ml-4`}>{currentStep.label.replace(/\(.+?\)/g, '').replace('hot water', '').trim()}</span>
         </div>
         <div className="flex gap-2 w-full">
           {!running && (
@@ -160,15 +166,6 @@ const ProPours: React.FC<{ onExit?: () => void }> = ({ onExit }) => {
           </ul>
         </div>
       </div>
-      <style>{`
-        .animate-fade-in-scale {
-          animation: fadeInScale 0.5s cubic-bezier(0.4,0,0.2,1);
-        }
-        @keyframes fadeInScale {
-          0% { opacity: 0; transform: scale(0.95); }
-          100% { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
     </div>
   );
 };
