@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -17,12 +20,16 @@
   }
 
   html {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 
   body {
     @apply bg-gray-900 text-gray-100;
+    font-family: 'Inter', sans-serif;
+    background-color: #111827;
+    color: #F3F4F6;
+    min-height: max(884px, 100dvh);
   }
 }
 
@@ -33,17 +40,44 @@
   }
   
   .btn-primary {
-    @apply bg-gray-100 text-gray-900 hover:bg-gray-200 
-           focus:ring-gray-100;
+    background-color: #F9FAFB;
+    color: #111827;
+    @apply w-full py-4 rounded-xl text-lg font-semibold;
   }
   
   .btn-secondary {
-    @apply bg-transparent border border-gray-600 text-gray-300 
-           hover:bg-gray-800 focus:ring-gray-600;
+    background-color: #374151;
+    color: #F3F4F6;
+    @apply px-4 py-2 rounded-lg text-sm font-medium;
+  }
+
+  .btn-secondary-outline {
+    border: 1px solid #4B5563;
+    color: #F3F4F6;
+    @apply px-4 py-2 rounded-lg text-sm font-medium;
   }
 
   .card {
-    @apply bg-gray-800/50 backdrop-blur-sm rounded-xl p-6;
+    background-color: #1F2937;
+    border-radius: 0.75rem;
+    padding: 1rem;
+  }
+
+  .selected-card {
+    border: 2px solid #A5B4FC;
+    background-color: #1F2937;
+    @apply p-4 text-center rounded-xl;
+  }
+
+  .unselected-card {
+    background-color: #374151;
+    @apply p-4 text-center rounded-xl;
+  }
+
+  .input-display {
+    background-color: #374151;
+    border-radius: 0.5rem;
+    @apply p-4 text-center;
   }
 
   input[type="range"] {
@@ -65,5 +99,35 @@
 
   .amount-btn-inactive {
     @apply bg-gray-800 text-gray-300 hover:bg-gray-700;
+  }
+
+  .circular-progress {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(#0EA5E9 var(--progress), #374151 0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .circular-progress::before {
+    content: '';
+    position: absolute;
+    width: calc(100% - 16px);
+    height: calc(100% - 16px);
+    background-color: #1A1A1A;
+    border-radius: 50%;
+  }
+  
+  .progress-value {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+  
+  .font-roboto-mono {
+    font-family: 'Roboto Mono', monospace;
   }
 }
