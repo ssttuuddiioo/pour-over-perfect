@@ -269,16 +269,15 @@ function BrewTimerPage({
   const progressPercentage = Math.min((elapsed / totalTime) * 100, 100);
   
   const currentStep = fullStepSequence[fullCurrentStep];
-  const currentStepInstruction = getStepInstruction();
 
   return (
-    <div className="text-white min-h-screen" style={{ backgroundColor: '#1A1A1A' }}>
-      <div className="container mx-auto px-3 py-4 max-w-sm">
+    <div className="text-white min-h-screen" style={{ backgroundColor: '#000000' }}>
+      <div className="container mx-auto px-3 py-2 max-w-sm">
         {/* Header */}
-        <header className="mb-3">
+        <header className="mb-2">
           <button 
             onClick={onBack} 
-            className="text-slate-300 hover:text-white"
+            className="text-gray-400 hover:text-white"
             aria-label="Back"
           >
             <span className="material-icons-outlined text-xl">arrow_back_ios_new</span>
@@ -286,30 +285,27 @@ function BrewTimerPage({
         </header>
 
         {/* Timer Section */}
-        <div className="flex flex-col items-center mb-4">
+        <div className="flex flex-col items-center mb-3">
           <div 
-            className="circular-progress mb-3" 
+            className="circular-progress mb-2" 
             style={{ '--progress': `${progressPercentage}%` } as React.CSSProperties}
           >
             <div className="progress-value">
-              <div className="text-4xl font-bold text-sky-400 font-roboto-mono">
+              <div className="text-4xl font-bold text-white font-roboto-mono">
                 {formatTime(Math.ceil(timeRemaining))}
               </div>
-              <div className="text-xs text-slate-400">remaining</div>
+              <div className="text-xs text-gray-400">remaining</div>
             </div>
           </div>
           <div className="text-center">
-            <h1 className="text-xl font-semibold text-slate-100">
+            <h1 className="text-lg font-semibold text-white">
               {currentStep?.label || 'Ready'}
             </h1>
-            <p className="text-xs text-slate-400">
-              {currentStepInstruction}
-            </p>
           </div>
         </div>
 
         {/* Recipe List */}
-        <div className="bg-slate-800 rounded-xl p-3 space-y-2 mb-4 shadow-lg" style={{ marginBottom: '6rem' }}>
+        <div className="bg-gray-900 rounded-xl p-2 shadow-lg">
           {fullStepSequence.map((step: any, index: number) => {
             const isActive = index === fullCurrentStep;
             const isCompleted = elapsed >= (fullStepEndTimes[index] || 0);
@@ -322,67 +318,69 @@ function BrewTimerPage({
             return (
               <div
                 key={index}
-                className={`flex items-center justify-between p-3 rounded-lg transition-colors duration-150 ${
+                className={`flex items-center justify-between p-2 rounded-lg transition-colors duration-150 ${
+                  index < fullStepSequence.length - 1 ? 'mb-1' : ''
+                } ${
                   isActive 
-                    ? 'bg-sky-500/20 border border-sky-500 shadow-md' 
+                    ? 'bg-white/10 border border-white' 
                     : isFuture
-                    ? 'hover:bg-slate-700/60 cursor-pointer'
-                    : 'hover:bg-slate-700/60 opacity-60 cursor-pointer'
+                    ? 'hover:bg-gray-700/60 cursor-pointer'
+                    : 'hover:bg-gray-700/60 opacity-60 cursor-pointer'
                 }`}
               >
-                <div className="flex items-center">
+                <div className="flex items-center flex-1 min-w-0">
                   <div 
-                    className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold mr-3 shadow ${
+                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mr-2 flex-shrink-0 ${
                       isActive 
-                        ? 'bg-sky-500 text-white' 
-                        : 'bg-slate-600 text-slate-300'
+                        ? 'bg-white text-black' 
+                        : 'bg-gray-600 text-gray-300'
                     }`}
                   >
                     {index + 1}
                   </div>
-                  <div>
-                    <span 
-                      className={`text-sm ${
-                        isActive 
-                          ? 'font-semibold text-slate-100' 
-                          : 'font-medium text-slate-300'
-                      }`}
-                    >
-                      {step.label}
-                    </span>
-                    {step.water && (
-                      <p 
-                        className={`text-xs ${
-                          isActive ? 'text-sky-400' : 'text-slate-400'
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span 
+                        className={`text-sm truncate ${
+                          isActive 
+                            ? 'font-semibold text-white' 
+                            : 'font-medium text-gray-300'
                         }`}
                       >
-                        {step.water}
-                      </p>
-                    )}
+                        {step.label}
+                        {step.water && (
+                          <span 
+                            className={`ml-1 text-xs ${
+                              isActive ? 'text-gray-300' : 'text-gray-400'
+                            }`}
+                          >
+                            {step.water}
+                          </span>
+                        )}
+                      </span>
+                      <span 
+                        className={`text-xs font-roboto-mono ml-2 flex-shrink-0 ${
+                          isActive 
+                            ? 'text-gray-300 font-medium' 
+                            : 'text-gray-400'
+                        }`}
+                      >
+                        {formatTime(stepDuration)}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <span 
-                  className={`text-sm font-roboto-mono ${
-                    isActive 
-                      ? 'text-slate-300 font-medium' 
-                      : 'text-slate-400'
-                  }`}
-                >
-                  {formatTime(stepDuration)}
-                </span>
               </div>
             );
           })}
-        </div>
-
-        {/* Fixed Bottom Controls */}
-        <div className="fixed bottom-0 left-0 right-0 bg-slate-900/80 backdrop-blur-sm p-3 border-t border-slate-700">
-          <div className="container mx-auto max-w-sm flex gap-3">
+          
+          {/* Controls integrated into recipe section */}
+          <div className="flex gap-3 mt-3 pt-2 border-t border-gray-700">
             <button 
-              className={`flex-1 font-semibold py-3 px-4 rounded-lg transition-colors duration-150 text-base shadow-md flex items-center justify-center ${
+              className={`flex-1 font-semibold py-3 px-4 rounded-lg transition-colors duration-150 text-base flex items-center justify-center ${
                 timerActive && !timerPaused 
-                  ? 'bg-slate-700 hover:bg-slate-600 text-slate-300' 
-                  : 'bg-sky-500 hover:bg-sky-600 text-white'
+                  ? 'bg-gray-800 hover:bg-gray-700 text-white' 
+                  : 'bg-white hover:bg-gray-100 text-black'
               }`}
               onClick={timerActive && !timerPaused ? handlePause : handleResume}
               disabled={finished}
@@ -393,7 +391,7 @@ function BrewTimerPage({
               {timerActive && !timerPaused ? 'Pause' : 'Start'}
             </button>
             <button 
-              className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 font-semibold py-3 px-4 rounded-lg transition-colors duration-150 text-base shadow-md flex items-center justify-center"
+              className="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-150 text-base flex items-center justify-center"
               onClick={handleReset}
             >
               <span className="material-icons-outlined align-middle mr-1 text-lg">replay</span>
@@ -714,12 +712,12 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   }
   
   return (
-    <div className="antialiased" style={{ backgroundColor: '#111827', color: '#F3F4F6' }}>
-      <div className="container mx-auto px-4 py-6 max-w-md">
+    <div className="antialiased" style={{ backgroundColor: '#000000', color: '#FFFFFF' }}>
+      <div className="container mx-auto px-4 py-4 max-w-md">
         {/* Header */}
-        <header className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-white">Pour Perfect</h1>
-          <div className="flex space-x-3">
+        <header className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold text-white">Pour Perfect</h1>
+          <div className="flex space-x-2">
             <button 
               onClick={() => setShowNotes(true)}
               className="btn-secondary-outline flex items-center"
@@ -739,11 +737,11 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
         </header>
 
         {/* Main Content */}
-        <main className="space-y-8">
+        <main className="space-y-6">
           {/* Coffee Section */}
           <div>
             <h2 className="text-sm font-medium text-gray-400 mb-2">Coffee</h2>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               {coffeeOptions.slice(0, 2).map(amount => (
                 <div
                   key={amount}
@@ -752,7 +750,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
                   } cursor-pointer transition-colors`}
                   onClick={() => handleCoffeeAmountChange(amount)}
                 >
-                  <span className="text-xl font-semibold">{amount}g</span>
+                  <span className="text-lg font-semibold">{amount}g</span>
                 </div>
               ))}
             </div>
@@ -761,7 +759,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
           {/* Ratio Section */}
           <div>
             <h2 className="text-sm font-medium text-gray-400 mb-2">Ratio</h2>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2">
               {ratioOptions.slice(0, 2).map(ratio => (
                 <div
                   key={ratio}
@@ -770,7 +768,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
                   } cursor-pointer transition-colors`}
                   onClick={() => handleRatioChange(ratio)}
                 >
-                  <span className="text-xl font-semibold">1:{ratio}</span>
+                  <span className="text-lg font-semibold">1:{ratio}</span>
                 </div>
               ))}
             </div>
@@ -779,7 +777,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
           {/* Grind Section */}
           <div>
             <h2 className="text-sm font-medium text-gray-400 mb-2">Grind</h2>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-4 gap-2">
               {['Fine', 'Medium', 'Medium-coarse', 'Coarse'].map((label, idx) => {
                 const grindMap = [3, 6, 7, 9];
                 return (
@@ -787,7 +785,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
                     key={label}
                     className={`${
                       grindSize === grindMap[idx] ? 'selected-card' : 'unselected-card'
-                    } text-sm font-medium transition-colors`}
+                    } text-xs font-medium transition-colors`}
                     onClick={() => setGrindSize(grindMap[idx])}
                   >
                     {label}
@@ -798,11 +796,11 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
           </div>
 
           {/* Brew Time and Total Water */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <h3 className="text-sm font-medium text-gray-400 mb-1 text-center">Brew Time</h3>
+              <h3 className="text-xs font-medium text-gray-400 mb-1 text-center">Brew Time</h3>
               <div className="input-display">
-                <p className="text-2xl font-semibold text-white">
+                <p className="text-xl font-semibold text-white">
                   {formatTime(brewingTimings.totalTime)}
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
@@ -811,9 +809,9 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
               </div>
             </div>
             <div>
-              <h3 className="text-sm font-medium text-gray-400 mb-1 text-center">Total Water</h3>
+              <h3 className="text-xs font-medium text-gray-400 mb-1 text-center">Total Water</h3>
               <div className="input-display">
-                <p className="text-2xl font-semibold text-white">
+                <p className="text-xl font-semibold text-white">
                   {brewingTimings.thirdPourTarget}g
                 </p>
                 <p className="text-xs text-gray-400 mt-1">
@@ -825,7 +823,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
         </main>
 
         {/* Footer */}
-        <footer className="mt-12">
+        <footer className="mt-8">
           <button 
             className="btn-primary" 
             onClick={handleStart}
