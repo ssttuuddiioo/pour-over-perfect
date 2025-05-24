@@ -74,7 +74,10 @@ export const calculateBrewTiming = (
   // Calculate target amounts for each phase
   const firstPourTarget = bloomWater + pourVolume;
   const secondPourTarget = firstPourTarget + pourVolume;
-  const thirdPourTarget = totalWater;
+  const thirdPourTarget = secondPourTarget + pourVolume;
+  
+  // Ensure third pour reaches total water (handle rounding)
+  const adjustedThirdPourTarget = Math.max(thirdPourTarget, totalWater);
 
   // Calculate brew time (affected by grind size)
   const baseTime = 150; // 2:30 base time
@@ -105,7 +108,7 @@ export const calculateBrewTiming = (
   // Calculate individual pour durations based on volume and adjust for acidity
   let firstPourDuration = Math.round((firstPourTarget - bloomWater) / pourRate);
   let secondPourDuration = Math.round((secondPourTarget - firstPourTarget) / pourRate);
-  let thirdPourDuration = Math.round((thirdPourTarget - secondPourTarget) / pourRate);
+  let thirdPourDuration = Math.round((adjustedThirdPourTarget - secondPourTarget) / pourRate);
   
   // Apply acidity adjustment to pour durations
   firstPourDuration = adjustPourDurationForAcidity(firstPourDuration, acidityLevel);
@@ -164,7 +167,7 @@ export const calculateBrewTiming = (
     bloomWater,
     firstPourTarget,
     secondPourTarget,
-    thirdPourTarget,
+    thirdPourTarget: adjustedThirdPourTarget,
     totalTime: targetTime,
     pourVolume,
     pulseCount
