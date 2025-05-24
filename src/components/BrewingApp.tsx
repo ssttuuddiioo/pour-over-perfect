@@ -266,47 +266,54 @@ function BrewTimerPage({
 }: any) {
   const totalTime = fullStepEndTimes[fullStepEndTimes.length - 1] || 1;
   const timeRemaining = Math.max(0, totalTime - elapsed);
-  const progressPercentage = Math.min((elapsed / totalTime) * 100, 100);
   
-  const currentStep = fullStepSequence[fullCurrentStep];
+  // Calculate current step progress
+  const currentStepStartTime = fullCurrentStep === 0 ? 0 : fullStepEndTimes[fullCurrentStep - 1];
+  const currentStepEndTime = fullStepEndTimes[fullCurrentStep] || totalTime;
+  const currentStepDuration = currentStepEndTime - currentStepStartTime;
+  const currentStepElapsed = Math.max(0, elapsed - currentStepStartTime);
+  const currentStepRemaining = Math.max(0, currentStepDuration - currentStepElapsed);
+  const currentStepProgress = currentStepDuration > 0 ? (currentStepElapsed / currentStepDuration) * 100 : 0;
+
+  // Helper function to format time as "23s"
+  const formatTimeSimple = (seconds: number) => {
+    return `${Math.round(seconds)}s`;
+  };
+
+  // Helper function to extract target weight
+  const extractTargetWeight = (waterText: string) => {
+    if (waterText && waterText.includes('Pour to')) {
+      return waterText.replace('Pour to ', '');
+    }
+    // Return empty for Wait and Drawdown steps
+    return '';
+  };
 
   return (
-    <div className="text-white min-h-screen" style={{ backgroundColor: '#000000' }}>
-      <div className="container mx-auto px-3 py-2 max-w-sm">
+    <div className="text-white min-h-screen flex flex-col" style={{ backgroundColor: '#000000', fontFamily: 'Space Grotesk, sans-serif' }}>
+      <div className="container mx-auto px-6 py-6 max-w-sm flex-1 flex flex-col">
         {/* Header */}
-        <header className="mb-2">
+        <header className="mb-8">
           <button 
             onClick={onBack} 
-            className="text-gray-400 hover:text-white"
+            className="text-gray-400 hover:text-white text-lg font-medium"
             aria-label="Back"
+            style={{ fontFamily: 'Space Grotesk, sans-serif' }}
           >
-            <span className="material-icons-outlined text-xl">arrow_back_ios_new</span>
+            Back
           </button>
         </header>
 
-        {/* Timer Section */}
-        <div className="flex flex-col items-center mb-3">
-          <div 
-            className="circular-progress mb-2" 
-            style={{ '--progress': `${progressPercentage}%` } as React.CSSProperties}
-          >
-            <div className="progress-value">
-              <div className="text-4xl font-bold text-white font-roboto-mono">
-                {formatTime(Math.ceil(timeRemaining))}
-              </div>
-              <div className="text-xs text-gray-400">remaining</div>
-            </div>
-          </div>
-          <div className="text-center">
-            <h1 className="text-lg font-semibold text-white">
-              {currentStep?.label || 'Ready'}
-            </h1>
+        {/* Large Timer Display */}
+        <div className="text-center mb-12">
+          <div className="text-4xl font-medium text-white font-roboto-mono tracking-tight">
+            {formatTime(Math.ceil(timeRemaining))}
           </div>
         </div>
 
-        {/* Recipe List */}
-        <div className="bg-gray-900 rounded-xl p-2 shadow-lg">
-          {fullStepSequence.map((step: any, index: number) => {
+        {/* Vertical Step List */}
+        <div className="flex-1 space-y-4">
+          {fullStepSequence.slice(0, -1).map((step: any, index: number) => {
             const isActive = index === fullCurrentStep;
             const isCompleted = elapsed >= (fullStepEndTimes[index] || 0);
             const isFuture = index > fullCurrentStep;
@@ -314,91 +321,90 @@ function BrewTimerPage({
             const stepStart = index === 0 ? 0 : fullStepEndTimes[index - 1];
             const stepEnd = fullStepEndTimes[index] || 0;
             const stepDuration = Math.max(0, stepEnd - stepStart);
+            const stepElapsed = Math.max(0, elapsed - stepStart);
+            const stepRemaining = Math.max(0, stepDuration - stepElapsed);
+            const stepProgress = stepDuration > 0 ? Math.min((stepElapsed / stepDuration) * 100, 100) : 0;
+
+            // Determine opacity based on state
+            let opacity = 'opacity-40'; // Future steps
+            if (isCompleted) opacity = 'opacity-60'; // Past steps
+            if (isActive) opacity = 'opacity-100'; // Current step
+
+            const targetWeight = extractTargetWeight(step.water);
 
             return (
-              <div
-                key={index}
-                className={`flex items-center justify-between p-2 rounded-lg transition-colors duration-150 ${
-                  index < fullStepSequence.length - 1 ? 'mb-1' : ''
-                } ${
-                  isActive 
-                    ? 'bg-white/10 border border-white' 
-                    : isFuture
-                    ? 'hover:bg-gray-700/60 cursor-pointer'
-                    : 'hover:bg-gray-700/60 opacity-60 cursor-pointer'
-                }`}
-              >
-                <div className="flex items-center flex-1 min-w-0">
-                  <div 
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold mr-2 flex-shrink-0 ${
-                      isActive 
-                        ? 'bg-white text-black' 
-                        : 'bg-gray-600 text-gray-300'
-                    }`}
-                  >
-                    {index + 1}
+              <div key={index} className={`${opacity} transition-opacity duration-300`}>
+                {/* 3-Column Grid Layout */}
+                <div className="grid grid-cols-3 text-center items-center py-3 relative">
+                  {/* Left: Step name */}
+                  <div className="text-left">
+                    <span className="text-lg font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                      {step.label}
+                    </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <span 
-                        className={`text-sm truncate ${
-                          isActive 
-                            ? 'font-semibold text-white' 
-                            : 'font-medium text-gray-300'
+
+                  {/* Center: Target weight */}
+                  <div>
+                    <span className="text-lg font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                      {targetWeight}
+                    </span>
+                  </div>
+
+                  {/* Right: Time - Show step countdown for active step, full duration for others */}
+                  <div className="text-right">
+                    <span className="text-lg font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                      {isActive && timerActive && !isCompleted ? 
+                        formatTimeSimple(Math.ceil(stepRemaining)) : 
+                        formatTimeSimple(stepDuration)
+                      }
+                    </span>
+                  </div>
+
+                  {/* Progress Line - Custom dotted styling */}
+                  <div className="absolute bottom-0 left-0 w-full h-px">
+                    {/* Base line - custom dotted for incomplete/current, solid for completed */}
+                    {isCompleted ? (
+                      <div className="w-full h-px bg-white" />
+                    ) : (
+                      <div 
+                        className="w-full h-px"
+                        style={{
+                          backgroundImage: `radial-gradient(circle, #9CA3AF 1px, transparent 1px)`,
+                          backgroundSize: '8px 1px',
+                          backgroundRepeat: 'repeat-x'
+                        }}
+                      />
+                    )}
+                    
+                    {/* Progress overlay for current step only */}
+                    {isActive && !isCompleted && (
+                      <div 
+                        className={`absolute top-0 h-px bg-white transition-all duration-100 ease-out ${
+                          step.label === 'Wait' || step.label === 'Drawdown' 
+                            ? 'right-0' 
+                            : 'left-0'
                         }`}
-                      >
-                        {step.label}
-                        {step.water && (
-                          <span 
-                            className={`ml-1 text-xs ${
-                              isActive ? 'text-gray-300' : 'text-gray-400'
-                            }`}
-                          >
-                            {step.water}
-                          </span>
-                        )}
-                      </span>
-                      <span 
-                        className={`text-xs font-roboto-mono ml-2 flex-shrink-0 ${
-                          isActive 
-                            ? 'text-gray-300 font-medium' 
-                            : 'text-gray-400'
-                        }`}
-                      >
-                        {formatTime(stepDuration)}
-                      </span>
-                    </div>
+                        style={{ width: `${stepProgress}%` }}
+                      />
+                    )}
                   </div>
                 </div>
               </div>
             );
           })}
-          
-          {/* Controls integrated into recipe section */}
-          <div className="flex gap-3 mt-3 pt-2 border-t border-gray-700">
-            <button 
-              className={`flex-1 font-semibold py-3 px-4 rounded-lg transition-colors duration-150 text-base flex items-center justify-center ${
-                timerActive && !timerPaused 
-                  ? 'bg-gray-800 hover:bg-gray-700 text-white' 
-                  : 'bg-white hover:bg-gray-100 text-black'
-              }`}
-              onClick={timerActive && !timerPaused ? handlePause : handleResume}
-              disabled={finished}
-            >
-              <span className="material-icons-outlined align-middle mr-1 text-lg">
-                {timerActive && !timerPaused ? 'pause' : 'play_arrow'}
-              </span>
-              {timerActive && !timerPaused ? 'Pause' : 'Start'}
-            </button>
-            <button 
-              className="flex-1 bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-150 text-base flex items-center justify-center"
-              onClick={handleReset}
-            >
-              <span className="material-icons-outlined align-middle mr-1 text-lg">replay</span>
-              Restart
-            </button>
-          </div>
         </div>
+
+        {/* Bottom Button */}
+        <footer className="mt-12 pb-6">
+          <button 
+            className="w-full py-4 text-xl font-medium text-white transition-colors duration-150 hover:text-gray-300"
+            onClick={timerActive && !timerPaused ? handlePause : handleResume}
+            disabled={finished}
+            style={{ fontFamily: 'Space Grotesk, sans-serif' }}
+          >
+            {timerActive && !timerPaused ? 'Pause' : 'Start'}
+          </button>
+        </footer>
       </div>
     </div>
   );
@@ -482,9 +488,42 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
         setElapsed(prev => {
           const newElapsed = prev + 0.1;
           
-          // Update current step
+          // Update current step and play chime on pour completion
           const newCurrentStep = stepEndTimes.findIndex(endTime => newElapsed < endTime);
-          setCurrentStep(newCurrentStep === -1 ? stepSequence.length - 1 : newCurrentStep);
+          const actualNewStep = newCurrentStep === -1 ? stepSequence.length - 1 : newCurrentStep;
+          
+          // Play chime when a pour step is completed (not when moving to next step)
+          if (actualNewStep !== currentStep) {
+            const completedStepIndex = actualNewStep - 1;
+            const completedStep = stepSequence[completedStepIndex];
+            
+            // Check if the completed step was a pour step
+            const isPourStep = completedStep && (
+              completedStep.label === 'Bloom' || 
+              completedStep.label === 'First Pour' || 
+              completedStep.label === 'Second Pour' || 
+              completedStep.label === 'Final Pour' ||
+              completedStep.label === 'Pour'
+            );
+            
+            if (isPourStep && completedStepIndex >= 0) {
+              // Play soft chime sound for pour completion
+              try {
+                const audio = new Audio(softChimeUrl);
+                audio.volume = 0.3;
+                audio.play().catch(() => {}); // Fail silently if audio can't play
+              } catch (error) {
+                // Fail silently
+              }
+              
+              // Trigger haptic feedback if available
+              if ('vibrate' in navigator) {
+                navigator.vibrate(100);
+              }
+            }
+          }
+          
+          setCurrentStep(actualNewStep);
           
           // Stop if finished
           if (newElapsed >= totalTime) {
@@ -508,7 +547,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
         intervalRef.current = null;
       }
     };
-  }, [isRunning, isFinished, totalTime, stepEndTimes.length, stepSequence.length]);
+  }, [isRunning, isFinished, totalTime, stepEndTimes.length, stepSequence.length, currentStep]);
 
   const handleStart = () => {
     // Reset and show timer
