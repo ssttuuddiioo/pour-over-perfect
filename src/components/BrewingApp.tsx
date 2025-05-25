@@ -13,6 +13,110 @@ const defaultRatioOptions = [15, 18];
 const chimeUrl = 'https://assets.mixkit.co/active_storage/sfx/2870/2870.wav';
 const softChimeUrl = 'https://cdn.pixabay.com/audio/2022/10/16/audio_12b6b9b6b2.mp3';
 
+function MeditativeColorField({ 
+  currentStep, 
+  stepProgress, 
+  isActive, 
+  stepLabel 
+}: { 
+  currentStep: number, 
+  stepProgress: number, 
+  isActive: boolean,
+  stepLabel: string 
+}) {
+  // Color palettes for different phases
+  const getPhaseColors = (label: string, progress: number) => {
+    const isPourPhase = label === 'Bloom' || label === 'Pour';
+    const isWaitPhase = label === 'Wait';
+    const isDrawdown = label === 'Drawdown';
+    
+    if (isPourPhase) {
+      // Warm, expanding colors for pouring phases
+      const intensity = Math.min(progress / 100, 1);
+      return {
+        primary: `hsl(${25 + currentStep * 15}, ${60 + intensity * 40}%, ${40 + intensity * 30}%)`,
+        secondary: `hsl(${35 + currentStep * 20}, ${70 + intensity * 30}%, ${50 + intensity * 20}%)`,
+        accent: `hsl(${45 + currentStep * 10}, ${80 + intensity * 20}%, ${60 + intensity * 15}%)`
+      };
+    } else if (isWaitPhase) {
+      // Cool, contracting colors for waiting phases
+      const drain = 1 - (progress / 100);
+      return {
+        primary: `hsl(${200 + currentStep * 10}, ${40 + drain * 20}%, ${25 + drain * 15}%)`,
+        secondary: `hsl(${220 + currentStep * 15}, ${50 + drain * 15}%, ${35 + drain * 10}%)`,
+        accent: `hsl(${240 + currentStep * 5}, ${60 + drain * 10}%, ${45 + drain * 5}%)`
+      };
+    } else if (isDrawdown) {
+      // Deep, settling colors for drawdown
+      const settling = progress / 100;
+      return {
+        primary: `hsl(${280 + settling * 20}, ${30 + settling * 20}%, ${20 + settling * 10}%)`,
+        secondary: `hsl(${260 + settling * 15}, ${40 + settling * 15}%, ${30 + settling * 8}%)`,
+        accent: `hsl(${300 + settling * 10}, ${50 + settling * 10}%, ${40 + settling * 5}%)`
+      };
+    }
+    
+    // Default neutral state
+    return {
+      primary: 'hsl(0, 0%, 15%)',
+      secondary: 'hsl(0, 0%, 20%)',
+      accent: 'hsl(0, 0%, 25%)'
+    };
+  };
+
+  const colors = getPhaseColors(stepLabel, stepProgress);
+  const isPourPhase = stepLabel === 'Bloom' || stepLabel === 'Pour';
+  const scale = isPourPhase ? 0.5 + (stepProgress / 100) * 0.5 : 1 - (stepProgress / 100) * 0.3;
+  const opacity = isActive ? 0.8 : 0.3;
+
+  return (
+    <div className="absolute inset-0 overflow-hidden" style={{ zIndex: -1 }}>
+      {/* Primary color field - largest, background */}
+      <div 
+        className="absolute inset-0 transition-all duration-[2000ms] ease-out"
+        style={{
+          background: `radial-gradient(ellipse at center, ${colors.primary} 0%, ${colors.secondary} 70%, transparent 100%)`,
+          opacity: opacity * 0.6,
+          transform: `scale(${scale * 1.2})`,
+        }}
+      />
+      
+      {/* Secondary color field - medium, offset */}
+      <div 
+        className="absolute inset-0 transition-all duration-[1500ms] ease-out"
+        style={{
+          background: `radial-gradient(circle at 30% 60%, ${colors.secondary} 0%, transparent 60%)`,
+          opacity: opacity * 0.8,
+          transform: `scale(${scale}) translate(${isPourPhase ? '0%' : '5%'}, ${isPourPhase ? '0%' : '10%'})`,
+        }}
+      />
+      
+      {/* Accent color field - smallest, dynamic position */}
+      <div 
+        className="absolute inset-0 transition-all duration-[1000ms] ease-out"
+        style={{
+          background: `radial-gradient(circle at 70% 40%, ${colors.accent} 0%, transparent 40%)`,
+          opacity: opacity,
+          transform: `scale(${scale * 0.8}) translate(${isPourPhase ? '0%' : '-10%'}, ${isPourPhase ? '0%' : '-5%'})`,
+        }}
+      />
+
+      {/* Subtle texture overlay for depth */}
+      <div 
+        className="absolute inset-0 transition-opacity duration-[3000ms]"
+        style={{
+          background: `
+            radial-gradient(circle at 20% 80%, rgba(255,255,255,0.02) 0%, transparent 30%),
+            radial-gradient(circle at 80% 20%, rgba(255,255,255,0.01) 0%, transparent 40%),
+            radial-gradient(circle at 40% 40%, rgba(0,0,0,0.05) 0%, transparent 20%)
+          `,
+          opacity: isActive ? 1 : 0.5,
+        }}
+      />
+    </div>
+  );
+}
+
 function InfoPage({ onBack }: { onBack: () => void }) {
   useEffect(() => {
     if (window.kofiWidgetOverlay) {
@@ -290,8 +394,16 @@ function BrewTimerPage({
   };
 
   return (
-    <div className="text-white min-h-screen flex flex-col" style={{ backgroundColor: '#000000', fontFamily: 'Space Grotesk, sans-serif' }}>
-      <div className="container mx-auto px-6 py-6 max-w-sm flex-1 flex flex-col">
+    <div className="text-white min-h-screen flex flex-col relative" style={{ backgroundColor: '#000000', fontFamily: 'Space Grotesk, sans-serif' }}>
+      {/* Meditative Color Field Visualization */}
+      <MeditativeColorField 
+        currentStep={fullCurrentStep}
+        stepProgress={currentStepProgress}
+        isActive={timerActive}
+        stepLabel={fullStepSequence[fullCurrentStep]?.label || ''}
+      />
+      
+      <div className="container mx-auto px-6 py-6 max-w-sm flex-1 flex flex-col relative z-10">
         {/* Header */}
         <header className="mb-8">
           <button 
