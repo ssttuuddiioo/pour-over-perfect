@@ -117,20 +117,24 @@ export const calculateBrewTiming = (
 
   // Calculate remaining time for other phases
   const totalPourDuration = firstPourDuration + secondPourDuration + thirdPourDuration;
-  const remainingTime = targetTime - totalPourDuration;
+  
+  // Fixed bloom duration - always around 30 seconds for proper extraction
+  const bloomDuration = 30;
+  
+  // Calculate remaining time for rest phases after subtracting bloom and pours
+  const remainingTime = targetTime - totalPourDuration - bloomDuration;
   
   // Adjusted phase splits for better balance
   const durations = {
-    // Shorter bloom for shorter total times
-    bloomDuration: Math.round(remainingTime * (targetTime < 180 ? 0.12 : 0.15)),
+    bloomDuration,
     firstPourDuration,
-    // Slightly longer first rest to ensure proper bloom
-    restDuration: Math.round(remainingTime * 0.22),
+    // Distribute remaining time among rest and drawdown phases
+    restDuration: Math.round(remainingTime * 0.25),
     secondPourDuration,
-    secondRestDuration: Math.round(remainingTime * 0.22),
+    secondRestDuration: Math.round(remainingTime * 0.25),
     thirdPourDuration,
     // Longer drawdown for better extraction
-    drawdownDuration: Math.round(remainingTime * 0.44)
+    drawdownDuration: Math.round(remainingTime * 0.50)
   };
   
   // Log timing calculations
@@ -151,8 +155,8 @@ export const calculateBrewTiming = (
     phaseSplits: {
       bloom: `${Math.round(durations.bloomDuration / targetTime * 100)}%`,
       pours: '35%',
-      rests: '44%',
-      drawdown: '44%'
+      rests: '50%',
+      drawdown: '50%'
     }
   });
   
