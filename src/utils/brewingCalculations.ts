@@ -49,9 +49,11 @@ const adjustPourDurationForAcidity = (
 const calculatePulseCount = (
   fruitinessLevel: number = 50 // Default to middle value
 ): number => {
-  // At fruitiness 0: minimum 1 pulse
+  // At fruitiness 0: minimum 2 pulses
+  // At fruitiness 50: 3 pulses (default)
   // At fruitiness 100: maximum 3 pulses
-  return Math.max(1, Math.min(3, Math.ceil(1 + fruitinessLevel / 50)));
+  if (fruitinessLevel <= 25) return 2;
+  return 3; // Default to 3 pours for most cases
 };
 
 export const calculateBrewTiming = (
@@ -69,6 +71,7 @@ export const calculateBrewTiming = (
   
   // Determine number of pulses based on fruitiness (default behavior is 3 pours)
   const pulseCount = calculatePulseCount(fruitinessLevel);
+
   
   // FIXED: Properly distribute remaining water across actual number of pours
   let firstPourTarget, secondPourTarget, thirdPourTarget;
@@ -86,13 +89,19 @@ export const calculateBrewTiming = (
     thirdPourTarget = totalWater;
   } else {
     // Three pours after bloom (default)
-    const pourVolume = Math.round(remainingWater / 3);
-    firstPourTarget = bloomWater + pourVolume;
-    secondPourTarget = firstPourTarget + pourVolume;
-    thirdPourTarget = totalWater; // Ensure we reach exact total
+    // Distribute remaining water more evenly across the three pours
+    const firstPourVolume = Math.round(remainingWater * 0.4); // 40% of remaining water
+    const secondPourVolume = Math.round(remainingWater * 0.35); // 35% of remaining water
+    const thirdPourVolume = remainingWater - firstPourVolume - secondPourVolume; // Remainder
+    
+    firstPourTarget = bloomWater + firstPourVolume;
+    secondPourTarget = firstPourTarget + secondPourVolume;
+    thirdPourTarget = secondPourTarget + thirdPourVolume; // This should equal totalWater
+    
+
   }
   
-  // Calculate pour volume for display purposes
+  // Calculate pour volume for display purposes (average per pour)
   const pourVolume = Math.round(remainingWater / pulseCount);
 
   // Calculate brew time (affected by grind size)
@@ -153,42 +162,7 @@ export const calculateBrewTiming = (
     drawdownDuration: Math.round(remainingTime * 0.50)
   };
   
-  // FIXED: Add debug logging to verify calculations
-  console.log('Brew Time Calculation:', {
-    baseTime,
-    doseAdjustment,
-    ratioAdjustment,
-    grindAdjustment,
-    totalTime: targetTime,
-    coffeeAmount,
-    waterRatio,
-    totalWater, // Now properly rounded to 1 decimal place
-    bloomWater,
-    remainingWater,
-    grindSize,
-    bloomRatio,
-    acidityLevel,
-    fruitinessLevel,
-    pulseCount,
-    pourTargets: {
-      first: firstPourTarget,
-      second: secondPourTarget,
-      third: thirdPourTarget
-    },
-    pourRate: `${pourRate.toFixed(1)}g/s`,
-    phaseSplits: {
-      bloom: `${Math.round(durations.bloomDuration / targetTime * 100)}%`,
-      pours: '35%',
-      rests: '50%',
-      drawdown: '50%'
-    }
-  });
-  
-  // Log phase durations
-  console.log('Phase Durations:', {
-    totalTime: targetTime,
-    ...durations
-  });
+
 
   return {
     ...durations,
@@ -207,3 +181,4 @@ export const formatTime = (seconds: number): string => {
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
+
