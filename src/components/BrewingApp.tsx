@@ -160,18 +160,71 @@ function InfoPage({ onBack }: { onBack: () => void }) {
   );
 }
 
+function CompletionPrompt({ 
+  onLogExperience, 
+  onSkip 
+}: { 
+  onLogExperience: () => void, 
+  onSkip: () => void 
+}) {
+  return (
+    <div className="antialiased h-screen flex items-center justify-center" style={{ backgroundColor: '#000000', color: '#FFFFFF' }}>
+      <div className="w-full max-w-md mx-auto text-center space-y-6" style={{ padding: '2rem' }}>
+        <div className="space-y-4">
+          <div className="text-6xl">☕</div>
+          <h1 className="text-3xl font-bold text-white">Brew Complete!</h1>
+          <p className="text-lg text-gray-400">
+            How was your pour-over? Would you like to log this brewing experience?
+          </p>
+        </div>
+        
+        <div className="space-y-3">
+          <button 
+            className="btn-primary w-full" 
+            onClick={onLogExperience}
+          >
+            Log This Brew
+          </button>
+          <button 
+            className="btn-secondary w-full" 
+            onClick={onSkip}
+          >
+            Skip for Now
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SettingsPage({
   onBack,
   settingsDraft,
   setSettingsDraft,
   handleSettingsSave,
-  closeSettings
+  closeSettings,
+  isBrewLog = false,
+  brewingSettings,
+  currentCoffeeSettings,
+  currentGrindSize
 }: {
   onBack: () => void,
   settingsDraft: any,
   setSettingsDraft: any,
   handleSettingsSave: (e: React.FormEvent) => void,
-  closeSettings: () => void
+  closeSettings: () => void,
+  isBrewLog?: boolean,
+  brewingSettings?: {
+    grindSize: number,
+    coffeeAmount: number,
+    waterRatio: number,
+    totalWater: number
+  },
+  currentCoffeeSettings?: {
+    amount: number,
+    ratio: number
+  },
+  currentGrindSize?: number
 }) {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -206,18 +259,93 @@ function SettingsPage({
       <div className="h-full flex flex-col" style={{ padding: '2rem 4rem' }}>
         {/* Header - matching home page */}
         <header className="flex justify-between items-center mb-4">
-          <h1 className="text-3xl font-bold text-white">Coffee Details</h1>
+          <h1 className="text-3xl font-bold text-white">
+            {isBrewLog ? 'Log Your Brew' : 'Coffee Details'}
+          </h1>
           <button onClick={onBack} className="btn-secondary-outline">Back</button>
         </header>
 
         <form onSubmit={handleSettingsSave} className="flex-1 flex flex-col">
-          {/* Main Content - Coffee Details Only */}
+          {/* Main Content */}
           <main className="flex-1 space-y-6 overflow-y-auto">
+            {/* Current Brewing Settings - Show for both regular details and brew log */}
+            {(currentCoffeeSettings || brewingSettings) && (
+              <div>
+                <h2 className="text-lg font-semibold text-white mb-3">
+                  {isBrewLog ? 'Brewing Summary' : 'Current Settings'}
+                </h2>
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-400">Coffee:</span>
+                      <span className="text-white ml-2">
+                        {isBrewLog ? brewingSettings?.coffeeAmount : currentCoffeeSettings?.amount}g
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Ratio:</span>
+                      <span className="text-white ml-2">
+                        1:{isBrewLog ? brewingSettings?.waterRatio : currentCoffeeSettings?.ratio}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-gray-400">Grind:</span>
+                      <span className="text-white ml-2">
+                        {(() => {
+                          const grind = isBrewLog ? brewingSettings?.grindSize : currentGrindSize;
+                          return grind === 3 ? 'Fine' : 
+                                 grind === 6 ? 'Medium' :
+                                 grind === 7 ? 'Medium-coarse' : 'Coarse';
+                        })()}
+                      </span>
+                    </div>
+                    {isBrewLog && brewingSettings && (
+                      <div>
+                        <span className="text-gray-400">Total Water:</span>
+                        <span className="text-white ml-2">{brewingSettings.totalWater}g</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Brewing Notes Section - Show for both regular details and brew log */}
+            <div>
+              <label className="block text-lg font-semibold text-white mb-3">
+                {isBrewLog ? 'How was your brew?' : 'Brewing Notes'}
+              </label>
+              <p className="text-sm text-gray-400 mb-3">
+                {isBrewLog 
+                  ? 'Share your thoughts on taste, aroma, body, acidity, or what you\'d change next time...'
+                  : 'Keep track of your brewing experiments, taste notes, and what works best with this coffee.'
+                }
+              </p>
+              <textarea
+                value={isBrewLog ? (settingsDraft.brewNotes || '') : (settingsDraft.generalNotes || '')}
+                onChange={(e) => setSettingsDraft((d: any) => ({ 
+                  ...d, 
+                  [isBrewLog ? 'brewNotes' : 'generalNotes']: e.target.value 
+                }))}
+                placeholder={isBrewLog 
+                  ? "How did it taste? What would you change next time?"
+                  : "Record your brewing experiments, taste preferences, grind adjustments, etc."
+                }
+                className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 resize-none"
+                rows={4}
+              />
+            </div>
+
             {/* Coffee Details Section */}
             <div>
-              <p className="text-sm text-gray-400 mb-6">
-                Track details about your current coffee beans. This information helps you remember what works best for different origins and roasts.
-              </p>
+              <h2 className="text-lg font-semibold text-white mb-3">
+                {isBrewLog ? 'Coffee Used' : 'Coffee Details'}
+              </h2>
+              {isBrewLog && (
+                <p className="text-sm text-gray-400 mb-6">
+                  Tell us about the coffee you just brewed with.
+                </p>
+              )}
               
               {/* Coffee Image */}
               <div className="mb-6">
@@ -361,10 +489,10 @@ function SettingsPage({
                     className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
                     placeholder="e.g. 1,200m or 4,000ft"
                   />
-                </div>
-              </div>
+                              </div>
             </div>
-          </main>
+          </div>
+        </main>
 
           {/* Footer - matching home page */}
           <footer className="mt-6 space-y-3">
@@ -372,7 +500,7 @@ function SettingsPage({
               type="submit"
               className="btn-primary w-full"
             >
-              Save Coffee Details
+              {isBrewLog ? 'Save Brew Log' : 'Save Coffee Details'}
             </button>
             <button
               type="button"
@@ -487,127 +615,219 @@ function BrewTimerPage({
         stepLabel={fullStepSequence[fullCurrentStep]?.label || ''}
       />
       
-      {/* OPTIMIZED: Removed padding, max width, adjusted spacing for 2556x1179 */}
+      {/* New clean interface design */}
       <div className="w-full h-screen flex flex-col relative z-10" style={{ padding: '2rem 4rem' }}>
-        {/* Header - Reduced margin */}
-        <header className="mb-4">
-          <button 
-            onClick={onBack} 
-            className="text-gray-400 hover:text-white text-lg font-medium"
-            aria-label="Back"
-            style={{ fontFamily: 'Space Grotesk, sans-serif' }}
-          >
-            Back
-          </button>
-        </header>
-
-        {/* Large Timer Display - Reduced margin */}
-        <div className="text-center mb-6">
-          <div className="text-5xl font-medium text-white font-roboto-mono tracking-tight">
-            {formatTime(Math.ceil(timeRemaining))}
+        {/* Top info bar */}
+        <div className="grid grid-cols-3 gap-8 mb-8">
+          <div className="text-center">
+            <div className="text-sm text-gray-400 mb-1">Total time</div>
+            <div className="text-3xl font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+              {formatTime(totalTime)}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm text-gray-400 mb-1">Time left</div>
+            <div className="text-3xl font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+              {formatTime(Math.ceil(timeRemaining))}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm text-gray-400 mb-1">Current step</div>
+            <div className="text-3xl font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+              {(() => {
+                const currentStepStartTime = fullCurrentStep === 0 ? 0 : fullStepEndTimes[fullCurrentStep - 1];
+                const currentStepEndTime = fullStepEndTimes[fullCurrentStep] || totalTime;
+                const currentStepDuration = currentStepEndTime - currentStepStartTime;
+                const currentStepElapsed = Math.max(0, elapsed - currentStepStartTime);
+                const currentStepRemaining = Math.max(0, currentStepDuration - currentStepElapsed);
+                return formatTimeSimple(Math.ceil(currentStepRemaining));
+              })()}
+            </div>
           </div>
         </div>
 
-        {/* Vertical Step List - Optimized for landscape display */}
-        <div className="flex-1 space-y-2 overflow-y-auto">
+        {/* Step list */}
+        <div className="flex-1 space-y-6 overflow-y-auto">
           {fullStepSequence.slice(0, -1).map((step: any, index: number) => {
             const isActive = index === fullCurrentStep;
             const isCompleted = elapsed >= (fullStepEndTimes[index] || 0);
-            const isFuture = index > fullCurrentStep;
             
             const stepStart = index === 0 ? 0 : fullStepEndTimes[index - 1];
             const stepEnd = fullStepEndTimes[index] || 0;
             const stepDuration = Math.max(0, stepEnd - stepStart);
             const stepElapsed = Math.max(0, elapsed - stepStart);
-            const stepRemaining = Math.max(0, stepDuration - stepElapsed);
             const stepProgress = stepDuration > 0 ? Math.min((stepElapsed / stepDuration) * 100, 100) : 0;
-
-            // Determine opacity based on state
-            let opacity = 'opacity-40'; // Future steps
-            if (isCompleted) opacity = 'opacity-60'; // Past steps
-            if (isActive) opacity = 'opacity-100'; // Current step
 
             const targetWeight = extractTargetWeight(step.water);
 
             return (
-              <div key={index} className={`${opacity} transition-opacity duration-300`}>
-                {/* 3-Column Grid Layout - Reduced padding */}
-                <div className="grid grid-cols-3 text-center items-center py-2 relative">
-                  {/* Left: Step name */}
-                  <div className="text-left">
-                    <span className="text-xl font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+              <div key={index} className="relative">
+                {/* Step content */}
+                <div className="flex justify-between items-center py-3">
+                  <div className="flex-1">
+                    <span className={`text-2xl font-medium ${isActive ? 'text-white' : isCompleted ? 'text-gray-400' : 'text-gray-600'}`} 
+                          style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                       {step.label}
                     </span>
                   </div>
-
-                  {/* Center: Target weight */}
-                  <div>
-                    <span className="text-xl font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                      {targetWeight}
-                    </span>
-                  </div>
-
-                  {/* Right: Time - Show step countdown for active step, full duration for others */}
                   <div className="text-right">
-                    <span className="text-xl font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                      {isActive && timerActive && !isCompleted ? 
-                        formatTimeSimple(Math.ceil(stepRemaining)) : 
-                        formatTimeSimple(stepDuration)
-                      }
+                    <span className={`text-2xl font-medium ${isActive ? 'text-white' : isCompleted ? 'text-gray-400' : 'text-gray-600'}`} 
+                          style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                      {targetWeight || formatTimeSimple(stepDuration)}
                     </span>
                   </div>
+                </div>
 
-                  {/* Progress Line - Custom dotted styling */}
-                  <div className="absolute bottom-0 left-0 w-full h-px">
-                    {/* Base line - custom dotted for incomplete/current, solid for completed */}
-                    {isCompleted ? (
-                      <div className="w-full h-px bg-white" />
-                    ) : (
-                      <div 
-                        className="w-full h-px"
-                        style={{
-                          backgroundImage: `radial-gradient(circle, #9CA3AF 1px, transparent 1px)`,
-                          backgroundSize: '8px 1px',
-                          backgroundRepeat: 'repeat-x'
-                        }}
-                      />
-                    )}
-                    
-                    {/* Progress overlay for current step only */}
-                    {isActive && !isCompleted && (
-                      <div 
-                        className={`absolute top-0 h-px bg-white transition-all duration-100 ease-out ${
-                          step.label === 'Wait' || step.label === 'Drawdown' 
-                            ? 'right-0' 
-                            : 'left-0'
-                        }`}
-                        style={{ width: `${stepProgress}%` }}
-                      />
-                    )}
-                  </div>
+                {/* Progress line */}
+                <div className="absolute bottom-0 left-0 w-full h-px">
+                  {/* Base line */}
+                  <div 
+                    className="w-full h-px"
+                    style={{
+                      backgroundImage: isCompleted 
+                        ? 'none'
+                        : `radial-gradient(circle, #4B5563 1px, transparent 1px)`,
+                      backgroundColor: isCompleted ? '#ffffff' : 'transparent',
+                      backgroundSize: '8px 1px',
+                      backgroundRepeat: 'repeat-x'
+                    }}
+                  />
+                  
+                  {/* Progress overlay for current step */}
+                  {isActive && !isCompleted && (
+                    <div 
+                      className="absolute top-0 h-px bg-white transition-all duration-100 ease-out"
+                      style={{ 
+                        width: `${stepProgress}%`,
+                        transformOrigin: step.label === 'Wait' || step.label === 'Drawdown' ? 'right' : 'left'
+                      }}
+                    />
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Bottom Button - Reduced margin */}
-        <footer className="mt-6 pb-4">
-          <button 
-            className="w-full py-4 text-xl font-medium text-white transition-colors duration-150 hover:text-gray-300"
-            onClick={timerActive && !timerPaused ? handlePause : handleResume}
-            disabled={finished}
-            style={{ fontFamily: 'Space Grotesk, sans-serif' }}
-          >
-            {timerActive && !timerPaused ? 'Pause' : 'Start'}
-          </button>
+        {/* Bottom Buttons - Back and Start/Pause */}
+        <footer className="mt-4 pb-4">
+          <div className="flex items-center justify-center space-x-4 text-xl font-medium" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+            <button 
+              onClick={onBack} 
+              className="text-gray-400 hover:text-white transition-colors duration-150"
+              aria-label="Back"
+            >
+              Back
+            </button>
+            <span className="text-gray-600">•</span>
+            <button 
+              className="text-white hover:text-gray-300 transition-colors duration-150"
+              onClick={timerActive && !timerPaused ? handlePause : handleResume}
+              disabled={finished}
+            >
+              {timerActive && !timerPaused ? 'Pause' : 'Start'}
+            </button>
+          </div>
         </footer>
       </div>
     </div>
   );
 }
 
-// FrenchPressTimerPage component removed
+function HistoryPage({ onBack }: { onBack: () => void }) {
+  const [brewLogs, setBrewLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    const logs = JSON.parse(localStorage.getItem('brewLogs') || '[]');
+    setBrewLogs(logs);
+  }, []);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  return (
+    <div className="antialiased h-screen" style={{ backgroundColor: '#000000', color: '#FFFFFF' }}>
+      <div className="h-full flex flex-col" style={{ padding: '1.5rem 0.8rem 0.4rem 0.8rem' }}>
+        {/* Header */}
+        <header className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Brew History</h1>
+            <p className="text-sm text-gray-400 mt-2">Your archived brewing experiences</p>
+          </div>
+          <button onClick={onBack} className="btn-secondary-outline">Back</button>
+        </header>
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto">
+          {brewLogs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
+              <div className="text-6xl opacity-50">📚</div>
+              <h2 className="text-xl font-semibold text-gray-400">No brew logs yet</h2>
+              <p className="text-gray-500">Complete a brew and log your experience to see it here!</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {brewLogs.map((log, index) => (
+                <div key={index} className="bg-gray-800 rounded-lg p-4 flex items-center space-x-4">
+                  {/* Coffee Image */}
+                  <div className="flex-shrink-0">
+                    {log.coffeeDetails?.image ? (
+                      <img 
+                        src={log.coffeeDetails.image} 
+                        alt={log.coffeeDetails.name || 'Coffee'} 
+                        className="w-16 h-16 object-cover rounded-lg"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-700 rounded-lg flex items-center justify-center">
+                        <span className="text-2xl">☕</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Coffee Info */}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-semibold text-white truncate">
+                      {log.coffeeDetails?.name || 'Unnamed Coffee'}
+                    </h3>
+                    <p className="text-sm text-gray-400">
+                      {log.coffeeDetails?.roaster && `${log.coffeeDetails.roaster} • `}
+                      {formatDate(log.createdAt)}
+                    </p>
+                    <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                      <span>{log.brewingSettings?.coffeeAmount}g</span>
+                      <span>1:{log.brewingSettings?.waterRatio}</span>
+                      <span>{log.brewingSettings?.totalWater}g water</span>
+                    </div>
+                    {log.brewNotes && (
+                      <p className="text-sm text-gray-300 mt-2 line-clamp-2">
+                        {log.brewNotes}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Date Badge */}
+                  <div className="flex-shrink-0 text-right">
+                    <div className="text-xs text-gray-500">
+                      {new Date(log.createdAt).toLocaleDateString('en-US', { 
+                        weekday: 'short'
+                      })}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+}
 
 const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => {
   const [grindSize, setGrindSize] = useState<number>(6);
@@ -633,8 +853,27 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   const [showInfo, setShowInfo] = useState(false);
   const [showProPours, setShowProPours] = useState(false);
   const [showBrewTimer, setShowBrewTimer] = useState(false);
+  const [showCompletionPrompt, setShowCompletionPrompt] = useState(false);
+  const [showBrewLog, setShowBrewLog] = useState(false);
 
-  const [settingsDraft, setSettingsDraft] = useState({
+  const [settingsDraft, setSettingsDraft] = useState<{
+    amount: number;
+    ratio: number;
+    coffeeOptions: number[];
+    ratioOptions: number[];
+    brewNotes?: string;
+    generalNotes?: string;
+    coffeeDetails?: {
+      name: string;
+      roaster: string;
+      roastDate: string;
+      origin: string;
+      variety: string;
+      process: string;
+      elevation: string;
+      image: string;
+    };
+  }>({
     amount: coffeeSettings.amount,
     ratio: coffeeSettings.ratio,
     coffeeOptions: [...coffeeOptions],
@@ -656,6 +895,8 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     50, // Default acidity for calculation (no EQ)
     50  // Default fruitiness for calculation (no EQ)
   );
+
+
 
   // Calculate step sequence
   const stepSequence = [
@@ -725,6 +966,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
           // Stop if finished
           if (newElapsed >= totalTime) {
             setIsRunning(false);
+            setShowCompletionPrompt(true);
             return totalTime;
           }
           
@@ -769,6 +1011,34 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   };
 
   const handleBack = () => {
+    setShowBrewTimer(false);
+    setShowCompletionPrompt(false);
+    setShowBrewLog(false);
+    handleTimerReset();
+  };
+
+  const handleLogExperience = () => {
+    setShowCompletionPrompt(false);
+    setShowBrewLog(true);
+    // Prepare settings draft for brew logging
+    setSettingsDraft({
+      ...settingsDraft,
+      brewNotes: '',
+      coffeeDetails: {
+        name: localStorage.getItem('coffeeDetails_name') || '',
+        roaster: localStorage.getItem('coffeeDetails_roaster') || '',
+        roastDate: localStorage.getItem('coffeeDetails_roastDate') || '',
+        origin: localStorage.getItem('coffeeDetails_origin') || '',
+        variety: localStorage.getItem('coffeeDetails_variety') || '',
+        process: localStorage.getItem('coffeeDetails_process') || '',
+        elevation: localStorage.getItem('coffeeDetails_elevation') || '',
+        image: localStorage.getItem('coffeeDetails_image') || ''
+      }
+    });
+  };
+
+  const handleSkipLog = () => {
+    setShowCompletionPrompt(false);
     setShowBrewTimer(false);
     handleTimerReset();
   };
@@ -842,7 +1112,8 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
 
   const openSettings = () => {
     setSettingsDraft({
-      // Coffee details only
+      ...settingsDraft,
+      // Coffee details and general notes
       coffeeDetails: {
         name: localStorage.getItem('coffeeDetails_name') || '',
         roaster: localStorage.getItem('coffeeDetails_roaster') || '',
@@ -852,7 +1123,8 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
         process: localStorage.getItem('coffeeDetails_process') || '',
         elevation: localStorage.getItem('coffeeDetails_elevation') || '',
         image: localStorage.getItem('coffeeDetails_image') || ''
-      }
+      },
+      generalNotes: localStorage.getItem('generalNotes') || ''
     });
     setShowSettings(true);
   };
@@ -864,15 +1136,52 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   const handleSettingsSave = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Save coffee details only
-    if (settingsDraft.coffeeDetails) {
-      Object.entries(settingsDraft.coffeeDetails).forEach(([key, value]) => {
-        localStorage.setItem(`coffeeDetails_${key}`, value);
-      });
+    if (showBrewLog) {
+      // Save brew log
+      const brewLog = {
+        brewingSettings: {
+          grindSize,
+          coffeeAmount: coffeeSettings.amount,
+          waterRatio: coffeeSettings.ratio,
+          totalWater: brewingTimings.thirdPourTarget
+        },
+        brewNotes: settingsDraft.brewNotes || '',
+        coffeeDetails: settingsDraft.coffeeDetails || {},
+        createdAt: new Date()
+      };
+      
+      // Save to localStorage for now (we'll update the database service later)
+      const existingLogs = JSON.parse(localStorage.getItem('brewLogs') || '[]');
+      existingLogs.unshift(brewLog);
+      localStorage.setItem('brewLogs', JSON.stringify(existingLogs));
+      
+      // Also save coffee details to regular storage
+      if (settingsDraft.coffeeDetails) {
+        Object.entries(settingsDraft.coffeeDetails).forEach(([key, value]) => {
+          localStorage.setItem(`coffeeDetails_${key}`, value as string);
+        });
+      }
+      
+      // Close brew log and return to home
+      setShowBrewLog(false);
+      setShowBrewTimer(false);
+      handleTimerReset();
+    } else {
+      // Save coffee details and general notes (regular settings)
+      if (settingsDraft.coffeeDetails) {
+        Object.entries(settingsDraft.coffeeDetails).forEach(([key, value]) => {
+          localStorage.setItem(`coffeeDetails_${key}`, value as string);
+        });
+      }
+      
+      // Save general notes
+      if (settingsDraft.generalNotes !== undefined) {
+        localStorage.setItem('generalNotes', settingsDraft.generalNotes);
+      }
+      
+      // Close settings
+      setShowSettings(false);
     }
-    
-    // Close settings
-    setShowSettings(false);
   };
 
   useEffect(() => {
@@ -905,34 +1214,41 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     return <InfoPage onBack={() => setShowInfo(false)} />;
   }
 
-  if (showSettings) {
-    return <SettingsPage onBack={closeSettings} settingsDraft={settingsDraft} setSettingsDraft={setSettingsDraft} handleSettingsSave={handleSettingsSave} closeSettings={closeSettings} />;
+  if (showCompletionPrompt) {
+    return (
+      <CompletionPrompt 
+        onLogExperience={handleLogExperience}
+        onSkip={handleSkipLog}
+      />
+    );
+  }
+
+  if (showSettings || showBrewLog) {
+    return (
+      <SettingsPage 
+        onBack={showBrewLog ? handleBack : closeSettings} 
+        settingsDraft={settingsDraft} 
+        setSettingsDraft={setSettingsDraft} 
+        handleSettingsSave={handleSettingsSave} 
+        closeSettings={closeSettings}
+        isBrewLog={showBrewLog}
+        brewingSettings={showBrewLog ? {
+          grindSize,
+          coffeeAmount: coffeeSettings.amount,
+          waterRatio: coffeeSettings.ratio,
+          totalWater: brewingTimings.thirdPourTarget
+        } : undefined}
+        currentCoffeeSettings={!showBrewLog ? {
+          amount: coffeeSettings.amount,
+          ratio: coffeeSettings.ratio
+        } : undefined}
+        currentGrindSize={!showBrewLog ? grindSize : undefined}
+      />
+    );
   }
 
   if (showNotes) {
-    return (
-      <div className="w-full max-w-sm">
-        <div className="card">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Brewing Notes</h2>
-            <button 
-              onClick={() => setShowNotes(false)}
-              className="btn btn-secondary"
-            >
-              Back
-            </button>
-          </div>
-          <Notes 
-            brewingSettings={{
-            grindSize,
-            coffeeAmount: coffeeSettings.amount,
-            waterRatio: coffeeSettings.ratio,
-            totalWater: brewingTimings.thirdPourTarget 
-            }}
-          />
-        </div>
-      </div>
-    );
+    return <HistoryPage onBack={() => setShowNotes(false)} />;
   }
 
   if (showProPours) {
@@ -976,138 +1292,126 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   return (
     <div className="antialiased h-screen" style={{ backgroundColor: '#000000', color: '#FFFFFF' }}>
       {/* REMOVED: container mx-auto px-4 py-4 max-w-md - now full width/height */}
-      <div className="h-full flex flex-col" style={{ padding: '2rem 4rem' }}>
+      <div className="h-full flex flex-col" style={{ padding: '1.5rem 0.8rem 0.4rem 0.8rem' }}>
         {/* Header - Reduced margin */}
-        <header className="flex justify-between items-center mb-4">
-          <h1 className="text-3xl font-bold text-white">Pour Perfect</h1>
-          <div className="flex space-x-2">
-            <button 
-              onClick={() => setShowNotes(true)}
-              className="btn-secondary-outline flex items-center"
-              aria-label="Notes"
-            >
-              Notes
-            </button>
-            <button
-              onClick={openSettings}
-              className="btn-secondary-outline p-2"
-              type="button"
-              aria-label="Edit"
-            >
-              <span className="material-icons-outlined">edit</span>
-            </button>
+        <header className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-white">Pour Perfect</h1>
           </div>
         </header>
 
         {/* Main Content - Optimized spacing */}
-        <main className="flex-1 space-y-4">
-          {/* Coffee Section - Now Editable */}
-          <div>
-            <h2 className="text-sm font-medium text-gray-400 mb-2">Coffee</h2>
-            <div className="relative">
-              <div className="selected-card flex items-center">
-                <button
-                  type="button"
-                  className="absolute left-2 text-gray-400 hover:text-white z-10 text-lg"
-                  onClick={() => incrementCoffee(-0.1)}
-                >
-                  &minus;
-                </button>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={coffeeSettings.amount}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    // Allow any input while typing, validate on blur
-                    if (value === '' || !isNaN(parseFloat(value))) {
-                      const tempSettings = { ...coffeeSettings, amount: value === '' ? 0 : parseFloat(value) || coffeeSettings.amount };
-                      setCoffeeSettings(tempSettings);
-                    }
-                  }}
-                  onBlur={(e) => {
-                    const numValue = parseFloat(e.target.value);
-                    if (isNaN(numValue) || numValue <= 0) {
-                      // Reset to previous valid value if invalid
-                      setCoffeeSettings({ ...coffeeSettings });
-                    } else {
-                      handleCoffeeInputChange(e.target.value);
-                    }
-                  }}
-                  onFocus={(e) => e.target.select()}
-                  className="w-full bg-transparent text-center text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded no-spinners"
-                  style={{ 
-                    padding: '0.75rem 3rem',
-                  }}
-                />
-                <button
-                  type="button"
-                  className="absolute right-2 text-gray-400 hover:text-white z-10 text-lg"
-                  onClick={() => incrementCoffee(0.1)}
-                >
-                  +
-                </button>
-                <span className="absolute right-8 text-gray-400 text-sm pointer-events-none">g</span>
+        <main className="flex-1 space-y-6">
+          {/* Coffee and Ratio Section - Side by Side */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Coffee Section - Now Editable */}
+            <div>
+              <h2 className="text-sm font-medium text-gray-400 mb-3">Coffee</h2>
+              <div className="relative">
+                <div className="selected-card flex items-center">
+                  <button
+                    type="button"
+                    className="absolute left-2 text-gray-400 hover:text-white z-10 text-lg"
+                    onClick={() => incrementCoffee(-0.1)}
+                  >
+                    &minus;
+                  </button>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={coffeeSettings.amount}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Allow any input while typing, validate on blur
+                      if (value === '' || !isNaN(parseFloat(value))) {
+                        const tempSettings = { ...coffeeSettings, amount: value === '' ? 0 : parseFloat(value) || coffeeSettings.amount };
+                        setCoffeeSettings(tempSettings);
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const numValue = parseFloat(e.target.value);
+                      if (isNaN(numValue) || numValue <= 0) {
+                        // Reset to previous valid value if invalid
+                        setCoffeeSettings({ ...coffeeSettings });
+                      } else {
+                        handleCoffeeInputChange(e.target.value);
+                      }
+                    }}
+                    onFocus={(e) => e.target.select()}
+                    className="w-full bg-transparent text-center text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded no-spinners"
+                    style={{ 
+                      padding: '0.75rem 3rem',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-2 text-gray-400 hover:text-white z-10 text-lg"
+                    onClick={() => incrementCoffee(0.1)}
+                  >
+                    +
+                  </button>
+                  <span className="absolute right-8 text-gray-400 text-sm pointer-events-none">g</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Ratio Section - Now Editable */}
-          <div>
-            <h2 className="text-sm font-medium text-gray-400 mb-2">Ratio</h2>
-            <div className="relative">
-              <div className="selected-card flex items-center">
-                <button
-                  type="button"
-                  className="absolute left-2 text-gray-400 hover:text-white z-10 text-lg"
-                  onClick={() => incrementRatio(-0.1)}
-                >
-                  &minus;
-                </button>
-                <span className="absolute left-8 text-gray-400 text-sm pointer-events-none z-5">1:</span>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={coffeeSettings.ratio}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    // Allow any input while typing, validate on blur
-                    if (value === '' || !isNaN(parseFloat(value))) {
-                      const tempSettings = { ...coffeeSettings, ratio: value === '' ? 0 : parseFloat(value) || coffeeSettings.ratio };
-                      setCoffeeSettings(tempSettings);
-                    }
-                  }}
-                  onBlur={(e) => {
-                    const numValue = parseFloat(e.target.value);
-                    if (isNaN(numValue) || numValue <= 0) {
-                      // Reset to previous valid value if invalid
-                      setCoffeeSettings({ ...coffeeSettings });
-                    } else {
-                      handleRatioInputChange(e.target.value);
-                    }
-                  }}
-                  onFocus={(e) => e.target.select()}
-                  className="w-full bg-transparent text-center text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded no-spinners"
-                  style={{ 
-                    padding: '0.75rem 3rem',
-                    paddingLeft: '4rem',
-                  }}
-                />
-                <button
-                  type="button"
-                  className="absolute right-2 text-gray-400 hover:text-white z-10 text-lg"
-                  onClick={() => incrementRatio(0.1)}
-                >
-                  +
-                </button>
+            {/* Ratio Section - Now Editable */}
+            <div>
+              <h2 className="text-sm font-medium text-gray-400 mb-3">Ratio</h2>
+              <div className="relative">
+                <div className="selected-card flex items-center">
+                  <button
+                    type="button"
+                    className="absolute left-2 text-gray-400 hover:text-white z-10 text-lg"
+                    onClick={() => incrementRatio(-0.1)}
+                  >
+                    &minus;
+                  </button>
+                  <span className="absolute left-8 text-gray-400 text-sm pointer-events-none z-5">1:</span>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={coffeeSettings.ratio}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Allow any input while typing, validate on blur
+                      if (value === '' || !isNaN(parseFloat(value))) {
+                        const tempSettings = { ...coffeeSettings, ratio: value === '' ? 0 : parseFloat(value) || coffeeSettings.ratio };
+                        setCoffeeSettings(tempSettings);
+                      }
+                    }}
+                    onBlur={(e) => {
+                      const numValue = parseFloat(e.target.value);
+                      if (isNaN(numValue) || numValue <= 0) {
+                        // Reset to previous valid value if invalid
+                        setCoffeeSettings({ ...coffeeSettings });
+                      } else {
+                        handleRatioInputChange(e.target.value);
+                      }
+                    }}
+                    onFocus={(e) => e.target.select()}
+                    className="w-full bg-transparent text-center text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded no-spinners"
+                    style={{ 
+                      padding: '0.75rem 3rem',
+                      paddingLeft: '4rem',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-2 text-gray-400 hover:text-white z-10 text-lg"
+                    onClick={() => incrementRatio(0.1)}
+                  >
+                    +
+                  </button>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Grind Section */}
           <div>
-            <h2 className="text-sm font-medium text-gray-400 mb-2">Grind</h2>
-            <div className="grid grid-cols-4 gap-2">
+            <h2 className="text-sm font-medium text-gray-400 mb-3">Grind</h2>
+            <div className="grid grid-cols-4 gap-3">
               {['Fine', 'Medium', 'Medium-coarse', 'Coarse'].map((label, idx) => {
                 const grindMap = [3, 6, 7, 9];
                 return (
@@ -1126,9 +1430,9 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
           </div>
 
           {/* Brew Time and Total Water */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <h3 className="text-xs font-medium text-gray-400 mb-1 text-center">Brew Time</h3>
+              <h3 className="text-xs font-medium text-gray-400 mb-2 text-center">Brew Time</h3>
               <div className="input-display">
                 <p className="text-xl font-semibold text-white">
                   {formatTime(brewingTimings.totalTime)}
@@ -1139,7 +1443,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
               </div>
             </div>
             <div>
-              <h3 className="text-xs font-medium text-gray-400 mb-1 text-center">Total Water</h3>
+              <h3 className="text-xs font-medium text-gray-400 mb-2 text-center">Total Water</h3>
               <div className="input-display">
                 <p className="text-xl font-semibold text-white">
                   {brewingTimings.thirdPourTarget}g
@@ -1150,10 +1454,29 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
               </div>
             </div>
           </div>
+
+          {/* Add Details and Past Brews Buttons */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={openSettings}
+              className="btn-primary"
+              type="button"
+              aria-label="Add Details"
+            >
+              Add Details
+            </button>
+            <button 
+              onClick={() => setShowNotes(true)}
+              className="btn-primary"
+              aria-label="Past Brews"
+            >
+              Past Brews
+            </button>
+          </div>
         </main>
 
         {/* Footer - Reduced margin */}
-        <footer className="mt-6">
+        <footer className="mt-8">
           <button 
             className="btn-primary" 
             onClick={handleStart}
