@@ -13,6 +13,110 @@ const defaultRatioOptions = [15, 18];
 const chimeUrl = 'https://assets.mixkit.co/active_storage/sfx/2870/2870.wav';
 const softChimeUrl = 'https://cdn.pixabay.com/audio/2022/10/16/audio_12b6b9b6b2.mp3';
 
+function MeditativeColorField({ 
+  currentStep, 
+  stepProgress, 
+  isActive, 
+  stepLabel 
+}: { 
+  currentStep: number, 
+  stepProgress: number, 
+  isActive: boolean,
+  stepLabel: string 
+}) {
+  // Color palettes for different phases
+  const getPhaseColors = (label: string, progress: number) => {
+    const isPourPhase = label === 'Bloom' || label === 'Pour';
+    const isWaitPhase = label === 'Wait';
+    const isDrawdown = label === 'Drawdown';
+    
+    if (isPourPhase) {
+      // Warm, expanding colors for pouring phases
+      const intensity = Math.min(progress / 100, 1);
+      return {
+        primary: `hsl(${25 + currentStep * 15}, ${60 + intensity * 40}%, ${40 + intensity * 30}%)`,
+        secondary: `hsl(${35 + currentStep * 20}, ${70 + intensity * 30}%, ${50 + intensity * 20}%)`,
+        accent: `hsl(${45 + currentStep * 10}, ${80 + intensity * 20}%, ${60 + intensity * 15}%)`
+      };
+    } else if (isWaitPhase) {
+      // Cool, contracting colors for waiting phases
+      const drain = 1 - (progress / 100);
+      return {
+        primary: `hsl(${200 + currentStep * 10}, ${40 + drain * 20}%, ${25 + drain * 15}%)`,
+        secondary: `hsl(${220 + currentStep * 15}, ${50 + drain * 15}%, ${35 + drain * 10}%)`,
+        accent: `hsl(${240 + currentStep * 5}, ${60 + drain * 10}%, ${45 + drain * 5}%)`
+      };
+    } else if (isDrawdown) {
+      // Deep, settling colors for drawdown
+      const settling = progress / 100;
+      return {
+        primary: `hsl(${280 + settling * 20}, ${30 + settling * 20}%, ${20 + settling * 10}%)`,
+        secondary: `hsl(${260 + settling * 15}, ${40 + settling * 15}%, ${30 + settling * 8}%)`,
+        accent: `hsl(${300 + settling * 10}, ${50 + settling * 10}%, ${40 + settling * 5}%)`
+      };
+    }
+    
+    // Default neutral state
+    return {
+      primary: 'hsl(0, 0%, 15%)',
+      secondary: 'hsl(0, 0%, 20%)',
+      accent: 'hsl(0, 0%, 25%)'
+    };
+  };
+
+  const colors = getPhaseColors(stepLabel, stepProgress);
+  const isPourPhase = stepLabel === 'Bloom' || stepLabel === 'Pour';
+  const scale = isPourPhase ? 0.5 + (stepProgress / 100) * 0.5 : 1 - (stepProgress / 100) * 0.3;
+  const opacity = isActive ? 0.8 : 0.3;
+
+  return (
+    <div className="absolute inset-0 overflow-hidden" style={{ zIndex: -1 }}>
+      {/* Primary color field - largest, background */}
+      <div 
+        className="absolute inset-0 transition-all duration-[2000ms] ease-out"
+        style={{
+          background: `radial-gradient(ellipse at center, ${colors.primary} 0%, ${colors.secondary} 70%, transparent 100%)`,
+          opacity: opacity * 0.6,
+          transform: `scale(${scale * 1.2})`,
+        }}
+      />
+      
+      {/* Secondary color field - medium, offset */}
+      <div 
+        className="absolute inset-0 transition-all duration-[1500ms] ease-out"
+        style={{
+          background: `radial-gradient(circle at 30% 60%, ${colors.secondary} 0%, transparent 60%)`,
+          opacity: opacity * 0.8,
+          transform: `scale(${scale}) translate(${isPourPhase ? '0%' : '5%'}, ${isPourPhase ? '0%' : '10%'})`,
+        }}
+      />
+      
+      {/* Accent color field - smallest, dynamic position */}
+      <div 
+        className="absolute inset-0 transition-all duration-[1000ms] ease-out"
+        style={{
+          background: `radial-gradient(circle at 70% 40%, ${colors.accent} 0%, transparent 40%)`,
+          opacity: opacity,
+          transform: `scale(${scale * 0.8}) translate(${isPourPhase ? '0%' : '-10%'}, ${isPourPhase ? '0%' : '-5%'})`,
+        }}
+      />
+
+      {/* Subtle texture overlay for depth */}
+      <div 
+        className="absolute inset-0 transition-opacity duration-[3000ms]"
+        style={{
+          background: `
+            radial-gradient(circle at 20% 80%, rgba(255,255,255,0.02) 0%, transparent 30%),
+            radial-gradient(circle at 80% 20%, rgba(255,255,255,0.01) 0%, transparent 40%),
+            radial-gradient(circle at 40% 40%, rgba(0,0,0,0.05) 0%, transparent 20%)
+          `,
+          opacity: isActive ? 1 : 0.5,
+        }}
+      />
+    </div>
+  );
+}
+
 function InfoPage({ onBack }: { onBack: () => void }) {
   useEffect(() => {
     if (window.kofiWidgetOverlay) {
@@ -69,131 +173,215 @@ function SettingsPage({
   handleSettingsSave: (e: React.FormEvent) => void,
   closeSettings: () => void
 }) {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const imageData = event.target?.result as string;
+        setSettingsDraft((d: any) => ({
+          ...d,
+          coffeeDetails: {
+            ...d.coffeeDetails,
+            image: imageData
+          }
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCoffeeDetailChange = (field: string, value: string) => {
+    setSettingsDraft((d: any) => ({
+      ...d,
+      coffeeDetails: {
+        ...d.coffeeDetails,
+        [field]: value
+      }
+    }));
+  };
+
   return (
-    <div className="w-full max-w-sm mx-auto">
-      <div className="card">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Settings</h2>
-          <button onClick={onBack} className="btn btn-secondary">Back</button>
-        </div>
-        <form onSubmit={handleSettingsSave} className="flex flex-col gap-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1">Coffee options</label>
-            <div className="grid grid-cols-2 gap-2 mb-2">
-              {settingsDraft.coffeeOptions.slice(0, 2).map((val: number, idx: number) => (
-                <div key={idx} className="relative flex items-center">
-                  <button
-                    type="button"
-                    className="absolute left-2 text-gray-400 hover:text-white"
-                    onClick={() => setSettingsDraft((d: any) => ({
-                      ...d,
-                      coffeeOptions: d.coffeeOptions.map((x: number, i: number) => 
-                        i === idx ? Math.max(10, parseFloat((x - 0.1).toFixed(1))) : x
-                      )
-                    }))}
-                  >
-                    &minus;
-                  </button>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    pattern="[0-9]*"
-                    min="10"
-                    max="40"
-                    step="0.1"
-                    value={val}
-                    onChange={(e) => setSettingsDraft((d: any) => ({
-                      ...d,
-                      coffeeOptions: d.coffeeOptions.map((x: number, i: number) => 
-                        i === idx ? parseFloat(e.target.value) || x : x
-                      )
-                    }))}
-                    className="w-full px-8 py-2 bg-gray-800 text-white rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-white"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-2 text-gray-400 hover:text-white"
-                    onClick={() => setSettingsDraft((d: any) => ({
-                      ...d,
-                      coffeeOptions: d.coffeeOptions.map((x: number, i: number) => 
-                        i === idx ? Math.min(40, parseFloat((x + 0.1).toFixed(1))) : x
-                      )
-                    }))}
-                  >
-                    +
-                  </button>
-                  <span className="absolute right-8 text-gray-400">g</span>
+    <div className="antialiased h-screen" style={{ backgroundColor: '#000000', color: '#FFFFFF' }}>
+      <div className="h-full flex flex-col" style={{ padding: '2rem 4rem' }}>
+        {/* Header - matching home page */}
+        <header className="flex justify-between items-center mb-4">
+          <h1 className="text-3xl font-bold text-white">Coffee Details</h1>
+          <button onClick={onBack} className="btn-secondary-outline">Back</button>
+        </header>
+
+        <form onSubmit={handleSettingsSave} className="flex-1 flex flex-col">
+          {/* Main Content - Coffee Details Only */}
+          <main className="flex-1 space-y-6 overflow-y-auto">
+            {/* Coffee Details Section */}
+            <div>
+              <p className="text-sm text-gray-400 mb-6">
+                Track details about your current coffee beans. This information helps you remember what works best for different origins and roasts.
+              </p>
+              
+              {/* Coffee Image */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-400 mb-2">Coffee Photo</label>
+                <div className="flex items-center space-x-4">
+                  {settingsDraft.coffeeDetails?.image && (
+                    <img 
+                      src={settingsDraft.coffeeDetails.image} 
+                      alt="Coffee" 
+                      className="w-20 h-20 object-cover rounded-lg"
+                    />
+                  )}
+                  <div className="flex-1">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      id="coffee-image-upload"
+                    />
+                    <label 
+                      htmlFor="coffee-image-upload"
+                      className="btn-secondary inline-block cursor-pointer"
+                    >
+                      {settingsDraft.coffeeDetails?.image ? 'Change Photo' : 'Add Photo'}
+                    </label>
+                    {settingsDraft.coffeeDetails?.image && (
+                      <button
+                        type="button"
+                        onClick={() => handleCoffeeDetailChange('image', '')}
+                        className="ml-2 text-gray-400 hover:text-white text-sm"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1">Ratio options</label>
-            <div className="grid grid-cols-2 gap-2 mb-2">
-              {settingsDraft.ratioOptions.slice(0, 2).map((val: number, idx: number) => (
-                <div key={idx} className="relative flex items-center">
-                  <button
-                    type="button"
-                    className="absolute left-2 text-gray-400 hover:text-white"
-                    onClick={() => setSettingsDraft((d: any) => ({
-                      ...d,
-                      ratioOptions: d.ratioOptions.map((x: number, i: number) => 
-                        i === idx ? Math.max(14, parseFloat((x - 0.1).toFixed(1))) : x
-                      )
-                    }))}
-                  >
-                    &minus;
-                  </button>
+              </div>
+
+              {/* Coffee Details Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                    Name
+                    <span className="text-xs text-gray-500 block">Producer or blend name</span>
+                  </label>
                   <input
-                    type="number"
-                    inputMode="decimal"
-                    pattern="[0-9]*"
-                    min="14"
-                    max="20"
-                    step="0.1"
-                    value={val}
-                    onChange={(e) => setSettingsDraft((d: any) => ({
-                      ...d,
-                      ratioOptions: d.ratioOptions.map((x: number, i: number) => 
-                        i === idx ? parseFloat(e.target.value) || x : x
-                      )
-                    }))}
-                    className="w-full px-8 py-2 bg-gray-800 text-white rounded-lg text-center focus:outline-none focus:ring-2 focus:ring-white"
+                    type="text"
+                    value={settingsDraft.coffeeDetails?.name || ''}
+                    onChange={(e) => handleCoffeeDetailChange('name', e.target.value)}
+                    className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
+                    placeholder="e.g. Blue Mountain Reserve"
                   />
-                  <button
-                    type="button"
-                    className="absolute right-2 text-gray-400 hover:text-white"
-                    onClick={() => setSettingsDraft((d: any) => ({
-                      ...d,
-                      ratioOptions: d.ratioOptions.map((x: number, i: number) => 
-                        i === idx ? Math.min(20, parseFloat((x + 0.1).toFixed(1))) : x
-                      )
-                    }))}
-                  >
-                    +
-                  </button>
-                  <span className="absolute right-8 text-gray-400">1:</span>
                 </div>
-              ))}
+
+                {/* Roaster */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                    Roaster
+                    <span className="text-xs text-gray-500 block">Who roasted it</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={settingsDraft.coffeeDetails?.roaster || ''}
+                    onChange={(e) => handleCoffeeDetailChange('roaster', e.target.value)}
+                    className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
+                    placeholder="e.g. Local Coffee Co."
+                  />
+                </div>
+
+                {/* Roast Date */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                    Roast Date
+                    <span className="text-xs text-gray-500 block">Important for freshness</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={settingsDraft.coffeeDetails?.roastDate || ''}
+                    onChange={(e) => handleCoffeeDetailChange('roastDate', e.target.value)}
+                    className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
+                  />
+                </div>
+
+                {/* Origin */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                    Origin
+                    <span className="text-xs text-gray-500 block">Country / Region / Farm</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={settingsDraft.coffeeDetails?.origin || ''}
+                    onChange={(e) => handleCoffeeDetailChange('origin', e.target.value)}
+                    className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
+                    placeholder="e.g. Jamaica, Blue Mountains"
+                  />
+                </div>
+
+                {/* Variety */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                    Variety
+                    <span className="text-xs text-gray-500 block">Coffee plant variety</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={settingsDraft.coffeeDetails?.variety || ''}
+                    onChange={(e) => handleCoffeeDetailChange('variety', e.target.value)}
+                    className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
+                    placeholder="e.g. Caturra, Geisha, Bourbon"
+                  />
+                </div>
+
+                {/* Process */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                    Process
+                    <span className="text-xs text-gray-500 block">How beans were processed</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={settingsDraft.coffeeDetails?.process || ''}
+                    onChange={(e) => handleCoffeeDetailChange('process', e.target.value)}
+                    className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
+                    placeholder="e.g. Washed, Natural, Honey"
+                  />
+                </div>
+
+                {/* Elevation */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-400 mb-2">
+                    Elevation
+                    <span className="text-xs text-gray-500 block">Growing altitude in meters or feet</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={settingsDraft.coffeeDetails?.elevation || ''}
+                    onChange={(e) => handleCoffeeDetailChange('elevation', e.target.value)}
+                    className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
+                    placeholder="e.g. 1,200m or 4,000ft"
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="flex gap-4 mt-2">
+          </main>
+
+          {/* Footer - matching home page */}
+          <footer className="mt-6 space-y-3">
             <button
               type="submit"
-              className="btn btn-primary flex-1"
+              className="btn-primary w-full"
             >
-              Save
+              Save Coffee Details
             </button>
-          </div>
-          <div className="flex gap-4 mt-4">
             <button
               type="button"
-              className="btn btn-secondary flex-1"
+              className="btn btn-secondary w-full"
               onClick={closeSettings}
             >
               Cancel
             </button>
-          </div>
+          </footer>
         </form>
       </div>
     </div>
@@ -290,10 +478,19 @@ function BrewTimerPage({
   };
 
   return (
-    <div className="text-white min-h-screen flex flex-col" style={{ backgroundColor: '#000000', fontFamily: 'Space Grotesk, sans-serif' }}>
-      <div className="container mx-auto px-6 py-6 max-w-sm flex-1 flex flex-col">
-        {/* Header */}
-        <header className="mb-8">
+    <div className="text-white min-h-screen flex flex-col relative" style={{ backgroundColor: '#000000', fontFamily: 'Space Grotesk, sans-serif' }}>
+      {/* Meditative Color Field Visualization */}
+      <MeditativeColorField 
+        currentStep={fullCurrentStep}
+        stepProgress={currentStepProgress}
+        isActive={timerActive}
+        stepLabel={fullStepSequence[fullCurrentStep]?.label || ''}
+      />
+      
+      {/* OPTIMIZED: Removed padding, max width, adjusted spacing for 2556x1179 */}
+      <div className="w-full h-screen flex flex-col relative z-10" style={{ padding: '2rem 4rem' }}>
+        {/* Header - Reduced margin */}
+        <header className="mb-4">
           <button 
             onClick={onBack} 
             className="text-gray-400 hover:text-white text-lg font-medium"
@@ -304,15 +501,15 @@ function BrewTimerPage({
           </button>
         </header>
 
-        {/* Large Timer Display */}
-        <div className="text-center mb-12">
-          <div className="text-4xl font-medium text-white font-roboto-mono tracking-tight">
+        {/* Large Timer Display - Reduced margin */}
+        <div className="text-center mb-6">
+          <div className="text-5xl font-medium text-white font-roboto-mono tracking-tight">
             {formatTime(Math.ceil(timeRemaining))}
           </div>
         </div>
 
-        {/* Vertical Step List */}
-        <div className="flex-1 space-y-4">
+        {/* Vertical Step List - Optimized for landscape display */}
+        <div className="flex-1 space-y-2 overflow-y-auto">
           {fullStepSequence.slice(0, -1).map((step: any, index: number) => {
             const isActive = index === fullCurrentStep;
             const isCompleted = elapsed >= (fullStepEndTimes[index] || 0);
@@ -334,25 +531,25 @@ function BrewTimerPage({
 
             return (
               <div key={index} className={`${opacity} transition-opacity duration-300`}>
-                {/* 3-Column Grid Layout */}
-                <div className="grid grid-cols-3 text-center items-center py-3 relative">
+                {/* 3-Column Grid Layout - Reduced padding */}
+                <div className="grid grid-cols-3 text-center items-center py-2 relative">
                   {/* Left: Step name */}
                   <div className="text-left">
-                    <span className="text-lg font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                    <span className="text-xl font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                       {step.label}
                     </span>
                   </div>
 
                   {/* Center: Target weight */}
                   <div>
-                    <span className="text-lg font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                    <span className="text-xl font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                       {targetWeight}
                     </span>
                   </div>
 
                   {/* Right: Time - Show step countdown for active step, full duration for others */}
                   <div className="text-right">
-                    <span className="text-lg font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+                    <span className="text-xl font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                       {isActive && timerActive && !isCompleted ? 
                         formatTimeSimple(Math.ceil(stepRemaining)) : 
                         formatTimeSimple(stepDuration)
@@ -394,8 +591,8 @@ function BrewTimerPage({
           })}
         </div>
 
-        {/* Bottom Button */}
-        <footer className="mt-12 pb-6">
+        {/* Bottom Button - Reduced margin */}
+        <footer className="mt-6 pb-4">
           <button 
             className="w-full py-4 text-xl font-medium text-white transition-colors duration-150 hover:text-gray-300"
             onClick={timerActive && !timerPaused ? handlePause : handleResume}
@@ -618,12 +815,44 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     localStorage.setItem('coffeeSettings', JSON.stringify(newSettings));
   };
 
+  // Helper functions for real-time editing
+  const handleCoffeeInputChange = (value: string) => {
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue) && numValue > 0) {
+      handleCoffeeAmountChange(numValue);
+    }
+  };
+
+  const handleRatioInputChange = (value: string) => {
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue) && numValue > 0) {
+      handleRatioChange(numValue);
+    }
+  };
+
+  const incrementCoffee = (delta: number) => {
+    const newAmount = Math.max(0.1, parseFloat((coffeeSettings.amount + delta).toFixed(1)));
+    handleCoffeeAmountChange(newAmount);
+  };
+
+  const incrementRatio = (delta: number) => {
+    const newRatio = Math.max(0.1, parseFloat((coffeeSettings.ratio + delta).toFixed(1)));
+    handleRatioChange(newRatio);
+  };
+
   const openSettings = () => {
     setSettingsDraft({
-      amount: coffeeSettings.amount,
-      ratio: coffeeSettings.ratio,
-      coffeeOptions: [...coffeeOptions],
-      ratioOptions: [...ratioOptions],
+      // Coffee details only
+      coffeeDetails: {
+        name: localStorage.getItem('coffeeDetails_name') || '',
+        roaster: localStorage.getItem('coffeeDetails_roaster') || '',
+        roastDate: localStorage.getItem('coffeeDetails_roastDate') || '',
+        origin: localStorage.getItem('coffeeDetails_origin') || '',
+        variety: localStorage.getItem('coffeeDetails_variety') || '',
+        process: localStorage.getItem('coffeeDetails_process') || '',
+        elevation: localStorage.getItem('coffeeDetails_elevation') || '',
+        image: localStorage.getItem('coffeeDetails_image') || ''
+      }
     });
     setShowSettings(true);
   };
@@ -634,21 +863,15 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
 
   const handleSettingsSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (
-      settingsDraft.amount < 10 || settingsDraft.amount > 40 ||
-      settingsDraft.ratio < 14 || settingsDraft.ratio > 20
-    ) return;
-    const newCoffeeSettings = { 
-        amount: settingsDraft.amount, 
-        ratio: settingsDraft.ratio, 
-        bloomRatio: coffeeSettings.bloomRatio || 2 
-    };
-    setCoffeeSettings(newCoffeeSettings);
-    setCoffeeOptions(settingsDraft.coffeeOptions);
-    setRatioOptions(settingsDraft.ratioOptions);
-    localStorage.setItem('coffeeSettings', JSON.stringify(newCoffeeSettings));
-    localStorage.setItem('coffeeOptions', JSON.stringify(settingsDraft.coffeeOptions));
-    localStorage.setItem('ratioOptions', JSON.stringify(settingsDraft.ratioOptions));
+    
+    // Save coffee details only
+    if (settingsDraft.coffeeDetails) {
+      Object.entries(settingsDraft.coffeeDetails).forEach(([key, value]) => {
+        localStorage.setItem(`coffeeDetails_${key}`, value);
+      });
+    }
+    
+    // Close settings
     setShowSettings(false);
   };
 
@@ -751,11 +974,12 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   }
   
   return (
-    <div className="antialiased" style={{ backgroundColor: '#000000', color: '#FFFFFF' }}>
-      <div className="container mx-auto px-4 py-4 max-w-md">
-        {/* Header */}
-        <header className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-white">Pour Perfect</h1>
+    <div className="antialiased h-screen" style={{ backgroundColor: '#000000', color: '#FFFFFF' }}>
+      {/* REMOVED: container mx-auto px-4 py-4 max-w-md - now full width/height */}
+      <div className="h-full flex flex-col" style={{ padding: '2rem 4rem' }}>
+        {/* Header - Reduced margin */}
+        <header className="flex justify-between items-center mb-4">
+          <h1 className="text-3xl font-bold text-white">Pour Perfect</h1>
           <div className="flex space-x-2">
             <button 
               onClick={() => setShowNotes(true)}
@@ -775,41 +999,108 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
           </div>
         </header>
 
-        {/* Main Content */}
-        <main className="space-y-6">
-          {/* Coffee Section */}
+        {/* Main Content - Optimized spacing */}
+        <main className="flex-1 space-y-4">
+          {/* Coffee Section - Now Editable */}
           <div>
             <h2 className="text-sm font-medium text-gray-400 mb-2">Coffee</h2>
-            <div className="grid grid-cols-2 gap-2">
-              {coffeeOptions.slice(0, 2).map(amount => (
-                <div
-                  key={amount}
-                  className={`${
-                    coffeeSettings.amount === amount ? 'selected-card' : 'unselected-card'
-                  } cursor-pointer transition-colors`}
-                  onClick={() => handleCoffeeAmountChange(amount)}
+            <div className="relative">
+              <div className="selected-card flex items-center">
+                <button
+                  type="button"
+                  className="absolute left-2 text-gray-400 hover:text-white z-10 text-lg"
+                  onClick={() => incrementCoffee(-0.1)}
                 >
-                  <span className="text-lg font-semibold">{amount}g</span>
-                </div>
-              ))}
+                  &minus;
+                </button>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={coffeeSettings.amount}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow any input while typing, validate on blur
+                    if (value === '' || !isNaN(parseFloat(value))) {
+                      const tempSettings = { ...coffeeSettings, amount: value === '' ? 0 : parseFloat(value) || coffeeSettings.amount };
+                      setCoffeeSettings(tempSettings);
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const numValue = parseFloat(e.target.value);
+                    if (isNaN(numValue) || numValue <= 0) {
+                      // Reset to previous valid value if invalid
+                      setCoffeeSettings({ ...coffeeSettings });
+                    } else {
+                      handleCoffeeInputChange(e.target.value);
+                    }
+                  }}
+                  onFocus={(e) => e.target.select()}
+                  className="w-full bg-transparent text-center text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded no-spinners"
+                  style={{ 
+                    padding: '0.75rem 3rem',
+                  }}
+                />
+                <button
+                  type="button"
+                  className="absolute right-2 text-gray-400 hover:text-white z-10 text-lg"
+                  onClick={() => incrementCoffee(0.1)}
+                >
+                  +
+                </button>
+                <span className="absolute right-8 text-gray-400 text-sm pointer-events-none">g</span>
+              </div>
             </div>
           </div>
 
-          {/* Ratio Section */}
+          {/* Ratio Section - Now Editable */}
           <div>
             <h2 className="text-sm font-medium text-gray-400 mb-2">Ratio</h2>
-            <div className="grid grid-cols-2 gap-2">
-              {ratioOptions.slice(0, 2).map(ratio => (
-                <div
-                  key={ratio}
-                  className={`${
-                    coffeeSettings.ratio === ratio ? 'selected-card' : 'unselected-card'
-                  } cursor-pointer transition-colors`}
-                  onClick={() => handleRatioChange(ratio)}
+            <div className="relative">
+              <div className="selected-card flex items-center">
+                <button
+                  type="button"
+                  className="absolute left-2 text-gray-400 hover:text-white z-10 text-lg"
+                  onClick={() => incrementRatio(-0.1)}
                 >
-                  <span className="text-lg font-semibold">1:{ratio}</span>
-                </div>
-              ))}
+                  &minus;
+                </button>
+                <span className="absolute left-8 text-gray-400 text-sm pointer-events-none z-5">1:</span>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={coffeeSettings.ratio}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow any input while typing, validate on blur
+                    if (value === '' || !isNaN(parseFloat(value))) {
+                      const tempSettings = { ...coffeeSettings, ratio: value === '' ? 0 : parseFloat(value) || coffeeSettings.ratio };
+                      setCoffeeSettings(tempSettings);
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const numValue = parseFloat(e.target.value);
+                    if (isNaN(numValue) || numValue <= 0) {
+                      // Reset to previous valid value if invalid
+                      setCoffeeSettings({ ...coffeeSettings });
+                    } else {
+                      handleRatioInputChange(e.target.value);
+                    }
+                  }}
+                  onFocus={(e) => e.target.select()}
+                  className="w-full bg-transparent text-center text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded no-spinners"
+                  style={{ 
+                    padding: '0.75rem 3rem',
+                    paddingLeft: '4rem',
+                  }}
+                />
+                <button
+                  type="button"
+                  className="absolute right-2 text-gray-400 hover:text-white z-10 text-lg"
+                  onClick={() => incrementRatio(0.1)}
+                >
+                  +
+                </button>
+              </div>
             </div>
           </div>
 
@@ -861,8 +1152,8 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
           </div>
         </main>
 
-        {/* Footer */}
-        <footer className="mt-8">
+        {/* Footer - Reduced margin */}
+        <footer className="mt-6">
           <button 
             className="btn-primary" 
             onClick={handleStart}
