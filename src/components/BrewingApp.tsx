@@ -616,24 +616,24 @@ function BrewTimerPage({
       />
       
       {/* New clean interface design */}
-      <div className="w-full h-screen flex flex-col relative z-10" style={{ padding: '2rem 4rem' }}>
+      <div className="w-full h-screen flex flex-col relative z-10" style={{ padding: '1.5rem 2rem' }}>
         {/* Top info bar */}
-        <div className="grid grid-cols-3 gap-8 mb-8">
+        <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="text-center">
-            <div className="text-sm text-gray-400 mb-1">Total time</div>
-            <div className="text-3xl font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+            <div className="text-xs text-gray-400 mb-1">Total time</div>
+            <div className="text-2xl font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
               {formatTime(totalTime)}
             </div>
           </div>
           <div className="text-center">
-            <div className="text-sm text-gray-400 mb-1">Time left</div>
-            <div className="text-3xl font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+            <div className="text-xs text-gray-400 mb-1">Time left</div>
+            <div className="text-2xl font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
               {formatTime(Math.ceil(timeRemaining))}
             </div>
           </div>
           <div className="text-center">
-            <div className="text-sm text-gray-400 mb-1">Current step</div>
-            <div className="text-3xl font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+            <div className="text-xs text-gray-400 mb-1">Current step</div>
+            <div className="text-2xl font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
               {(() => {
                 const currentStepStartTime = fullCurrentStep === 0 ? 0 : fullStepEndTimes[fullCurrentStep - 1];
                 const currentStepEndTime = fullStepEndTimes[fullCurrentStep] || totalTime;
@@ -647,7 +647,7 @@ function BrewTimerPage({
         </div>
 
         {/* Step list */}
-        <div className="flex-1 space-y-6 overflow-y-auto">
+        <div className="flex-1 space-y-3 overflow-y-auto">
           {fullStepSequence.slice(0, -1).map((step: any, index: number) => {
             const isActive = index === fullCurrentStep;
             const isCompleted = elapsed >= (fullStepEndTimes[index] || 0);
@@ -663,15 +663,15 @@ function BrewTimerPage({
             return (
               <div key={index} className="relative">
                 {/* Step content */}
-                <div className="flex justify-between items-center py-3">
+                <div className="flex justify-between items-center py-2">
                   <div className="flex-1">
-                    <span className={`text-2xl font-medium ${isActive ? 'text-white' : isCompleted ? 'text-gray-400' : 'text-gray-600'}`} 
+                    <span className={`text-xl font-medium ${isActive ? 'text-white' : isCompleted ? 'text-gray-400' : 'text-gray-600'}`} 
                           style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                       {step.label}
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className={`text-2xl font-medium ${isActive ? 'text-white' : isCompleted ? 'text-gray-400' : 'text-gray-600'}`} 
+                    <span className={`text-xl font-medium ${isActive ? 'text-white' : isCompleted ? 'text-gray-400' : 'text-gray-600'}`} 
                           style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
                       {targetWeight || formatTimeSimple(stepDuration)}
                     </span>
@@ -710,8 +710,8 @@ function BrewTimerPage({
         </div>
 
         {/* Bottom Buttons - Back and Start/Pause */}
-        <footer className="mt-4 pb-4">
-          <div className="flex items-center justify-center space-x-4 text-xl font-medium" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
+        <footer className="mt-3 pb-3">
+          <div className="flex items-center justify-center space-x-4 text-lg font-medium" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
             <button 
               onClick={onBack} 
               className="text-gray-400 hover:text-white transition-colors duration-150"
