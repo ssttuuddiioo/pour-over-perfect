@@ -143,4 +143,15 @@
   .progress-bar {
     transition: width 0.1s ease-out;
   }
+
+  /* Hide browser spinner arrows on number inputs */
+  .no-spinners::-webkit-outer-spin-button,
+  .no-spinners::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .no-spinners[type=number] {
+    -moz-appearance: textfield;
+  }
 }

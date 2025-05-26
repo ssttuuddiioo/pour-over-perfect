@@ -62,22 +62,38 @@ export const calculateBrewTiming = (
   acidityLevel: number = 50, // Optional acidity level for pour speed
   fruitinessLevel: number = 50 // Optional fruitiness level for pulse count
 ): BrewingTimings => {
-  // Calculate water amounts (independent of grind size)
-  const totalWater = coffeeAmount * waterRatio;
+  // FIXED: Calculate water amounts with proper rounding to 1 decimal place
+  const totalWater = Math.round((coffeeAmount * waterRatio) * 10) / 10;
   const bloomWater = Math.round(coffeeAmount * bloomRatio);
   const remainingWater = totalWater - bloomWater;
   
   // Determine number of pulses based on fruitiness (default behavior is 3 pours)
   const pulseCount = calculatePulseCount(fruitinessLevel);
+  
+  // FIXED: Properly distribute remaining water across actual number of pours
+  let firstPourTarget, secondPourTarget, thirdPourTarget;
+  
+  if (pulseCount === 1) {
+    // Single pour after bloom
+    firstPourTarget = totalWater;
+    secondPourTarget = totalWater;
+    thirdPourTarget = totalWater;
+  } else if (pulseCount === 2) {
+    // Two pours after bloom
+    const pourVolume = Math.round(remainingWater / 2);
+    firstPourTarget = bloomWater + pourVolume;
+    secondPourTarget = totalWater; // Final pour reaches total
+    thirdPourTarget = totalWater;
+  } else {
+    // Three pours after bloom (default)
+    const pourVolume = Math.round(remainingWater / 3);
+    firstPourTarget = bloomWater + pourVolume;
+    secondPourTarget = firstPourTarget + pourVolume;
+    thirdPourTarget = totalWater; // Ensure we reach exact total
+  }
+  
+  // Calculate pour volume for display purposes
   const pourVolume = Math.round(remainingWater / pulseCount);
-  
-  // Calculate target amounts for each phase
-  const firstPourTarget = bloomWater + pourVolume;
-  const secondPourTarget = firstPourTarget + pourVolume;
-  const thirdPourTarget = secondPourTarget + pourVolume;
-  
-  // Ensure third pour reaches total water (handle rounding)
-  const adjustedThirdPourTarget = Math.max(thirdPourTarget, totalWater);
 
   // Calculate brew time (affected by grind size)
   const baseTime = 150; // 2:30 base time
@@ -107,8 +123,8 @@ export const calculateBrewTiming = (
 
   // Calculate individual pour durations based on volume and adjust for acidity
   let firstPourDuration = Math.round((firstPourTarget - bloomWater) / pourRate);
-  let secondPourDuration = Math.round((secondPourTarget - firstPourTarget) / pourRate);
-  let thirdPourDuration = Math.round((adjustedThirdPourTarget - secondPourTarget) / pourRate);
+  let secondPourDuration = pulseCount >= 2 ? Math.round((secondPourTarget - firstPourTarget) / pourRate) : 0;
+  let thirdPourDuration = pulseCount >= 3 ? Math.round((thirdPourTarget - secondPourTarget) / pourRate) : 0;
   
   // Apply acidity adjustment to pour durations
   firstPourDuration = adjustPourDurationForAcidity(firstPourDuration, acidityLevel);
@@ -137,7 +153,7 @@ export const calculateBrewTiming = (
     drawdownDuration: Math.round(remainingTime * 0.50)
   };
   
-  // Log timing calculations
+  // FIXED: Add debug logging to verify calculations
   console.log('Brew Time Calculation:', {
     baseTime,
     doseAdjustment,
@@ -146,11 +162,19 @@ export const calculateBrewTiming = (
     totalTime: targetTime,
     coffeeAmount,
     waterRatio,
+    totalWater, // Now properly rounded to 1 decimal place
+    bloomWater,
+    remainingWater,
     grindSize,
     bloomRatio,
     acidityLevel,
     fruitinessLevel,
     pulseCount,
+    pourTargets: {
+      first: firstPourTarget,
+      second: secondPourTarget,
+      third: thirdPourTarget
+    },
     pourRate: `${pourRate.toFixed(1)}g/s`,
     phaseSplits: {
       bloom: `${Math.round(durations.bloomDuration / targetTime * 100)}%`,
@@ -171,7 +195,7 @@ export const calculateBrewTiming = (
     bloomWater,
     firstPourTarget,
     secondPourTarget,
-    thirdPourTarget: adjustedThirdPourTarget,
+    thirdPourTarget,
     totalTime: targetTime,
     pourVolume,
     pulseCount

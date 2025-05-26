@@ -6,9 +6,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
-      <div className="container mx-auto p-4">
-        <BrewingApp onShowAbout={() => setShowAbout(true)} />
-      </div>
+      <BrewingApp onShowAbout={() => setShowAbout(true)} />
+      
       {/* About Modal */}
       {showAbout && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
