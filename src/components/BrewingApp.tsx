@@ -838,15 +838,15 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
       try {
         const parsed = JSON.parse(savedSettings);
         return {
-          amount: parsed.amount || 20,
-          ratio: parsed.ratio || 16,
+          amount: parsed.amount || 15.2,
+          ratio: parsed.ratio || 14.5,
           bloomRatio: parsed.bloomRatio || 2
         };
       } catch (e) {
         console.error('Error loading saved settings:', e);
       }
     }
-    return { amount: 20, ratio: 16, bloomRatio: 2 };
+    return { amount: 15.2, ratio: 14.5, bloomRatio: 2 };
   };
 
   const [coffeeSettings, setCoffeeSettings] = useState<CoffeeSettings>(loadSavedSettings);
@@ -1302,13 +1302,14 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="h-full flex flex-col" style={{ padding: '1.5rem 0.8rem 0.4rem 0.8rem' }}>
+      <div className="h-full flex flex-col max-w-[1189px] mx-auto px-4 py-6">
         {/* Main Content - Optimized spacing */}
         <main className="flex-1 space-y-6">
-          {/* Coffee Amount and Ratio Selection */}
-          <div className="flex justify-center items-center space-x-8 mb-8">
-            <div className="text-center">
-              <div className="text-sm text-gray-400 mb-2">Coffee</div>
+          {/* Coffee and Ratio Pickers */}
+          <div className="grid grid-cols-2 gap-6">
+            {/* Coffee Amount Picker */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-white/60">Coffee</label>
               <VerticalPicker
                 items={Array.from({ length: 41 }, (_, i) => i + 10)}
                 value={coffeeSettings.amount}
@@ -1317,8 +1318,10 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
                 hasDecimals={true}
               />
             </div>
-            <div className="text-center">
-              <div className="text-sm text-gray-400 mb-2">Ratio</div>
+
+            {/* Ratio Picker */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-white/60">Ratio</label>
               <VerticalPicker
                 items={Array.from({ length: 41 }, (_, i) => i + 10)}
                 value={coffeeSettings.ratio}
@@ -1329,73 +1332,28 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
             </div>
           </div>
 
-          {/* Total Water Amount */}
-          <div className="text-center">
-            <div className="text-sm text-gray-400 mb-2">Total Water</div>
-            <div className="text-3xl font-semibold text-white">
-              {brewingTimings.thirdPourTarget}g
-            </div>
-          </div>
-
-          {/* Grind Section */}
-          <div>
-            <h2 className="text-sm font-medium text-gray-400 mb-3">Grind</h2>
-            <div className="grid grid-cols-4 gap-3">
-              {['Fine', 'Medium', 'Medium-coarse', 'Coarse'].map((label, idx) => {
-                const grindMap = [3, 6, 7, 9];
-                return (
-                  <button
-                    key={label}
-                    className={`${
-                      grindSize === grindMap[idx] ? 'selected-card' : 'unselected-card'
-                    } text-xs font-medium transition-colors`}
-                    onClick={() => setGrindSize(grindMap[idx])}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Brew Time and Total Water */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <h3 className="text-xs font-medium text-gray-400 mb-2 text-center">Brew Time</h3>
-              <div className="input-display">
-                <p className="text-xl font-semibold text-white">
-                  {formatTime(brewingTimings.totalTime)}
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {coffeeSettings.amount}g • 1:{coffeeSettings.ratio}
-                </p>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xs font-medium text-gray-400 mb-2 text-center">Total Water</h3>
-              <div className="input-display">
-                <p className="text-xl font-semibold text-white">
-                  {brewingTimings.thirdPourTarget}g
-                </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {Math.round(brewingTimings.pourVolume)}g per pour
-                </p>
-              </div>
+          {/* Water Amount Display */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-white/60">Water</label>
+            <div className="h-14 flex items-center justify-center bg-white/5 rounded-xl">
+              <span className="text-2xl font-medium text-white">
+                {Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g
+              </span>
             </div>
           </div>
 
           {/* Info and Ready Buttons */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
+          <div className="grid grid-cols-2 gap-4 pt-2">
             <button 
               onClick={onShowAbout}
-              className="btn-primary h-16 text-xl font-medium"
+              className="h-12 rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/15 text-base font-medium transition-colors"
               type="button"
               aria-label="Info"
             >
               Info
             </button>
             <button 
-              className="btn-primary h-16 text-xl font-medium"
+              className="h-12 rounded-xl bg-white/10 hover:bg-white/15 active:bg-white/20 text-base font-medium transition-colors"
               onClick={handleStart}
             >
               Ready
@@ -1403,10 +1361,10 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
           </div>
 
           {/* Add Details and Past Brews Buttons */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             <button
               onClick={openSettings}
-              className="btn-primary h-24 text-lg font-medium"
+              className="h-16 rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/15 text-base font-medium transition-colors"
               type="button"
               aria-label="Add Details"
             >
@@ -1414,7 +1372,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
             </button>
             <button 
               onClick={() => setShowNotes(true)}
-              className="btn-primary h-24 text-lg font-medium"
+              className="h-16 rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/15 text-base font-medium transition-colors"
               aria-label="Past Brews"
             >
               Past Brews
