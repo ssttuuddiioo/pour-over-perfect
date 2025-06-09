@@ -24,10 +24,11 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const decimalContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const itemHeight = 50; // Height of each item in pixels
-  const visibleItems = 5; // Number of items visible at once
+  const itemHeight = 50;
+  const visibleItems = 5;
+  const totalHeight = itemHeight * items.length;
+  const containerHeight = itemHeight * visibleItems;
 
-  // Generate decimal options (0-9)
   const decimalOptions = Array.from({ length: 10 }, (_, i) => i);
 
   useEffect(() => {
@@ -35,6 +36,9 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
       const index = items.indexOf(Math.floor(value));
       if (index !== -1) {
         setSelectedIndex(index);
+        if (containerRef.current) {
+          containerRef.current.scrollTop = index * itemHeight;
+        }
       }
     } else {
       const wholeNumber = Math.floor(value);
@@ -43,6 +47,12 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
       if (index !== -1) {
         setSelectedIndex(index);
         setSelectedDecimal(decimal);
+        if (containerRef.current) {
+          containerRef.current.scrollTop = index * itemHeight;
+        }
+        if (decimalContainerRef.current) {
+          decimalContainerRef.current.scrollTop = decimal * itemHeight;
+        }
       }
     }
     setEditValue(value.toString());
@@ -80,10 +90,8 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
     const newValue = e.target.value;
     setEditValue(newValue);
     
-    // Allow empty input while typing
     if (newValue === '') return;
     
-    // Validate and update if it's a valid number
     const numValue = parseFloat(newValue);
     if (!isNaN(numValue) && numValue >= items[0] && numValue <= items[items.length - 1]) {
       onChange(numValue);
@@ -92,7 +100,6 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
 
   const handleInputBlur = () => {
     setIsEditing(false);
-    // Reset to last valid value if current input is invalid
     const numValue = parseFloat(editValue);
     if (isNaN(numValue) || numValue < items[0] || numValue > items[items.length - 1]) {
       setEditValue(value.toString());
@@ -109,7 +116,6 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
   const startEditing = () => {
     setIsEditing(true);
     setEditValue(value.toString());
-    // Focus input after a short delay to ensure the element is mounted
     setTimeout(() => inputRef.current?.focus(), 0);
   };
 
@@ -133,17 +139,12 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
           />
         ) : (
           <>
-            {/* Gradient overlays for fade effect */}
-            <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black to-transparent z-10" />
-            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black to-transparent z-10" />
-            
-            {/* Selection highlight */}
+            <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black to-transparent z-10 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black to-transparent z-10 pointer-events-none" />
             <div 
-              className="absolute left-0 right-0 h-[50px] bg-white/10 rounded-lg z-0"
+              className="absolute left-0 right-0 h-[50px] bg-white/10 rounded-lg z-0 pointer-events-none"
               style={{ top: '100px' }}
             />
-            
-            {/* Scrollable container */}
             <div
               ref={containerRef}
               className="h-full overflow-y-auto scrollbar-hide"
@@ -151,13 +152,18 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
               style={{
                 scrollSnapType: 'y mandatory',
                 scrollPadding: '100px 0',
+                touchAction: 'pan-y',
+                WebkitOverflowScrolling: 'touch',
               }}
             >
-              <div className="py-[100px]">
+              <div 
+                className="py-[100px]"
+                style={{ height: totalHeight + (itemHeight * 2) }}
+              >
                 {items.map((item, index) => (
                   <div
                     key={item}
-                    className="h-[50px] flex items-center justify-center text-2xl font-medium cursor-pointer"
+                    className="h-[50px] flex items-center justify-center text-2xl font-medium cursor-pointer select-none"
                     style={{
                       scrollSnapAlign: 'center',
                       color: index === selectedIndex ? 'white' : 'rgba(255, 255, 255, 0.5)',
@@ -178,17 +184,12 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
         <>
           <span className="text-2xl font-medium text-white">.</span>
           <div className="relative h-[250px] w-12 overflow-hidden">
-            {/* Gradient overlays for fade effect */}
-            <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black to-transparent z-10" />
-            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black to-transparent z-10" />
-            
-            {/* Selection highlight */}
+            <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black to-transparent z-10 pointer-events-none" />
+            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black to-transparent z-10 pointer-events-none" />
             <div 
-              className="absolute left-0 right-0 h-[50px] bg-white/10 rounded-lg z-0"
+              className="absolute left-0 right-0 h-[50px] bg-white/10 rounded-lg z-0 pointer-events-none"
               style={{ top: '100px' }}
             />
-            
-            {/* Scrollable container */}
             <div
               ref={decimalContainerRef}
               className="h-full overflow-y-auto scrollbar-hide"
@@ -196,13 +197,18 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
               style={{
                 scrollSnapType: 'y mandatory',
                 scrollPadding: '100px 0',
+                touchAction: 'pan-y',
+                WebkitOverflowScrolling: 'touch',
               }}
             >
-              <div className="py-[100px]">
+              <div 
+                className="py-[100px]"
+                style={{ height: itemHeight * 12 }}
+              >
                 {decimalOptions.map((decimal) => (
                   <div
                     key={decimal}
-                    className="h-[50px] flex items-center justify-center text-2xl font-medium cursor-pointer"
+                    className="h-[50px] flex items-center justify-center text-2xl font-medium cursor-pointer select-none"
                     style={{
                       scrollSnapAlign: 'center',
                       color: decimal === selectedDecimal ? 'white' : 'rgba(255, 255, 255, 0.5)',
