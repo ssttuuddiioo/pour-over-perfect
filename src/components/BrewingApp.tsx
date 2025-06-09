@@ -465,211 +465,214 @@ function BrewTimerPage({
   };
 
   return (
-    <div className={`min-h-screen flex flex-col relative ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
-      <div className="flex flex-col items-center justify-center min-h-screen w-full">
-        {/* Step Instructions at the very top */}
-        {(() => {
-          // Custom instructions for each step
-          const stepInstructions = [
-            'Evenly pour water twice the coffee weight; saturate grounds for 30 s.',
-            'In 30 s pour in a slow spiral to reach 108 g total water, keeping the water level steady.',
-            'Hold for 19 s to let the slurry settle and ensure even extraction.',
-            'Add water over 30 s, spiral to 176 g, same pour speed and height as before.',
-            'Pause 19 s; allow water to drain and extraction to balance.',
-            'Pour centered for 30 s until scale reads 225 g; maintain a smooth, gentle stream.',
-            'Let coffee draw down for approx. 38 s; stop when the bed is flat and dripping ends.'
-          ];
-          return (
-            <div className="w-full max-w-[430px] mx-auto px-8 mt-16 mb-10">
-              {fullCurrentStep < stepInstructions.length && (
-                <div
-                  key={fullCurrentStep}
-                  className="w-full text-left text-xl font-normal leading-snug text-black dark:text-white"
-                  style={{
-                    opacity: 1,
-                    transition: 'opacity 400ms cubic-bezier(0.4,0,0.2,1)',
-                    willChange: 'opacity',
-                  }}
-                >
-                  {stepInstructions[fullCurrentStep]}
-                </div>
-              )}
+    <div className={`min-h-screen flex flex-col relative ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+      style={{ minHeight: '100vh', minWidth: '100vw' }}>
+      <div
+        className="flex flex-col items-center justify-center w-full h-full"
+        style={{ minHeight: '100vh', minWidth: '100vw' }}
+      >
+        {/* Scaled content wrapper for 1180x1980 fit */}
+        <div
+          style={{
+            width: 1180,
+            height: 1980,
+            maxWidth: '100vw',
+            maxHeight: '100vh',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Step Instructions at the very top */}
+          {(() => {
+            // Keep spacing but remove instruction text
+            return (
+              <div className="w-full max-w-[430px] mx-auto px-8 mt-2 mb-2" style={{ minHeight: 20 }}>
+                {/* Intentionally left blank for spacing */}
+              </div>
+            );
+          })()}
+          {/* Timers below instructions */}
+          <div className="h-full flex flex-col w-full max-w-[430px] mx-auto px-4 py-2 relative z-10">
+            {/* Top Info Bar */}
+            <div className="flex justify-between items-end mb-4 w-full">
+              <div className="flex flex-col items-start">
+                <div className="text-xs uppercase tracking-wider text-gray-400">Total time</div>
+                <div className="text-2xl font-light mt-1">{formatTime(totalTime)}</div>
+              </div>
+              <div className="flex flex-col items-center flex-1">
+                <div className="text-xs uppercase tracking-wider text-gray-400">Time left</div>
+                <div className="text-2xl font-light mt-1">{formatTime(Math.ceil(timeRemaining))}</div>
+              </div>
+              <div className="flex flex-col items-end">
+                <div className="text-xs uppercase tracking-wider text-gray-400">Current step</div>
+                <div className="text-2xl font-light mt-1">{currentStepTimeRemaining}s</div>
+              </div>
             </div>
-          );
-        })()}
-        {/* Timers below instructions */}
-        <div className="h-full flex flex-col w-full max-w-[430px] mx-auto px-4 py-6 relative z-10" style={{ transform: 'scale(0.7)', transformOrigin: 'center', minWidth: 0 }}>
-          {/* Top Info Bar */}
-          <div className="flex justify-around items-center text-center mb-10">
-            <div>
-              <div className="text-xs uppercase tracking-wider text-gray-400">Total time</div>
-              <div className="text-2xl font-light mt-1">{formatTime(totalTime)}</div>
-            </div>
-            <div className="border-l border-gray-200 h-8 self-center"></div>
-            <div>
-              <div className="text-xs uppercase tracking-wider text-gray-400">Time left</div>
-              <div className="text-2xl font-light mt-1">{formatTime(Math.ceil(timeRemaining))}</div>
-            </div>
-            <div>
-              <div className="text-xs uppercase tracking-wider text-gray-400">Current step</div>
-              <div className="text-2xl font-light mt-1">{currentStepTimeRemaining}s</div>
-            </div>
-          </div>
 
-          {/* Step List */}
-          <div className="flex-1 relative" style={{ minHeight: 420 }}>
-            {/* Animated highlight box */}
-            {(() => {
-              // Dynamic step offset measurement for perfect highlight alignment
-              const [stepOffsets, setStepOffsets] = React.useState<number[]>([]);
-              const stepRefs = React.useRef<(HTMLDivElement | null)[]>([]);
-              React.useEffect(() => {
-                setStepOffsets(
-                  stepRefs.current.map(ref => (ref ? ref.offsetTop : 0))
-                );
-              }, [fullStepSequence.length, elapsed]);
-              const highlightTop = stepOffsets[fullCurrentStep] || 0;
-              const highlightHeight = stepRefs.current[fullCurrentStep]?.offsetHeight || 56;
-              return (
-                <>
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: 0,
-                      right: 0,
-                      top: highlightTop,
-                      height: highlightHeight,
-                      zIndex: 1,
-                      transition: 'top 400ms cubic-bezier(0.4, 0, 0.2, 1), height 200ms cubic-bezier(0.4, 0, 0.2, 1)',
-                      pointerEvents: 'none',
-                      borderRadius: 8,
-                      border: isDarkMode ? '1px solid #222' : '1px solid #D1D5DB',
-                      background: isDarkMode
-                        ? 'linear-gradient(rgba(60,60,60,0.2), rgba(60,60,60,0.2)), #000'
-                        : 'linear-gradient(rgba(120,120,120,0.08), rgba(120,120,120,0.08)), #F3F4F6',
-                      boxShadow: isDarkMode ? '0 2px 8px #0002' : '0 2px 8px #0001',
-                    }}
-                  />
-                  <div className="space-y-2 relative z-10">
-                    {fullStepSequence.slice(0, -1).map((step: any, index: number) => {
-                      const isActive = index === fullCurrentStep;
-                      const isCompleted = elapsed >= (fullStepEndTimes[index] || 0);
-                      const stepStart = index === 0 ? 0 : fullStepEndTimes[index - 1];
-                      const stepEnd = fullStepEndTimes[index] || 0;
-                      const stepDuration = Math.max(0, stepEnd - stepStart);
-                      const stepElapsed = Math.max(0, elapsed - stepStart);
-                      const stepProgress = stepDuration > 0 ? Math.min((stepElapsed / stepDuration) * 100, 100) : 0;
-                      const targetWeight = extractTargetWeight(step.water);
-                      const stepTextColor = isActive ? (isDarkMode ? 'text-white' : 'text-black') : (isDarkMode ? 'text-gray-500' : 'text-gray-400');
-                      return (
-                        <div
-                          key={index}
-                          className="py-3 relative"
-                          style={{ minHeight: 56 }}
-                          ref={el => (stepRefs.current[index] = el)}
-                        >
-                          <div className={`flex flex-col justify-between p-3 h-full`}
-                            style={{ transition: 'background 0.3s, box-shadow 0.3s, border 0.3s' }}
+            {/* Step List */}
+            <div className="flex-1 relative" style={{ minHeight: 420 }}>
+              {/* Animated highlight box */}
+              {(() => {
+                // Dynamic step offset measurement for perfect highlight alignment
+                const [stepOffsets, setStepOffsets] = React.useState<number[]>([]);
+                const stepRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+                React.useEffect(() => {
+                  setStepOffsets(
+                    stepRefs.current.map(ref => (ref ? ref.offsetTop : 0))
+                  );
+                }, [fullStepSequence.length, elapsed]);
+                const highlightTop = stepOffsets[fullCurrentStep] || 0;
+                const highlightHeight = stepRefs.current[fullCurrentStep]?.offsetHeight || 56;
+                return (
+                  <>
+                    <div
+                      style={{
+                        position: 'absolute',
+                        left: 0,
+                        right: 0,
+                        top: highlightTop,
+                        height: highlightHeight,
+                        zIndex: 1,
+                        transition: 'top 400ms cubic-bezier(0.4, 0, 0.2, 1), height 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+                        pointerEvents: 'none',
+                        borderRadius: 8,
+                        border: isDarkMode ? '1px solid #222' : '1px solid #D1D5DB',
+                        background: isDarkMode
+                          ? 'linear-gradient(rgba(60,60,60,0.2), rgba(60,60,60,0.2)), #000'
+                          : 'linear-gradient(rgba(120,120,120,0.08), rgba(120,120,120,0.08)), #F3F4F6',
+                        boxShadow: isDarkMode ? '0 2px 8px #0002' : '0 2px 8px #0001',
+                      }}
+                    />
+                    <div className="space-y-2 relative z-10">
+                      {fullStepSequence.slice(0, -1).map((step: any, index: number) => {
+                        const isActive = index === fullCurrentStep;
+                        const isCompleted = elapsed >= (fullStepEndTimes[index] || 0);
+                        const stepStart = index === 0 ? 0 : fullStepEndTimes[index - 1];
+                        const stepEnd = fullStepEndTimes[index] || 0;
+                        const stepDuration = Math.max(0, stepEnd - stepStart);
+                        const stepElapsed = Math.max(0, elapsed - stepStart);
+                        const stepProgress = stepDuration > 0 ? Math.min((stepElapsed / stepDuration) * 100, 100) : 0;
+                        const targetWeight = extractTargetWeight(step.water);
+                        const stepTextColor = isActive ? (isDarkMode ? 'text-white' : 'text-black') : (isDarkMode ? 'text-gray-500' : 'text-gray-400');
+                        return (
+                          <div
+                            key={index}
+                            className="py-3 relative"
+                            style={{ minHeight: 56 }}
+                            ref={el => (stepRefs.current[index] = el)}
                           >
-                            <div className="flex justify-between items-center">
-                              <span
-                                className={
-                                  isCompleted
-                                    ? 'text-base'
-                                    : isActive
-                                    ? 'text-base'
-                                    : 'text-base'
-                                }
-                                style={{
-                                  color: isCompleted
-                                    ? (isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)')
-                                    : (isDarkMode ? '#fff' : '#000'),
-                                  fontWeight: isActive ? 600 : 400
-                                }}
-                              >
-                                {step.label}
-                              </span>
-                              <span
-                                className={
-                                  isCompleted
-                                    ? 'text-base'
-                                    : isActive
-                                    ? 'text-base'
-                                    : 'text-base'
-                                }
-                                style={{
-                                  color: isCompleted
-                                    ? (isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)')
-                                    : (isDarkMode ? '#fff' : '#000'),
-                                  fontWeight: isActive ? 600 : 400
-                                }}
-                              >
-                                {targetWeight || `${Math.round(stepDuration)}s`}
-                              </span>
-                            </div>
-                            {/* Progress/Separator Line - now inside the step box */}
-                            {index < fullStepSequence.length - 2 && (
-                              <div className="relative w-full mt-2">
-                                <div 
-                                  className="w-full h-[2px]"
+                            <div className={`flex flex-col justify-between p-3 h-full`}
+                              style={{ transition: 'background 0.3s, box-shadow 0.3s, border 0.3s' }}
+                            >
+                              <div className="flex justify-between items-center">
+                                <span
+                                  className={
+                                    isCompleted
+                                      ? 'text-base'
+                                      : isActive
+                                      ? 'text-base'
+                                      : 'text-base'
+                                  }
                                   style={{
-                                    backgroundImage: isCompleted 
-                                      ? 'none'
-                                      : `radial-gradient(circle, #D1D5DB 2px, transparent 2px)`,
-                                    backgroundColor: isCompleted ? '#E5E7EB' : 'transparent',
-                                    backgroundSize: '16px 2px',
-                                    backgroundRepeat: 'repeat-x'
+                                    color: isCompleted
+                                      ? (isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)')
+                                      : (isDarkMode ? '#fff' : '#000'),
+                                    fontWeight: isActive ? 600 : 400
                                   }}
-                                />
-                                {isActive && !isCompleted && (
+                                >
+                                  {step.label}
+                                </span>
+                                <span
+                                  className={
+                                    isCompleted
+                                      ? 'text-base'
+                                      : isActive
+                                      ? 'text-base'
+                                      : 'text-base'
+                                  }
+                                  style={{
+                                    color: isCompleted
+                                      ? (isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)')
+                                      : (isDarkMode ? '#fff' : '#000'),
+                                    fontWeight: isActive ? 600 : 400
+                                  }}
+                                >
+                                  {targetWeight || `${Math.round(stepDuration)}s`}
+                                </span>
+                              </div>
+                              {/* Progress/Separator Line - now inside the step box */}
+                              {index < fullStepSequence.length - 2 && (
+                                <div className="relative w-full mt-2">
                                   <div 
-                                    className="absolute top-0 h-[2px] transition-all duration-100 ease-linear"
-                                    style={{ 
-                                      width: `${stepProgress}%`,
-                                      background: isDarkMode ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.75)',
-                                      transformOrigin: step.label.includes('Wait') || step.label.includes('Drawdown') ? 'right' : 'left'
+                                    className="w-full h-[2px]"
+                                    style={{
+                                      backgroundImage: isCompleted 
+                                        ? 'none'
+                                        : `radial-gradient(circle, #D1D5DB 2px, transparent 2px)`,
+                                      backgroundColor: isCompleted ? '#E5E7EB' : 'transparent',
+                                      backgroundSize: '16px 2px',
+                                      backgroundRepeat: 'repeat-x'
                                     }}
                                   />
-                                )}
-                              </div>
-                            )}
+                                  {isActive && !isCompleted && (
+                                    <div 
+                                      className="absolute top-0 h-[2px] transition-all duration-100 ease-linear"
+                                      style={{ 
+                                        width: `${stepProgress}%`,
+                                        background: isDarkMode ? '#fff' : '#000',
+                                        transformOrigin: step.label.includes('Wait') || step.label.includes('Drawdown') ? 'right' : 'left'
+                                      }}
+                                    />
+                                  )}
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-
-          {/* Bottom Buttons */}
-          <footer className="mt-10">
-            <div className="flex items-center justify-center space-x-8">
-              <button onClick={onBack} className="py-2 px-8 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] bg-white dark:bg-black">Back</button>
-              <div className="w-2 h-2 bg-gray-200 rounded-full"></div>
-              <button
-                onClick={() => {
-                  const isDrawdown = fullStepSequence[fullCurrentStep]?.label === 'Drawdown';
-                  if (isDrawdown) {
-                    onDone && onDone();
-                  } else if (timerActive && !timerPaused) {
-                    handlePause();
-                  } else {
-                    handleResume();
-                  }
-                }}
-                className="py-2 px-8 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] bg-white dark:bg-black"
-                disabled={finished}
-              >
-                {fullStepSequence[fullCurrentStep]?.label === 'Drawdown'
-                  ? 'Done'
-                  : timerActive && !timerPaused
-                  ? 'Pause'
-                  : 'Start'}
-              </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
-          </footer>
+
+            {/* Bottom Buttons */}
+            <footer className="mt-4 mb-2">
+              <div className="flex items-center justify-center space-x-8">
+                <button
+                  onClick={onBack}
+                  className={`py-2 px-8 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+                >
+                  Back
+                </button>
+                <div className="w-2 h-2 bg-gray-200 rounded-full"></div>
+                <button
+                  onClick={() => {
+                    const isDrawdown = fullStepSequence[fullCurrentStep]?.label === 'Drawdown';
+                    if (isDrawdown) {
+                      onDone && onDone();
+                    } else if (timerActive && !timerPaused) {
+                      handlePause();
+                    } else {
+                      handleResume();
+                    }
+                  }}
+                  className={`py-2 px-8 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+                  disabled={finished}
+                >
+                  {fullStepSequence[fullCurrentStep]?.label === 'Drawdown'
+                    ? 'Done'
+                    : timerActive && !timerPaused
+                    ? 'Pause'
+                    : 'Start'}
+                </button>
+              </div>
+            </footer>
+          </div>
         </div>
       </div>
     </div>
@@ -770,6 +773,35 @@ function HistoryPage({ onBack }: { onBack: () => void }) {
   );
 }
 
+function AboutPage({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white px-4">
+      <div className="max-w-md w-full bg-zinc-900 rounded-xl shadow-lg p-8 flex flex-col items-center">
+        <h1 className="text-3xl font-bold mb-4">Origen</h1>
+        <p className="mb-6 text-center text-base">
+          Origen is a coffee project by Pablo Gnecco.<br/>
+          A quest to source, roast, and share ethically traded Colombian coffee.<br/>
+          This timer is an experiment.
+        </p>
+        <a
+          href="https://www.buymeacoffee.com/origen.coffee"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block mb-6 px-6 py-2 bg-yellow-400 text-black font-semibold rounded-lg shadow hover:bg-yellow-300 transition"
+        >
+          Buy me a coffee
+        </a>
+        <button
+          onClick={onBack}
+          className="mt-2 px-6 py-2 border border-gray-300 rounded-lg text-base font-medium bg-black text-white hover:border-[#ff6700]"
+        >
+          Back
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => {
   const { isDarkMode, toggleDarkMode } = useTheme();
   // Load initial settings from localStorage or use defaults
@@ -808,6 +840,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   const [showBrewTimer, setShowBrewTimer] = useState(false);
   const [showCompletionPrompt, setShowCompletionPrompt] = useState(false);
   const [showBrewLog, setShowBrewLog] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
 
   const [settingsDraft, setSettingsDraft] = useState<{
     amount: number;
@@ -1242,6 +1275,10 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     );
   }
   
+  if (showAbout) {
+    return <AboutPage onBack={() => setShowAbout(false)} />;
+  }
+  
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
       <div className="h-full flex flex-col w-full max-w-[430px] mx-auto px-4 py-6 relative">
@@ -1331,7 +1368,13 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
         {/* Footer attribution */}
         <div className="w-full flex justify-center items-center mt-8 mb-2">
           <span className="text-xs text-gray-400">Made by </span>
-          <span className="text-xs font-semibold" style={{ color: '#ff6700', marginLeft: '0.25rem' }}>Origen</span>
+          <button
+            className="text-xs font-semibold underline hover:text-[#ff6700] focus:outline-none ml-1"
+            style={{ color: '#ff6700' }}
+            onClick={() => setShowAbout(true)}
+          >
+            Origen
+          </button>
         </div>
 
         {/* Modals as overlays */}
