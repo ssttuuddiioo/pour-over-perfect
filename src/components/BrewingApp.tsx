@@ -446,7 +446,8 @@ function BrewTimerPage({
   timerPaused,
   finished,
   formatTime,
-  onBack
+  onBack,
+  onDone
 }: any) {
   const { isDarkMode } = useTheme();
   const totalTime = fullStepEndTimes[fullStepEndTimes.length - 1] || 1;
@@ -465,87 +466,211 @@ function BrewTimerPage({
 
   return (
     <div className={`min-h-screen flex flex-col relative ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
-      <div className="h-full flex flex-col w-full max-w-[430px] mx-auto px-4 py-6 relative z-10">
-        
-        {/* Top Info Bar */}
-        <div className="flex justify-around items-center text-center mb-10">
-          <div>
-            <div className={`text-xs uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total time</div>
-            <div className={`text-2xl font-light mt-1`}>{formatTime(totalTime)}</div>
-          </div>
-          <div className={`border-l ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} h-8 self-center`}></div>
-          <div>
-            <div className={`text-xs uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Time left</div>
-            <div className={`text-2xl font-light mt-1`}>{formatTime(Math.ceil(timeRemaining))}</div>
-          </div>
-          <div>
-            <div className={`text-xs uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Current step</div>
-            <div className={`text-2xl font-light mt-1`}>{currentStepTimeRemaining}s</div>
-          </div>
-        </div>
-
-        {/* Step List */}
-        <div className="flex-1 space-y-2 overflow-y-auto">
-          {fullStepSequence.slice(0, -1).map((step: any, index: number) => {
-            const isActive = index === fullCurrentStep;
-            const isCompleted = elapsed >= (fullStepEndTimes[index] || 0);
-            
-            const stepStart = index === 0 ? 0 : fullStepEndTimes[index - 1];
-            const stepEnd = fullStepEndTimes[index] || 0;
-            const stepDuration = Math.max(0, stepEnd - stepStart);
-            const stepElapsed = Math.max(0, elapsed - stepStart);
-            const stepProgress = stepDuration > 0 ? Math.min((stepElapsed / stepDuration) * 100, 100) : 0;
-
-            const targetWeight = extractTargetWeight(step.water);
-            const stepTextColor = isActive ? (isDarkMode ? 'text-white' : 'text-black') : (isDarkMode ? 'text-gray-500' : 'text-gray-400');
-
-            return (
-              <div key={index} className="py-3 relative">
-                <div className={`flex justify-between items-center p-3 ${isActive ? `${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-md` : ''}`}>
-                  <span className={`${stepTextColor} text-base`}>{step.label}</span>
-                  <span className={`${stepTextColor} text-base`}>{targetWeight || `${Math.round(stepDuration)}s`}</span>
+      <div className="flex flex-col items-center justify-center min-h-screen w-full">
+        {/* Step Instructions at the very top */}
+        {(() => {
+          // Custom instructions for each step
+          const stepInstructions = [
+            'Evenly pour water twice the coffee weight; saturate grounds for 30 s.',
+            'In 30 s pour in a slow spiral to reach 108 g total water, keeping the water level steady.',
+            'Hold for 19 s to let the slurry settle and ensure even extraction.',
+            'Add water over 30 s, spiral to 176 g, same pour speed and height as before.',
+            'Pause 19 s; allow water to drain and extraction to balance.',
+            'Pour centered for 30 s until scale reads 225 g; maintain a smooth, gentle stream.',
+            'Let coffee draw down for approx. 38 s; stop when the bed is flat and dripping ends.'
+          ];
+          return (
+            <div className="w-full max-w-[430px] mx-auto px-8 mt-16 mb-10">
+              {fullCurrentStep < stepInstructions.length && (
+                <div
+                  key={fullCurrentStep}
+                  className="w-full text-left text-xl font-normal leading-snug text-black dark:text-white"
+                  style={{
+                    opacity: 1,
+                    transition: 'opacity 400ms cubic-bezier(0.4,0,0.2,1)',
+                    willChange: 'opacity',
+                  }}
+                >
+                  {stepInstructions[fullCurrentStep]}
                 </div>
-                
-                {/* Progress/Separator Line */}
-                {index < fullStepSequence.length - 2 && (
-                  <div className="absolute bottom-0 left-0 w-full h-px">
-                    <div 
-                      className="w-full h-px"
-                      style={{
-                        backgroundImage: isCompleted 
-                          ? 'none'
-                          : `radial-gradient(circle, ${isDarkMode ? '#4B5563' : '#CBD5E0'} 1px, transparent 1px)`,
-                        backgroundColor: isCompleted ? (isDarkMode ? 'white' : 'black') : 'transparent',
-                        backgroundSize: '8px 1px',
-                        backgroundRepeat: 'repeat-x'
-                      }}
-                    />
-                    {isActive && !isCompleted && (
-                      <div 
-                        className={`absolute top-0 h-px ${isDarkMode ? 'bg-white' : 'bg-black'} transition-all duration-100 ease-linear`}
-                        style={{ 
-                          width: `${stepProgress}%`,
-                          transformOrigin: step.label.includes('Wait') || step.label.includes('Drawdown') ? 'right' : 'left'
-                        }}
-                      />
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Bottom Buttons */}
-        <footer className="mt-6">
-          <div className="flex items-center justify-center space-x-4">
-            <button onClick={onBack} className={`py-2 px-6 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg text-sm transition-colors hover:border-[#ff6700]`}>Back</button>
-            <div className={`w-1.5 h-1.5 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} rounded-full`}></div>
-            <button onClick={timerActive && !timerPaused ? handlePause : handleResume} className={`py-2 px-6 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg text-sm transition-colors hover:border-[#ff6700]`} disabled={finished}>
-              {timerActive && !timerPaused ? 'Pause' : 'Start'}
-            </button>
+              )}
+            </div>
+          );
+        })()}
+        {/* Timers below instructions */}
+        <div className="h-full flex flex-col w-full max-w-[430px] mx-auto px-4 py-6 relative z-10" style={{ transform: 'scale(0.7)', transformOrigin: 'center', minWidth: 0 }}>
+          {/* Top Info Bar */}
+          <div className="flex justify-around items-center text-center mb-10">
+            <div>
+              <div className="text-xs uppercase tracking-wider text-gray-400">Total time</div>
+              <div className="text-2xl font-light mt-1">{formatTime(totalTime)}</div>
+            </div>
+            <div className="border-l border-gray-200 h-8 self-center"></div>
+            <div>
+              <div className="text-xs uppercase tracking-wider text-gray-400">Time left</div>
+              <div className="text-2xl font-light mt-1">{formatTime(Math.ceil(timeRemaining))}</div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wider text-gray-400">Current step</div>
+              <div className="text-2xl font-light mt-1">{currentStepTimeRemaining}s</div>
+            </div>
           </div>
-        </footer>
+
+          {/* Step List */}
+          <div className="flex-1 relative" style={{ minHeight: 420 }}>
+            {/* Animated highlight box */}
+            {(() => {
+              // Dynamic step offset measurement for perfect highlight alignment
+              const [stepOffsets, setStepOffsets] = React.useState<number[]>([]);
+              const stepRefs = React.useRef<(HTMLDivElement | null)[]>([]);
+              React.useEffect(() => {
+                setStepOffsets(
+                  stepRefs.current.map(ref => (ref ? ref.offsetTop : 0))
+                );
+              }, [fullStepSequence.length, elapsed]);
+              const highlightTop = stepOffsets[fullCurrentStep] || 0;
+              const highlightHeight = stepRefs.current[fullCurrentStep]?.offsetHeight || 56;
+              return (
+                <>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      top: highlightTop,
+                      height: highlightHeight,
+                      zIndex: 1,
+                      transition: 'top 400ms cubic-bezier(0.4, 0, 0.2, 1), height 200ms cubic-bezier(0.4, 0, 0.2, 1)',
+                      pointerEvents: 'none',
+                      borderRadius: 8,
+                      border: isDarkMode ? '1px solid #222' : '1px solid #D1D5DB',
+                      background: isDarkMode
+                        ? 'linear-gradient(rgba(60,60,60,0.2), rgba(60,60,60,0.2)), #000'
+                        : 'linear-gradient(rgba(120,120,120,0.08), rgba(120,120,120,0.08)), #F3F4F6',
+                      boxShadow: isDarkMode ? '0 2px 8px #0002' : '0 2px 8px #0001',
+                    }}
+                  />
+                  <div className="space-y-2 relative z-10">
+                    {fullStepSequence.slice(0, -1).map((step: any, index: number) => {
+                      const isActive = index === fullCurrentStep;
+                      const isCompleted = elapsed >= (fullStepEndTimes[index] || 0);
+                      const stepStart = index === 0 ? 0 : fullStepEndTimes[index - 1];
+                      const stepEnd = fullStepEndTimes[index] || 0;
+                      const stepDuration = Math.max(0, stepEnd - stepStart);
+                      const stepElapsed = Math.max(0, elapsed - stepStart);
+                      const stepProgress = stepDuration > 0 ? Math.min((stepElapsed / stepDuration) * 100, 100) : 0;
+                      const targetWeight = extractTargetWeight(step.water);
+                      const stepTextColor = isActive ? (isDarkMode ? 'text-white' : 'text-black') : (isDarkMode ? 'text-gray-500' : 'text-gray-400');
+                      return (
+                        <div
+                          key={index}
+                          className="py-3 relative"
+                          style={{ minHeight: 56 }}
+                          ref={el => (stepRefs.current[index] = el)}
+                        >
+                          <div className={`flex flex-col justify-between p-3 h-full`}
+                            style={{ transition: 'background 0.3s, box-shadow 0.3s, border 0.3s' }}
+                          >
+                            <div className="flex justify-between items-center">
+                              <span
+                                className={
+                                  isCompleted
+                                    ? 'text-base'
+                                    : isActive
+                                    ? 'text-base'
+                                    : 'text-base'
+                                }
+                                style={{
+                                  color: isCompleted
+                                    ? (isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)')
+                                    : (isDarkMode ? '#fff' : '#000'),
+                                  fontWeight: isActive ? 600 : 400
+                                }}
+                              >
+                                {step.label}
+                              </span>
+                              <span
+                                className={
+                                  isCompleted
+                                    ? 'text-base'
+                                    : isActive
+                                    ? 'text-base'
+                                    : 'text-base'
+                                }
+                                style={{
+                                  color: isCompleted
+                                    ? (isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)')
+                                    : (isDarkMode ? '#fff' : '#000'),
+                                  fontWeight: isActive ? 600 : 400
+                                }}
+                              >
+                                {targetWeight || `${Math.round(stepDuration)}s`}
+                              </span>
+                            </div>
+                            {/* Progress/Separator Line - now inside the step box */}
+                            {index < fullStepSequence.length - 2 && (
+                              <div className="relative w-full mt-2">
+                                <div 
+                                  className="w-full h-[2px]"
+                                  style={{
+                                    backgroundImage: isCompleted 
+                                      ? 'none'
+                                      : `radial-gradient(circle, #D1D5DB 2px, transparent 2px)`,
+                                    backgroundColor: isCompleted ? '#E5E7EB' : 'transparent',
+                                    backgroundSize: '16px 2px',
+                                    backgroundRepeat: 'repeat-x'
+                                  }}
+                                />
+                                {isActive && !isCompleted && (
+                                  <div 
+                                    className="absolute top-0 h-[2px] transition-all duration-100 ease-linear"
+                                    style={{ 
+                                      width: `${stepProgress}%`,
+                                      background: isDarkMode ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.75)',
+                                      transformOrigin: step.label.includes('Wait') || step.label.includes('Drawdown') ? 'right' : 'left'
+                                    }}
+                                  />
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+
+          {/* Bottom Buttons */}
+          <footer className="mt-10">
+            <div className="flex items-center justify-center space-x-8">
+              <button onClick={onBack} className="py-2 px-8 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] bg-white dark:bg-black">Back</button>
+              <div className="w-2 h-2 bg-gray-200 rounded-full"></div>
+              <button
+                onClick={() => {
+                  const isDrawdown = fullStepSequence[fullCurrentStep]?.label === 'Drawdown';
+                  if (isDrawdown) {
+                    onDone && onDone();
+                  } else if (timerActive && !timerPaused) {
+                    handlePause();
+                  } else {
+                    handleResume();
+                  }
+                }}
+                className="py-2 px-8 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] bg-white dark:bg-black"
+                disabled={finished}
+              >
+                {fullStepSequence[fullCurrentStep]?.label === 'Drawdown'
+                  ? 'Done'
+                  : timerActive && !timerPaused
+                  ? 'Pause'
+                  : 'Start'}
+              </button>
+            </div>
+          </footer>
+        </div>
       </div>
     </div>
   );
@@ -1112,6 +1237,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
         finished={isFinished}
         formatTime={formatTime}
         onBack={handleBack}
+        onDone={() => setShowCompletionPrompt(true)}
       />
     );
   }
