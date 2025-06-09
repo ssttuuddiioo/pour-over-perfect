@@ -5,6 +5,7 @@ import { CoffeeSettings } from '../types/brewing'; // BrewingPhase might not be 
 import { calculateBrewTiming, formatTime } from '../utils/brewingCalculations';
 import { ClipboardList, Info, Settings as SettingsIcon, X, Coffee, Sliders, SlidersHorizontal, Pencil } from 'lucide-react';
 import ProPours from './ProPours';
+import VerticalPicker from './VerticalPicker';
 // FlavorEQ import removed
 
 const defaultCoffeeOptions = [15, 30];
@@ -489,10 +490,10 @@ function SettingsPage({
                     className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
                     placeholder="e.g. 1,200m or 4,000ft"
                   />
-                              </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </main>
+          </main>
 
           {/* Footer - matching home page */}
           <footer className="mt-6 space-y-3">
@@ -830,7 +831,26 @@ function HistoryPage({ onBack }: { onBack: () => void }) {
 }
 
 const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => {
-  const [grindSize, setGrindSize] = useState<number>(6);
+  // Load initial settings from localStorage or use defaults
+  const loadSavedSettings = () => {
+    const savedSettings = localStorage.getItem('coffeeSettings');
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        return {
+          amount: parsed.amount || 20,
+          ratio: parsed.ratio || 16,
+          bloomRatio: parsed.bloomRatio || 2
+        };
+      } catch (e) {
+        console.error('Error loading saved settings:', e);
+      }
+    }
+    return { amount: 20, ratio: 16, bloomRatio: 2 };
+  };
+
+  const [coffeeSettings, setCoffeeSettings] = useState<CoffeeSettings>(loadSavedSettings);
+  const [grindSize, setGrindSize] = useState(6);
   const [coffeeOptions, setCoffeeOptions] = useState<number[]>(() => {
     const saved = localStorage.getItem('coffeeOptions');
     return saved ? JSON.parse(saved) : defaultCoffeeOptions;
@@ -838,14 +858,6 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   const [ratioOptions, setRatioOptions] = useState<number[]>(() => {
     const saved = localStorage.getItem('ratioOptions');
     return saved ? JSON.parse(saved) : defaultRatioOptions;
-  });
-  const [coffeeSettings, setCoffeeSettings] = useState<CoffeeSettings>(() => {
-    const saved = localStorage.getItem('coffeeSettings');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      return { ...parsed, bloomRatio: parsed.bloomRatio || 2 }; 
-    }
-    return { amount: 15, ratio: 15, bloomRatio: 2 };
   });
 
   const [showNotes, setShowNotes] = useState(false);
@@ -895,8 +907,6 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     50, // Default acidity for calculation (no EQ)
     50  // Default fruitiness for calculation (no EQ)
   );
-
-
 
   // Calculate step sequence
   const stepSequence = [
@@ -1074,15 +1084,11 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   }, [showSettings]);
   
   const handleCoffeeAmountChange = (amount: number) => {
-    const newSettings = { ...coffeeSettings, amount, bloomRatio: coffeeSettings.bloomRatio || 2 };
-    setCoffeeSettings(newSettings);
-    localStorage.setItem('coffeeSettings', JSON.stringify(newSettings));
+    setCoffeeSettings(prev => ({ ...prev, amount }));
   };
 
   const handleRatioChange = (ratio: number) => {
-    const newSettings = { ...coffeeSettings, ratio, bloomRatio: coffeeSettings.bloomRatio || 2 };
-    setCoffeeSettings(newSettings);
-    localStorage.setItem('coffeeSettings', JSON.stringify(newSettings));
+    setCoffeeSettings(prev => ({ ...prev, ratio }));
   };
 
   // Helper functions for real-time editing
@@ -1210,6 +1216,11 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     return () => window.removeEventListener('keydown', trapFocus);
   }, [showSettings]);
 
+  // Save settings whenever they change
+  useEffect(() => {
+    localStorage.setItem('coffeeSettings', JSON.stringify(coffeeSettings));
+  }, [coffeeSettings]);
+
   if (showInfo) {
     return <InfoPage onBack={() => setShowInfo(false)} />;
   }
@@ -1290,121 +1301,39 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   }
   
   return (
-    <div className="antialiased h-screen" style={{ backgroundColor: '#000000', color: '#FFFFFF' }}>
-      {/* REMOVED: container mx-auto px-4 py-4 max-w-md - now full width/height */}
+    <div className="min-h-screen bg-black text-white">
       <div className="h-full flex flex-col" style={{ padding: '1.5rem 0.8rem 0.4rem 0.8rem' }}>
-        {/* Header - Reduced margin */}
-        <header className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Pour Perfect</h1>
-          </div>
-        </header>
-
         {/* Main Content - Optimized spacing */}
         <main className="flex-1 space-y-6">
-          {/* Coffee and Ratio Section - Side by Side */}
-          <div className="grid grid-cols-2 gap-4">
-            {/* Coffee Section - Now Editable */}
-            <div>
-              <h2 className="text-sm font-medium text-gray-400 mb-3">Coffee</h2>
-              <div className="relative">
-                <div className="selected-card flex items-center">
-                  <button
-                    type="button"
-                    className="absolute left-2 text-gray-400 hover:text-white z-10 text-lg"
-                    onClick={() => incrementCoffee(-0.1)}
-                  >
-                    &minus;
-                  </button>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={coffeeSettings.amount}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Allow any input while typing, validate on blur
-                      if (value === '' || !isNaN(parseFloat(value))) {
-                        const tempSettings = { ...coffeeSettings, amount: value === '' ? 0 : parseFloat(value) || coffeeSettings.amount };
-                        setCoffeeSettings(tempSettings);
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const numValue = parseFloat(e.target.value);
-                      if (isNaN(numValue) || numValue <= 0) {
-                        // Reset to previous valid value if invalid
-                        setCoffeeSettings({ ...coffeeSettings });
-                      } else {
-                        handleCoffeeInputChange(e.target.value);
-                      }
-                    }}
-                    onFocus={(e) => e.target.select()}
-                    className="w-full bg-transparent text-center text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded no-spinners"
-                    style={{ 
-                      padding: '0.75rem 3rem',
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-2 text-gray-400 hover:text-white z-10 text-lg"
-                    onClick={() => incrementCoffee(0.1)}
-                  >
-                    +
-                  </button>
-                  <span className="absolute right-8 text-gray-400 text-sm pointer-events-none">g</span>
-                </div>
-              </div>
+          {/* Coffee Amount and Ratio Selection */}
+          <div className="flex justify-center items-center space-x-8 mb-8">
+            <div className="text-center">
+              <div className="text-sm text-gray-400 mb-2">Coffee</div>
+              <VerticalPicker
+                items={Array.from({ length: 41 }, (_, i) => i + 10)}
+                value={coffeeSettings.amount}
+                onChange={handleCoffeeAmountChange}
+                unit="g"
+                hasDecimals={true}
+              />
             </div>
+            <div className="text-center">
+              <div className="text-sm text-gray-400 mb-2">Ratio</div>
+              <VerticalPicker
+                items={Array.from({ length: 41 }, (_, i) => i + 10)}
+                value={coffeeSettings.ratio}
+                onChange={handleRatioChange}
+                unit=":1"
+                hasDecimals={true}
+              />
+            </div>
+          </div>
 
-            {/* Ratio Section - Now Editable */}
-            <div>
-              <h2 className="text-sm font-medium text-gray-400 mb-3">Ratio</h2>
-              <div className="relative">
-                <div className="selected-card flex items-center">
-                  <button
-                    type="button"
-                    className="absolute left-2 text-gray-400 hover:text-white z-10 text-lg"
-                    onClick={() => incrementRatio(-0.1)}
-                  >
-                    &minus;
-                  </button>
-                  <span className="absolute left-8 text-gray-400 text-sm pointer-events-none z-5">1:</span>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={coffeeSettings.ratio}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      // Allow any input while typing, validate on blur
-                      if (value === '' || !isNaN(parseFloat(value))) {
-                        const tempSettings = { ...coffeeSettings, ratio: value === '' ? 0 : parseFloat(value) || coffeeSettings.ratio };
-                        setCoffeeSettings(tempSettings);
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const numValue = parseFloat(e.target.value);
-                      if (isNaN(numValue) || numValue <= 0) {
-                        // Reset to previous valid value if invalid
-                        setCoffeeSettings({ ...coffeeSettings });
-                      } else {
-                        handleRatioInputChange(e.target.value);
-                      }
-                    }}
-                    onFocus={(e) => e.target.select()}
-                    className="w-full bg-transparent text-center text-lg font-semibold text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded no-spinners"
-                    style={{ 
-                      padding: '0.75rem 3rem',
-                      paddingLeft: '4rem',
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-2 text-gray-400 hover:text-white z-10 text-lg"
-                    onClick={() => incrementRatio(0.1)}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
+          {/* Total Water Amount */}
+          <div className="text-center">
+            <div className="text-sm text-gray-400 mb-2">Total Water</div>
+            <div className="text-3xl font-semibold text-white">
+              {brewingTimings.thirdPourTarget}g
             </div>
           </div>
 
@@ -1455,11 +1384,29 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
             </div>
           </div>
 
+          {/* Info and Ready Buttons */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <button 
+              onClick={onShowAbout}
+              className="btn-primary h-16 text-xl font-medium"
+              type="button"
+              aria-label="Info"
+            >
+              Info
+            </button>
+            <button 
+              className="btn-primary h-16 text-xl font-medium"
+              onClick={handleStart}
+            >
+              Ready
+            </button>
+          </div>
+
           {/* Add Details and Past Brews Buttons */}
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={openSettings}
-              className="btn-primary"
+              className="btn-primary h-24 text-lg font-medium"
               type="button"
               aria-label="Add Details"
             >
@@ -1467,23 +1414,13 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
             </button>
             <button 
               onClick={() => setShowNotes(true)}
-              className="btn-primary"
+              className="btn-primary h-24 text-lg font-medium"
               aria-label="Past Brews"
             >
               Past Brews
             </button>
           </div>
         </main>
-
-        {/* Footer - Reduced margin */}
-        <footer className="mt-8">
-          <button 
-            className="btn-primary" 
-            onClick={handleStart}
-          >
-            Ready
-          </button>
-        </footer>
       </div>
     </div>
   );
