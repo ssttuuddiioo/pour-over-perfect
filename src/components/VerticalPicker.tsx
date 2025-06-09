@@ -7,6 +7,7 @@ interface VerticalPickerProps {
   unit?: string;
   formatValue?: (value: number) => string;
   hasDecimals?: boolean;
+  isDarkMode?: boolean;
 }
 
 const VerticalPicker: React.FC<VerticalPickerProps> = ({
@@ -16,6 +17,7 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
   unit = '',
   formatValue = (v) => v.toString(),
   hasDecimals = false,
+  isDarkMode = true,
 }) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [selectedDecimal, setSelectedDecimal] = useState(0);
@@ -121,112 +123,119 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
 
   return (
     <div className="flex items-center space-x-1">
-      {/* Whole number picker or input */}
-      <div className="relative h-[250px] w-16 overflow-hidden">
-        {isEditing ? (
-          <input
-            ref={inputRef}
-            type="number"
-            value={editValue}
-            onChange={handleInputChange}
-            onBlur={handleInputBlur}
-            onKeyDown={handleInputKeyDown}
-            className="w-full h-full bg-transparent text-2xl font-medium text-white text-center focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded"
-            style={{ padding: '100px 0' }}
-            min={items[0]}
-            max={items[items.length - 1]}
-            step={hasDecimals ? "0.1" : "1"}
-          />
-        ) : (
-          <>
-            <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black to-transparent z-10 pointer-events-none" />
-            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black to-transparent z-10 pointer-events-none" />
-            <div 
-              className="absolute left-0 right-0 h-[50px] bg-white/10 rounded-lg z-0 pointer-events-none"
-              style={{ top: '100px' }}
+      {/* Picker container with single border and matching button width */}
+      <div className="flex flex-row items-center justify-center h-[250px] px-4 border border-gray-300 rounded-lg bg-transparent overflow-hidden w-full max-w-[180px] mx-auto">
+        {/* Whole number picker or input */}
+        <div className="relative h-[250px] w-24 overflow-hidden flex flex-col items-center justify-center">
+          {isEditing ? (
+            <input
+              ref={inputRef}
+              type="number"
+              value={editValue}
+              onChange={handleInputChange}
+              onBlur={handleInputBlur}
+              onKeyDown={handleInputKeyDown}
+              className={`w-full h-full bg-transparent text-2xl font-medium ${isDarkMode ? 'text-white' : 'text-black'} text-center focus:outline-none focus:ring-2 focus:ring-opacity-50 rounded`}
+              style={{ padding: '100px 0' }}
+              min={items[0]}
+              max={items[items.length - 1]}
+              step={hasDecimals ? "0.1" : "1"}
             />
-            <div
-              ref={containerRef}
-              className="h-full overflow-y-auto scrollbar-hide"
-              onScroll={handleScroll}
-              style={{
-                scrollSnapType: 'y mandatory',
-                scrollPadding: '100px 0',
-                touchAction: 'pan-y',
-                WebkitOverflowScrolling: 'touch',
-              }}
-            >
+          ) : (
+            <>
+              <div className={`absolute top-0 left-0 right-0 h-20 ${isDarkMode ? 'bg-gradient-to-b from-black to-transparent' : 'bg-gradient-to-b from-white to-transparent'} z-10 pointer-events-none`} />
+              <div className={`absolute bottom-0 left-0 right-0 h-20 ${isDarkMode ? 'bg-gradient-to-t from-black to-transparent' : 'bg-gradient-to-t from-white to-transparent'} z-10 pointer-events-none`} />
               <div 
-                className="py-[100px]"
-                style={{ height: totalHeight + (itemHeight * 2) }}
+                className={`absolute left-0 right-0 h-[50px] ${isDarkMode ? 'bg-white/10' : 'bg-black/10'} rounded-lg z-0 pointer-events-none`}
+                style={{ top: '100px' }}
+              />
+              <div
+                ref={containerRef}
+                className="h-full overflow-y-auto scrollbar-hide flex flex-col items-center justify-center"
+                onScroll={handleScroll}
+                style={{
+                  scrollSnapType: 'y mandatory',
+                  scrollPadding: '100px 0',
+                  touchAction: 'pan-y',
+                  WebkitOverflowScrolling: 'touch',
+                }}
               >
-                {items.map((item, index) => (
-                  <div
-                    key={item}
-                    className="h-[50px] flex items-center justify-center text-2xl font-medium cursor-pointer select-none"
-                    style={{
-                      scrollSnapAlign: 'center',
-                      color: index === selectedIndex ? 'white' : 'rgba(255, 255, 255, 0.5)',
-                    }}
-                    onClick={() => startEditing()}
-                  >
-                    {formatValue(item)}
-                  </div>
-                ))}
+                <div 
+                  className="py-[100px]"
+                  style={{ height: totalHeight + (itemHeight * 2) }}
+                >
+                  {items.map((item, index) => (
+                    <div
+                      key={item}
+                      className={`h-[50px] flex items-center justify-center text-2xl font-medium cursor-pointer select-none text-center`}
+                      style={{
+                        scrollSnapAlign: 'center',
+                        color: index === selectedIndex 
+                          ? (isDarkMode ? 'white' : 'black')
+                          : (isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)'),
+                      }}
+                      onClick={() => startEditing()}
+                    >
+                      {formatValue(item)}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Decimal picker (if enabled) */}
+        {hasDecimals && !isEditing && (
+          <>
+            <span className={`text-2xl font-medium mx-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>.</span>
+            <div className="relative h-[250px] w-16 overflow-hidden flex flex-col items-center justify-center">
+              <div className={`absolute top-0 left-0 right-0 h-20 ${isDarkMode ? 'bg-gradient-to-b from-black to-transparent' : 'bg-gradient-to-b from-white to-transparent'} z-10 pointer-events-none`} />
+              <div className={`absolute bottom-0 left-0 right-0 h-20 ${isDarkMode ? 'bg-gradient-to-t from-black to-transparent' : 'bg-gradient-to-t from-white to-transparent'} z-10 pointer-events-none`} />
+              <div 
+                className={`absolute left-0 right-0 h-[50px] ${isDarkMode ? 'bg-white/10' : 'bg-black/10'} rounded-lg z-0 pointer-events-none`}
+                style={{ top: '100px' }}
+              />
+              <div
+                ref={decimalContainerRef}
+                className="h-full overflow-y-auto scrollbar-hide flex flex-col items-center justify-center"
+                onScroll={handleDecimalScroll}
+                style={{
+                  scrollSnapType: 'y mandatory',
+                  scrollPadding: '100px 0',
+                  touchAction: 'pan-y',
+                  WebkitOverflowScrolling: 'touch',
+                }}
+              >
+                <div 
+                  className="py-[100px]"
+                  style={{ height: itemHeight * 12 }}
+                >
+                  {decimalOptions.map((decimal) => (
+                    <div
+                      key={decimal}
+                      className={`h-[50px] flex items-center justify-center text-2xl font-medium cursor-pointer select-none text-center`}
+                      style={{
+                        scrollSnapAlign: 'center',
+                        color: decimal === selectedDecimal 
+                          ? (isDarkMode ? 'white' : 'black')
+                          : (isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)'),
+                      }}
+                      onClick={() => startEditing()}
+                    >
+                      {decimal}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </>
         )}
       </div>
 
-      {/* Decimal picker (if enabled) */}
-      {hasDecimals && !isEditing && (
-        <>
-          <span className="text-2xl font-medium text-white">.</span>
-          <div className="relative h-[250px] w-12 overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black to-transparent z-10 pointer-events-none" />
-            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black to-transparent z-10 pointer-events-none" />
-            <div 
-              className="absolute left-0 right-0 h-[50px] bg-white/10 rounded-lg z-0 pointer-events-none"
-              style={{ top: '100px' }}
-            />
-            <div
-              ref={decimalContainerRef}
-              className="h-full overflow-y-auto scrollbar-hide"
-              onScroll={handleDecimalScroll}
-              style={{
-                scrollSnapType: 'y mandatory',
-                scrollPadding: '100px 0',
-                touchAction: 'pan-y',
-                WebkitOverflowScrolling: 'touch',
-              }}
-            >
-              <div 
-                className="py-[100px]"
-                style={{ height: itemHeight * 12 }}
-              >
-                {decimalOptions.map((decimal) => (
-                  <div
-                    key={decimal}
-                    className="h-[50px] flex items-center justify-center text-2xl font-medium cursor-pointer select-none"
-                    style={{
-                      scrollSnapAlign: 'center',
-                      color: decimal === selectedDecimal ? 'white' : 'rgba(255, 255, 255, 0.5)',
-                    }}
-                    onClick={() => startEditing()}
-                  >
-                    {decimal}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
       {/* Unit display */}
       {unit && (
-        <span className="text-2xl font-medium text-white ml-1">{unit}</span>
+        <span className={`text-2xl font-medium ${isDarkMode ? 'text-white' : 'text-black'} ml-1`}>{unit}</span>
       )}
     </div>
   );

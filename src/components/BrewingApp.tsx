@@ -6,7 +6,11 @@ import { calculateBrewTiming, formatTime } from '../utils/brewingCalculations';
 import { ClipboardList, Info, Settings as SettingsIcon, X, Coffee, Sliders, SlidersHorizontal, Pencil } from 'lucide-react';
 import ProPours from './ProPours';
 import VerticalPicker from './VerticalPicker';
+import BrewingGuide from './BrewingGuide';
+import SettingsModal from './SettingsModal';
+import NotesModal from './NotesModal';
 // FlavorEQ import removed
+import { useTheme } from '../context/ThemeContext';
 
 const defaultCoffeeOptions = [15, 30];
 const defaultRatioOptions = [15, 18];
@@ -227,6 +231,8 @@ function SettingsPage({
   },
   currentGrindSize?: number
 }) {
+  const { isDarkMode } = useTheme();
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -256,26 +262,28 @@ function SettingsPage({
   };
 
   return (
-    <div className="antialiased h-screen" style={{ backgroundColor: '#000000', color: '#FFFFFF' }}>
-      <div className="h-full flex flex-col" style={{ padding: '2rem 4rem' }}>
-        {/* Header - matching home page */}
-        <header className="flex justify-between items-center mb-4">
-          <h1 className="text-3xl font-bold text-white">
-            {isBrewLog ? 'Log Your Brew' : 'Coffee Details'}
+    <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
+      <div className="h-full flex flex-col w-full max-w-[430px] mx-auto px-4 py-6">
+        {/* Header */}
+        <header className="flex justify-between items-center mb-6">
+          <h1 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>
+            {isBrewLog ? 'Log Your Brew' : 'Details'}
           </h1>
-          <button onClick={onBack} className="btn-secondary-outline">Back</button>
+          <button onClick={onBack} className={`h-11 px-6 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg text-sm font-medium text-center transition-colors hover:border-[#ff6700]`}>
+            Back
+          </button>
         </header>
 
-        <form onSubmit={handleSettingsSave} className="flex-1 flex flex-col">
-          {/* Main Content */}
-          <main className="flex-1 space-y-6 overflow-y-auto">
-            {/* Current Brewing Settings - Show for both regular details and brew log */}
+        {/* Main Content */}
+        <main className="flex-1 space-y-6 overflow-y-auto">
+          <form onSubmit={handleSettingsSave} className="space-y-8">
+            {/* Conditional summary */}
             {(currentCoffeeSettings || brewingSettings) && (
               <div>
-                <h2 className="text-lg font-semibold text-white mb-3">
+                <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-black'} mb-3`}>
                   {isBrewLog ? 'Brewing Summary' : 'Current Settings'}
                 </h2>
-                <div className="bg-gray-800 rounded-lg p-4">
+                <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} rounded-lg p-4`}>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-gray-400">Coffee:</span>
@@ -311,207 +319,66 @@ function SettingsPage({
               </div>
             )}
 
-            {/* Brewing Notes Section - Show for both regular details and brew log */}
-            <div>
-              <label className="block text-lg font-semibold text-white mb-3">
-                {isBrewLog ? 'How was your brew?' : 'Brewing Notes'}
+            {/* Coffee Photo */}
+            <div className="flex items-center space-x-4">
+              <label htmlFor="coffee-image-upload" className="w-20 h-20 rounded-lg flex items-center justify-center border border-dashed border-gray-400 cursor-pointer">
+                {settingsDraft.coffeeDetails?.image ? (
+                  <img src={settingsDraft.coffeeDetails.image} alt="Coffee" className="w-full h-full object-cover rounded-lg" />
+                ) : (
+                  <span className="text-sm text-gray-400">Photo</span>
+                )}
               </label>
-              <p className="text-sm text-gray-400 mb-3">
-                {isBrewLog 
-                  ? 'Share your thoughts on taste, aroma, body, acidity, or what you\'d change next time...'
-                  : 'Keep track of your brewing experiments, taste notes, and what works best with this coffee.'
-                }
-              </p>
-              <textarea
-                value={isBrewLog ? (settingsDraft.brewNotes || '') : (settingsDraft.generalNotes || '')}
-                onChange={(e) => setSettingsDraft((d: any) => ({ 
-                  ...d, 
-                  [isBrewLog ? 'brewNotes' : 'generalNotes']: e.target.value 
-                }))}
-                placeholder={isBrewLog 
-                  ? "How did it taste? What would you change next time?"
-                  : "Record your brewing experiments, taste preferences, grind adjustments, etc."
-                }
-                className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 resize-none"
-                rows={4}
-              />
-            </div>
-
-            {/* Coffee Details Section */}
-            <div>
-              <h2 className="text-lg font-semibold text-white mb-3">
-                {isBrewLog ? 'Coffee Used' : 'Coffee Details'}
-              </h2>
-              {isBrewLog && (
-                <p className="text-sm text-gray-400 mb-6">
-                  Tell us about the coffee you just brewed with.
-                </p>
-              )}
-              
-              {/* Coffee Image */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-400 mb-2">Coffee Photo</label>
-                <div className="flex items-center space-x-4">
-                  {settingsDraft.coffeeDetails?.image && (
-                    <img 
-                      src={settingsDraft.coffeeDetails.image} 
-                      alt="Coffee" 
-                      className="w-20 h-20 object-cover rounded-lg"
-                    />
-                  )}
-                  <div className="flex-1">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      id="coffee-image-upload"
-                    />
-                    <label 
-                      htmlFor="coffee-image-upload"
-                      className="btn-secondary inline-block cursor-pointer"
-                    >
-                      {settingsDraft.coffeeDetails?.image ? 'Change Photo' : 'Add Photo'}
-                    </label>
-                    {settingsDraft.coffeeDetails?.image && (
-                      <button
-                        type="button"
-                        onClick={() => handleCoffeeDetailChange('image', '')}
-                        className="ml-2 text-gray-400 hover:text-white text-sm"
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Coffee Details Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    Name
-                    <span className="text-xs text-gray-500 block">Producer or blend name</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={settingsDraft.coffeeDetails?.name || ''}
-                    onChange={(e) => handleCoffeeDetailChange('name', e.target.value)}
-                    className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
-                    placeholder="e.g. Blue Mountain Reserve"
-                  />
-                </div>
-
-                {/* Roaster */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    Roaster
-                    <span className="text-xs text-gray-500 block">Who roasted it</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={settingsDraft.coffeeDetails?.roaster || ''}
-                    onChange={(e) => handleCoffeeDetailChange('roaster', e.target.value)}
-                    className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
-                    placeholder="e.g. Local Coffee Co."
-                  />
-                </div>
-
-                {/* Roast Date */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    Roast Date
-                    <span className="text-xs text-gray-500 block">Important for freshness</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={settingsDraft.coffeeDetails?.roastDate || ''}
-                    onChange={(e) => handleCoffeeDetailChange('roastDate', e.target.value)}
-                    className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
-                  />
-                </div>
-
-                {/* Origin */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    Origin
-                    <span className="text-xs text-gray-500 block">Country / Region / Farm</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={settingsDraft.coffeeDetails?.origin || ''}
-                    onChange={(e) => handleCoffeeDetailChange('origin', e.target.value)}
-                    className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
-                    placeholder="e.g. Jamaica, Blue Mountains"
-                  />
-                </div>
-
-                {/* Variety */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    Variety
-                    <span className="text-xs text-gray-500 block">Coffee plant variety</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={settingsDraft.coffeeDetails?.variety || ''}
-                    onChange={(e) => handleCoffeeDetailChange('variety', e.target.value)}
-                    className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
-                    placeholder="e.g. Caturra, Geisha, Bourbon"
-                  />
-                </div>
-
-                {/* Process */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    Process
-                    <span className="text-xs text-gray-500 block">How beans were processed</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={settingsDraft.coffeeDetails?.process || ''}
-                    onChange={(e) => handleCoffeeDetailChange('process', e.target.value)}
-                    className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
-                    placeholder="e.g. Washed, Natural, Honey"
-                  />
-                </div>
-
-                {/* Elevation */}
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    Elevation
-                    <span className="text-xs text-gray-500 block">Growing altitude in meters or feet</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={settingsDraft.coffeeDetails?.elevation || ''}
-                    onChange={(e) => handleCoffeeDetailChange('elevation', e.target.value)}
-                    className="w-full bg-gray-800 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
-                    placeholder="e.g. 1,200m or 4,000ft"
-                  />
-                </div>
+              <input type="file" id="coffee-image-upload" accept="image/*" onChange={handleImageUpload} className="hidden" />
+              <div className="flex-1">
+                <button type="button" onClick={() => document.getElementById('coffee-image-upload')?.click()} className="h-11 px-4 border border-gray-300 rounded-lg text-sm font-medium">Change Photo</button>
               </div>
             </div>
-          </main>
+            
+            {/* Coffee Details Form */}
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-400">Name</label>
+                <input type="text" name="name" value={settingsDraft.coffeeDetails?.name || ''} onChange={(e) => handleCoffeeDetailChange('name', e.target.value)} className={`w-full bg-transparent border-0 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-400'} focus:ring-0 focus:border-[#ff6700] py-2`} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400">Roaster</label>
+                <input type="text" name="roaster" value={settingsDraft.coffeeDetails?.roaster || ''} onChange={(e) => handleCoffeeDetailChange('roaster', e.target.value)} className={`w-full bg-transparent border-0 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-400'} focus:ring-0 focus:border-[#ff6700] py-2`} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400">Roast Date</label>
+                <input type="date" name="roastDate" value={settingsDraft.coffeeDetails?.roastDate || ''} onChange={(e) => handleCoffeeDetailChange('roastDate', e.target.value)} className={`w-full bg-transparent border-0 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-400'} focus:ring-0 focus:border-[#ff6700] py-2`} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400">Origin</label>
+                <input type="text" name="origin" value={settingsDraft.coffeeDetails?.origin || ''} onChange={(e) => handleCoffeeDetailChange('origin', e.target.value)} className={`w-full bg-transparent border-0 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-400'} focus:ring-0 focus:border-[#ff6700] py-2`} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400">Variety</label>
+                <input type="text" name="variety" value={settingsDraft.coffeeDetails?.variety || ''} onChange={(e) => handleCoffeeDetailChange('variety', e.target.value)} className={`w-full bg-transparent border-0 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-400'} focus:ring-0 focus:border-[#ff6700] py-2`} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400">Process</label>
+                <input type="text" name="process" value={settingsDraft.coffeeDetails?.process || ''} onChange={(e) => handleCoffeeDetailChange('process', e.target.value)} className={`w-full bg-transparent border-0 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-400'} focus:ring-0 focus:border-[#ff6700] py-2`} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400">Elevation</label>
+                <input type="text" name="elevation" value={settingsDraft.coffeeDetails?.elevation || ''} onChange={(e) => handleCoffeeDetailChange('elevation', e.target.value)} className={`w-full bg-transparent border-0 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-400'} focus:ring-0 focus:border-[#ff6700] py-2`} />
+              </div>
+            </div>
 
-          {/* Footer - matching home page */}
-          <footer className="mt-6 space-y-3">
-            <button
-              type="submit"
-              className="btn-primary w-full"
-            >
-              {isBrewLog ? 'Save Brew Log' : 'Save Coffee Details'}
+            {/* Brew Notes (if applicable) */}
+            {isBrewLog && (
+              <div>
+                <label className="block text-sm font-medium text-gray-400">Brew Notes</label>
+                <textarea name="brewNotes" value={settingsDraft.brewNotes || ''} onChange={(e) => setSettingsDraft({ ...settingsDraft, brewNotes: e.target.value })} className={`w-full bg-transparent border-0 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-400'} focus:ring-0 focus:border-[#ff6700] py-2 resize-none`} rows={3} />
+              </div>
+            )}
+            
+            <button type="submit" className={`w-full h-11 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg text-sm font-medium text-center transition-colors hover:border-[#ff6700]`}>
+              Save
             </button>
-            <button
-              type="button"
-              className="btn btn-secondary w-full"
-              onClick={closeSettings}
-            >
-              Cancel
-            </button>
-          </footer>
-        </form>
+          </form>
+        </main>
       </div>
     </div>
   );
@@ -581,74 +448,44 @@ function BrewTimerPage({
   formatTime,
   onBack
 }: any) {
+  const { isDarkMode } = useTheme();
   const totalTime = fullStepEndTimes[fullStepEndTimes.length - 1] || 1;
   const timeRemaining = Math.max(0, totalTime - elapsed);
   
-  // Calculate current step progress
-  const currentStepStartTime = fullCurrentStep === 0 ? 0 : fullStepEndTimes[fullCurrentStep - 1];
-  const currentStepEndTime = fullStepEndTimes[fullCurrentStep] || totalTime;
+  const currentStepStartTime = fullCurrentStep > 0 ? fullStepEndTimes[fullCurrentStep - 1] : 0;
+  const currentStepEndTime = fullStepEndTimes[fullCurrentStep] || 0;
   const currentStepDuration = currentStepEndTime - currentStepStartTime;
-  const currentStepElapsed = Math.max(0, elapsed - currentStepStartTime);
-  const currentStepRemaining = Math.max(0, currentStepDuration - currentStepElapsed);
-  const currentStepProgress = currentStepDuration > 0 ? (currentStepElapsed / currentStepDuration) * 100 : 0;
+  const currentStepElapsed = elapsed - currentStepStartTime;
+  const currentStepTimeRemaining = Math.ceil(Math.max(0, currentStepDuration - currentStepElapsed));
 
-  // Helper function to format time as "23s"
-  const formatTimeSimple = (seconds: number) => {
-    return `${Math.round(seconds)}s`;
-  };
-
-  // Helper function to extract target weight
   const extractTargetWeight = (waterText: string) => {
-    if (waterText && waterText.includes('Pour to')) {
-      return waterText.replace('Pour to ', '');
-    }
-    // Return empty for Wait and Drawdown steps
+    if (waterText && waterText.includes('Pour to')) return waterText.replace('Pour to ', '');
     return '';
   };
 
   return (
-    <div className="text-white min-h-screen flex flex-col relative" style={{ backgroundColor: '#000000', fontFamily: 'Space Grotesk, sans-serif' }}>
-      {/* Meditative Color Field Visualization */}
-      <MeditativeColorField 
-        currentStep={fullCurrentStep}
-        stepProgress={currentStepProgress}
-        isActive={timerActive}
-        stepLabel={fullStepSequence[fullCurrentStep]?.label || ''}
-      />
-      
-      {/* New clean interface design */}
-      <div className="w-full h-screen flex flex-col relative z-10" style={{ padding: '1.5rem 2rem' }}>
-        {/* Top info bar */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="text-center">
-            <div className="text-xs text-gray-400 mb-1">Total time</div>
-            <div className="text-2xl font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-              {formatTime(totalTime)}
-            </div>
+    <div className={`min-h-screen flex flex-col relative ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
+      <div className="h-full flex flex-col w-full max-w-[430px] mx-auto px-4 py-6 relative z-10">
+        
+        {/* Top Info Bar */}
+        <div className="flex justify-around items-center text-center mb-10">
+          <div>
+            <div className={`text-xs uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Total time</div>
+            <div className={`text-2xl font-light mt-1`}>{formatTime(totalTime)}</div>
           </div>
-          <div className="text-center">
-            <div className="text-xs text-gray-400 mb-1">Time left</div>
-            <div className="text-2xl font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-              {formatTime(Math.ceil(timeRemaining))}
-            </div>
+          <div className={`border-l ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} h-8 self-center`}></div>
+          <div>
+            <div className={`text-xs uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Time left</div>
+            <div className={`text-2xl font-light mt-1`}>{formatTime(Math.ceil(timeRemaining))}</div>
           </div>
-          <div className="text-center">
-            <div className="text-xs text-gray-400 mb-1">Current step</div>
-            <div className="text-2xl font-medium text-white" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-              {(() => {
-                const currentStepStartTime = fullCurrentStep === 0 ? 0 : fullStepEndTimes[fullCurrentStep - 1];
-                const currentStepEndTime = fullStepEndTimes[fullCurrentStep] || totalTime;
-                const currentStepDuration = currentStepEndTime - currentStepStartTime;
-                const currentStepElapsed = Math.max(0, elapsed - currentStepStartTime);
-                const currentStepRemaining = Math.max(0, currentStepDuration - currentStepElapsed);
-                return formatTimeSimple(Math.ceil(currentStepRemaining));
-              })()}
-            </div>
+          <div>
+            <div className={`text-xs uppercase tracking-wider ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>Current step</div>
+            <div className={`text-2xl font-light mt-1`}>{currentStepTimeRemaining}s</div>
           </div>
         </div>
 
-        {/* Step list */}
-        <div className="flex-1 space-y-3 overflow-y-auto">
+        {/* Step List */}
+        <div className="flex-1 space-y-2 overflow-y-auto">
           {fullStepSequence.slice(0, -1).map((step: any, index: number) => {
             const isActive = index === fullCurrentStep;
             const isCompleted = elapsed >= (fullStepEndTimes[index] || 0);
@@ -660,72 +497,51 @@ function BrewTimerPage({
             const stepProgress = stepDuration > 0 ? Math.min((stepElapsed / stepDuration) * 100, 100) : 0;
 
             const targetWeight = extractTargetWeight(step.water);
+            const stepTextColor = isActive ? (isDarkMode ? 'text-white' : 'text-black') : (isDarkMode ? 'text-gray-500' : 'text-gray-400');
 
             return (
-              <div key={index} className="relative">
-                {/* Step content */}
-                <div className="flex justify-between items-center py-2">
-                  <div className="flex-1">
-                    <span className={`text-xl font-medium ${isActive ? 'text-white' : isCompleted ? 'text-gray-400' : 'text-gray-600'}`} 
-                          style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                      {step.label}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className={`text-xl font-medium ${isActive ? 'text-white' : isCompleted ? 'text-gray-400' : 'text-gray-600'}`} 
-                          style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-                      {targetWeight || formatTimeSimple(stepDuration)}
-                    </span>
-                  </div>
+              <div key={index} className="py-3 relative">
+                <div className={`flex justify-between items-center p-3 ${isActive ? `${isDarkMode ? 'bg-gray-900' : 'bg-gray-100'} border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-md` : ''}`}>
+                  <span className={`${stepTextColor} text-base`}>{step.label}</span>
+                  <span className={`${stepTextColor} text-base`}>{targetWeight || `${Math.round(stepDuration)}s`}</span>
                 </div>
-
-                {/* Progress line */}
-                <div className="absolute bottom-0 left-0 w-full h-px">
-                  {/* Base line */}
-                  <div 
-                    className="w-full h-px"
-                    style={{
-                      backgroundImage: isCompleted 
-                        ? 'none'
-                        : `radial-gradient(circle, #4B5563 1px, transparent 1px)`,
-                      backgroundColor: isCompleted ? '#ffffff' : 'transparent',
-                      backgroundSize: '8px 1px',
-                      backgroundRepeat: 'repeat-x'
-                    }}
-                  />
-                  
-                  {/* Progress overlay for current step */}
-                  {isActive && !isCompleted && (
+                
+                {/* Progress/Separator Line */}
+                {index < fullStepSequence.length - 2 && (
+                  <div className="absolute bottom-0 left-0 w-full h-px">
                     <div 
-                      className="absolute top-0 h-px bg-white transition-all duration-100 ease-out"
-                      style={{ 
-                        width: `${stepProgress}%`,
-                        transformOrigin: step.label === 'Wait' || step.label === 'Drawdown' ? 'right' : 'left'
+                      className="w-full h-px"
+                      style={{
+                        backgroundImage: isCompleted 
+                          ? 'none'
+                          : `radial-gradient(circle, ${isDarkMode ? '#4B5563' : '#CBD5E0'} 1px, transparent 1px)`,
+                        backgroundColor: isCompleted ? (isDarkMode ? 'white' : 'black') : 'transparent',
+                        backgroundSize: '8px 1px',
+                        backgroundRepeat: 'repeat-x'
                       }}
                     />
-                  )}
-                </div>
+                    {isActive && !isCompleted && (
+                      <div 
+                        className={`absolute top-0 h-px ${isDarkMode ? 'bg-white' : 'bg-black'} transition-all duration-100 ease-linear`}
+                        style={{ 
+                          width: `${stepProgress}%`,
+                          transformOrigin: step.label.includes('Wait') || step.label.includes('Drawdown') ? 'right' : 'left'
+                        }}
+                      />
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
 
-        {/* Bottom Buttons - Back and Start/Pause */}
-        <footer className="mt-3 pb-3">
-          <div className="flex items-center justify-center space-x-4 text-lg font-medium" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
-            <button 
-              onClick={onBack} 
-              className="text-gray-400 hover:text-white transition-colors duration-150"
-              aria-label="Back"
-            >
-              Back
-            </button>
-            <span className="text-gray-600">•</span>
-            <button 
-              className="text-white hover:text-gray-300 transition-colors duration-150"
-              onClick={timerActive && !timerPaused ? handlePause : handleResume}
-              disabled={finished}
-            >
+        {/* Bottom Buttons */}
+        <footer className="mt-6">
+          <div className="flex items-center justify-center space-x-4">
+            <button onClick={onBack} className={`py-2 px-6 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg text-sm transition-colors hover:border-[#ff6700]`}>Back</button>
+            <div className={`w-1.5 h-1.5 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'} rounded-full`}></div>
+            <button onClick={timerActive && !timerPaused ? handlePause : handleResume} className={`py-2 px-6 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg text-sm transition-colors hover:border-[#ff6700]`} disabled={finished}>
               {timerActive && !timerPaused ? 'Pause' : 'Start'}
             </button>
           </div>
@@ -736,6 +552,7 @@ function BrewTimerPage({
 }
 
 function HistoryPage({ onBack }: { onBack: () => void }) {
+  const { isDarkMode } = useTheme();
   const [brewLogs, setBrewLogs] = useState<any[]>([]);
 
   useEffect(() => {
@@ -753,19 +570,17 @@ function HistoryPage({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <div className="antialiased h-screen" style={{ backgroundColor: '#000000', color: '#FFFFFF' }}>
-      <div className="h-full flex flex-col" style={{ padding: '1.5rem 0.8rem 0.4rem 0.8rem' }}>
+    <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
+      <div className="h-full flex flex-col w-full max-w-[430px] mx-auto px-4 py-6">
         {/* Header */}
         <header className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-white">Brew History</h1>
-            <p className="text-sm text-gray-400 mt-2">Your archived brewing experiences</p>
-          </div>
-          <button onClick={onBack} className="btn-secondary-outline">Back</button>
+          <h1 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>Brew History</h1>
+          <button onClick={onBack} className={`h-11 px-6 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg text-sm font-medium text-center transition-colors hover:border-[#ff6700]`}>
+            Back
+          </button>
         </header>
-
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 space-y-4 overflow-y-auto">
           {brewLogs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
               <div className="text-6xl opacity-50">📚</div>
@@ -831,6 +646,7 @@ function HistoryPage({ onBack }: { onBack: () => void }) {
 }
 
 const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => {
+  const { isDarkMode, toggleDarkMode } = useTheme();
   // Load initial settings from localStorage or use defaults
   const loadSavedSettings = () => {
     const savedSettings = localStorage.getItem('coffeeSettings');
@@ -1301,84 +1117,108 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   }
   
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="h-full flex flex-col max-w-[1189px] mx-auto px-4 py-6">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
+      <div className="h-full flex flex-col w-full max-w-[430px] mx-auto px-4 py-6 relative">
+        {/* Header with Title and Dark Mode Toggle */}
+        <div className="flex justify-between items-center mb-8">
+          <h1 className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>Pour Perfect</h1>
+          <button
+            onClick={toggleDarkMode}
+            className="w-[25px] h-[25px] rounded-full bg-[#ff6700] hover:opacity-90 transition-opacity"
+            aria-label={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          />
+        </div>
+
         {/* Main Content - Optimized spacing */}
-        <main className="flex-1 space-y-6">
+        <main className="flex-1 space-y-8">
           {/* Coffee and Ratio Pickers */}
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 gap-8">
             {/* Coffee Amount Picker */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-white/60">Coffee</label>
+              <label className={`block text-sm font-medium ${isDarkMode ? 'text-white/60' : 'text-black/60'}`}>Coffee Dose (g)</label>
               <VerticalPicker
                 items={Array.from({ length: 41 }, (_, i) => i + 10)}
                 value={coffeeSettings.amount}
                 onChange={handleCoffeeAmountChange}
-                unit="g"
                 hasDecimals={true}
+                isDarkMode={isDarkMode}
               />
             </div>
 
             {/* Ratio Picker */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-white/60">Ratio</label>
+              <label className={`block text-sm font-medium ${isDarkMode ? 'text-white/60' : 'text-black/60'}`}>Brew Ratio (x : 1)</label>
               <VerticalPicker
                 items={Array.from({ length: 41 }, (_, i) => i + 10)}
                 value={coffeeSettings.ratio}
                 onChange={handleRatioChange}
-                unit=":1"
                 hasDecimals={true}
+                isDarkMode={isDarkMode}
               />
             </div>
           </div>
 
           {/* Water Amount Display */}
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-white/60">Water</label>
-            <div className="h-14 flex items-center justify-center bg-white/5 rounded-xl">
-              <span className="text-2xl font-medium text-white">
-                {Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g
-              </span>
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className="space-y-2">
+              <label className={`block text-sm font-medium text-center ${isDarkMode ? 'text-white/60' : 'text-black/60'}`}>Total Water (g)</label>
+              <div className="h-11 flex items-center justify-center border border-gray-300 rounded-lg text-center">
+                <span className={`text-xl font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>{Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className={`block text-sm font-medium text-center ${isDarkMode ? 'text-white/60' : 'text-black/60'}`}>Total Time</label>
+              <div className="h-11 flex items-center justify-center border border-gray-300 rounded-lg text-center">
+                <span className={`text-xl font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>{formatTime(brewingTimings.totalTime)}</span>
+              </div>
             </div>
           </div>
 
-          {/* Info and Ready Buttons */}
-          <div className="grid grid-cols-2 gap-4 pt-2">
-            <button 
-              onClick={onShowAbout}
-              className="h-12 rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/15 text-base font-medium transition-colors"
-              type="button"
-              aria-label="Info"
-            >
-              Info
-            </button>
-            <button 
-              className="h-12 rounded-xl bg-white/10 hover:bg-white/15 active:bg-white/20 text-base font-medium transition-colors"
-              onClick={handleStart}
-            >
-              Ready
-            </button>
-          </div>
-
-          {/* Add Details and Past Brews Buttons */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Action Buttons Row: Details, Brews, Ready */}
+          <div className="grid grid-cols-4 gap-4 mb-8">
             <button
               onClick={openSettings}
-              className="h-16 rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/15 text-base font-medium transition-colors"
+              className="h-11 border border-gray-300 rounded-lg text-sm font-medium text-center transition-colors hover:border-[#ff6700] col-span-1"
               type="button"
               aria-label="Add Details"
             >
-              Add Details
+              Details
             </button>
-            <button 
+            <button
               onClick={() => setShowNotes(true)}
-              className="h-16 rounded-xl bg-white/5 hover:bg-white/10 active:bg-white/15 text-base font-medium transition-colors"
+              className="h-11 border border-gray-300 rounded-lg text-sm font-medium text-center transition-colors hover:border-[#ff6700] col-span-1"
               aria-label="Past Brews"
             >
-              Past Brews
+              Brews
             </button>
+            <div className="col-span-2">
+              <button
+                className="h-11 w-full border border-gray-300 rounded-lg text-sm font-medium text-center transition-colors hover:border-[#ff6700]"
+                onClick={handleStart}
+              >
+                Ready
+              </button>
+            </div>
           </div>
         </main>
+
+        {/* Footer attribution */}
+        <div className="w-full flex justify-center items-center mt-8 mb-2">
+          <span className="text-xs text-gray-400">Made by </span>
+          <span className="text-xs font-semibold" style={{ color: '#ff6700', marginLeft: '0.25rem' }}>Origen</span>
+        </div>
+
+        {/* Modals as overlays */}
+        {showSettings && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <SettingsModal onClose={closeSettings} onSave={handleSettingsSave} />
+          </div>
+        )}
+        {showNotes && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+            <NotesModal onClose={() => setShowNotes(false)} notes={/* pass notes data here */[]} />
+          </div>
+        )}
       </div>
     </div>
   );
