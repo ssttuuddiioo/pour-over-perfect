@@ -1,251 +1,159 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useRef, useEffect } from 'react';
 
 interface VerticalPickerProps {
   value: number;
   onChange: (value: number) => void;
   unit?: string;
-  formatValue?: (value: number) => string;
-  hasDecimals?: boolean;
   isDarkMode?: boolean;
-  min?: number;
-  max?: number;
+  storageKey?: string; // for localStorage persistence
 }
+
+const containerHeight = 250;
+const itemHeight = 50;
+const padding = (containerHeight - itemHeight) / 2; // 100px
+const intMin = 1;
+const intMax = 50;
+const decMin = 0;
+const decMax = 9;
 
 const VerticalPicker: React.FC<VerticalPickerProps> = ({
   value,
   onChange,
   unit = '',
-  formatValue = (v) => v.toString(),
-  hasDecimals = false,
   isDarkMode = true,
-  min = 1,
-  max = 50,
+  storageKey,
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editValue, setEditValue] = useState(value.toString());
+  const intRef = useRef<HTMLDivElement>(null);
+  const decRef = useRef<HTMLDivElement>(null);
 
-  const containerRef = useRef<HTMLDivElement>(null);
-  const decimalContainerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const scrollTimeout = useRef<NodeJS.Timeout>();
+  // Split value into integer and decimal
+  const intPart = Math.floor(value);
+  const decPart = Math.round((value - intPart) * 10);
 
-  const itemHeight = 50;
-
-  const items = useMemo(() => {
-    return Array.from({ length: (max - min) + 1 }, (_, i) => i + min);
-  }, [min, max]);
-
-  const decimalOptions = useMemo(() => Array.from({ length: 10 }, (_, i) => i), []);
-
-  const selectedIndex = useMemo(() => items.indexOf(Math.floor(value)), [value, items]);
-  const selectedDecimal = useMemo(() => Math.round((value - Math.floor(value)) * 10), [value]);
-
-  // Effect to position the scroller based on the value.
-  // This is now the ONLY place where scroll is set programmatically.
+  // Persist value
   useEffect(() => {
-    const scroller = containerRef.current;
-    if (scroller) {
-      const targetScrollTop = selectedIndex * itemHeight;
-      // We only scroll if the position is meaningfully different, to avoid fighting with user scroll.
-      if (Math.abs(scroller.scrollTop - targetScrollTop) > itemHeight / 2) {
-        scroller.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
-      }
+    if (storageKey) {
+      localStorage.setItem(storageKey, value.toFixed(1));
     }
-  }, [value, selectedIndex]); // It re-runs ONLY when the external value changes.
+  }, [value, storageKey]);
 
+  // Scroll to correct position when value changes
   useEffect(() => {
-    setEditValue(value.toString());
-  }, [value]);
-
-  const handleScroll = () => {
-    if (!containerRef.current) return;
-    
-    // Clear any existing timeout to avoid premature snapping
-    clearTimeout(scrollTimeout.current);
-
-    const scrollTop = containerRef.current.scrollTop;
-    const newIndex = Math.round(scrollTop / itemHeight);
-    
-    // Update the value based on scroll position
-    if (newIndex >= 0 && newIndex < items.length) {
-      const currentDecimal = hasDecimals ? selectedDecimal / 10 : 0;
-      const newValue = items[newIndex] + currentDecimal;
-      if (newValue !== value) {
-        onChange(newValue);
-      }
+    if (intRef.current) {
+      intRef.current.scrollTo({ top: (intPart - intMin) * itemHeight, behavior: 'smooth' });
     }
-    
-    // After scrolling stops, snap to the nearest item.
-    scrollTimeout.current = setTimeout(() => {
-      const scroller = containerRef.current;
-      if (scroller) {
-        const finalIndex = Math.round(scroller.scrollTop / itemHeight);
-        const targetScrollTop = finalIndex * itemHeight;
-        scroller.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
-      }
-    }, 150);
-  };
-  
-  const handleDecimalScroll = () => {
-    if (!decimalContainerRef.current) return;
-    
-    clearTimeout(scrollTimeout.current);
-
-    const scrollTop = decimalContainerRef.current.scrollTop;
-    const newDecimal = Math.round(scrollTop / itemHeight);
-    
-    if (newDecimal >= 0 && newDecimal < 10) {
-      const newValue = items[selectedIndex] + (newDecimal / 10);
-      if (newValue !== value) {
-        onChange(newValue);
-      }
+    if (decRef.current) {
+      decRef.current.scrollTo({ top: (decPart - decMin) * itemHeight, behavior: 'smooth' });
     }
-    
-    scrollTimeout.current = setTimeout(() => {
-      const scroller = decimalContainerRef.current;
-      if (scroller) {
-        const finalDecimal = Math.round(scroller.scrollTop / itemHeight);
-        scroller.scrollTo({ top: finalDecimal * itemHeight, behavior: 'smooth' });
-      }
-    }, 150);
-  };
+  }, [intPart, decPart]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditValue(e.target.value);
-  };
-
-  const handleInputBlur = () => {
-    setIsEditing(false);
-    let numValue = parseFloat(editValue);
-    if (!isNaN(numValue)) {
-      numValue = Math.max(min, Math.min(max, numValue));
-      onChange(numValue);
-    } else {
-      setEditValue(value.toString());
+  // Snap integer scroll
+  const handleIntScroll = () => {
+    if (!intRef.current) return;
+    const scrollTop = intRef.current.scrollTop;
+    const N = intMax - intMin + 1;
+    let idx = Math.round(scrollTop / itemHeight);
+    idx = Math.max(0, Math.min(N - 1, idx));
+    let snapped = intMin + idx;
+    if (scrollTop === 0) snapped = intMin;
+    const maxScroll = intRef.current.scrollHeight - intRef.current.clientHeight;
+    console.log('[INT] scrollTop:', scrollTop, 'maxScroll:', maxScroll, 'idx:', idx, 'snapped:', snapped);
+    if (snapped !== intPart) {
+      onChange(Number(`${snapped}.${decPart}`));
     }
+    intRef.current.scrollTo({ top: idx * itemHeight, behavior: 'smooth' });
   };
 
-  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      inputRef.current?.blur();
+  // Snap decimal scroll
+  const handleDecScroll = () => {
+    if (!decRef.current) return;
+    const scrollTop = decRef.current.scrollTop;
+    const N = decMax - decMin + 1;
+    let idx = Math.round(scrollTop / itemHeight);
+    idx = Math.max(0, Math.min(N - 1, idx));
+    const snapped = decMin + idx;
+    const maxScroll = decRef.current.scrollHeight - decRef.current.clientHeight;
+    console.log('[DEC] scrollTop:', scrollTop, 'maxScroll:', maxScroll, 'idx:', idx, 'snapped:', snapped);
+    if (snapped !== decPart) {
+      onChange(Number(`${intPart}.${snapped}`));
     }
+    decRef.current.scrollTo({ top: idx * itemHeight, behavior: 'smooth' });
   };
-
-  const startEditing = () => {
-    setIsEditing(true);
-    setEditValue(value.toString());
-    setTimeout(() => inputRef.current?.focus(), 0);
-  };
-
-  const totalHeight = itemHeight * items.length;
 
   return (
     <div className="flex items-center space-x-1">
-      <div 
-        className="flex flex-row items-center justify-center h-[250px] px-4 border border-gray-300 rounded-lg bg-transparent overflow-hidden w-full max-w-[180px] mx-auto"
+      <div
+        className="flex flex-row items-center justify-center px-4 border border-gray-300 rounded-lg bg-transparent overflow-hidden w-full max-w-[180px] mx-auto"
+        style={{ height: containerHeight }}
       >
-        <div className="relative h-[250px] w-24 overflow-hidden flex flex-col items-center justify-center">
-          {isEditing ? (
-            <input
-              ref={inputRef}
-              type="number"
-              value={editValue}
-              onChange={handleInputChange}
-              onBlur={handleInputBlur}
-              onKeyDown={handleInputKeyDown}
-              className={`w-full h-full bg-transparent text-2xl font-medium ${isDarkMode ? 'text-white' : 'text-black'} text-center focus:outline-none focus:ring-2 focus:ring-opacity-50 rounded`}
-              style={{ padding: '100px 0' }}
-              step={hasDecimals ? "0.1" : "1"}
-              min={min}
-              max={max}
-            />
-          ) : (
-            <>
-              <div className={`absolute top-0 left-0 right-0 h-20 ${isDarkMode ? 'bg-gradient-to-b from-black to-transparent' : 'bg-gradient-to-b from-white to-transparent'} z-10 pointer-events-none`} />
-              <div className={`absolute bottom-0 left-0 right-0 h-20 ${isDarkMode ? 'bg-gradient-to-t from-black to-transparent' : 'bg-gradient-to-t from-white to-transparent'} z-10 pointer-events-none`} />
-              <div 
-                className={`absolute left-0 right-0 h-[50px] ${isDarkMode ? 'bg-white/10' : 'bg-black/10'} rounded-lg z-0 pointer-events-none`}
-                style={{ top: '100px' }}
-              />
-              <div
-                ref={containerRef}
-                className="h-full overflow-y-auto scrollbar-hide flex flex-col items-center justify-center"
-                onScroll={handleScroll}
-                style={{
-                  scrollSnapType: 'y mandatory',
-                  scrollPadding: '100px 0',
-                }}
-              >
-                <div 
-                  className="py-[100px]"
-                  style={{ height: totalHeight + (itemHeight * 2) }}
+        {/* Integer column */}
+        <div
+          className="relative flex flex-col items-center justify-center overflow-hidden"
+          style={{ height: containerHeight, width: 96 }}
+        >
+          {/* Highlight box */}
+          <div className="absolute left-0 right-0 h-[50px] z-10 pointer-events-none" style={{ top: 100, background: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)', borderRadius: 8, border: isDarkMode ? '1px solid #222' : '1px solid #D1D5DB' }} />
+          <div
+            ref={intRef}
+            className="h-full overflow-y-auto scrollbar-hide flex flex-col items-center justify-center"
+            onScroll={() => { clearTimeout((intRef.current as any)?._snapTimeout); (intRef.current as any)._snapTimeout = setTimeout(handleIntScroll, 120); }}
+            style={{ scrollSnapType: 'y mandatory' }}
+          >
+            <div style={{ height: (intMax - intMin) * itemHeight + containerHeight }}>
+              <div style={{ height: padding }} />
+              {Array.from({ length: intMax - intMin + 1 }, (_, i) => intMin + i).map((item, idx, arr) => (
+                <div
+                  key={item}
+                  className={`h-[50px] flex items-center justify-center text-2xl font-medium select-none text-center`}
+                  style={{
+                    scrollSnapAlign: 'center',
+                    color: item === intPart ? (isDarkMode ? '#fff' : '#000') : (isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'),
+                    fontWeight: item === intPart ? 600 : 400,
+                    border: idx === 0 || idx === arr.length - 1 ? '2px solid red' : undefined,
+                  }}
                 >
-                  {items.map((item, index) => (
-                    <div
-                      key={item}
-                      className={`h-[50px] flex items-center justify-center text-2xl font-medium cursor-pointer select-none text-center`}
-                      style={{
-                        scrollSnapAlign: 'center',
-                        color: index === selectedIndex 
-                          ? (isDarkMode ? 'white' : 'black')
-                          : (isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)'),
-                      }}
-                      onClick={() => startEditing()}
-                    >
-                      {formatValue(item)}
-                    </div>
-                  ))}
+                  {item}
                 </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        {hasDecimals && !isEditing && (
-          <>
-            <span className={`text-2xl font-medium mx-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>.</span>
-            <div className="relative h-[250px] w-16 overflow-hidden flex flex-col items-center justify-center">
-              <div className={`absolute top-0 left-0 right-0 h-20 ${isDarkMode ? 'bg-gradient-to-b from-black to-transparent' : 'bg-gradient-to-b from-white to-transparent'} z-10 pointer-events-none`} />
-              <div className={`absolute bottom-0 left-0 right-0 h-20 ${isDarkMode ? 'bg-gradient-to-t from-black to-transparent' : 'bg-gradient-to-t from-white to-transparent'} z-10 pointer-events-none`} />
-              <div 
-                className={`absolute left-0 right-0 h-[50px] ${isDarkMode ? 'bg-white/10' : 'bg-black/10'} rounded-lg z-0 pointer-events-none`}
-                style={{ top: '100px' }}
-              />
-              <div
-                ref={decimalContainerRef}
-                className="h-full overflow-y-auto scrollbar-hide flex flex-col items-center justify-center"
-                onScroll={handleDecimalScroll}
-                style={{
-                  scrollSnapType: 'y mandatory',
-                  scrollPadding: '100px 0',
-                }}
-              >
-                <div 
-                  className="py-[100px]"
-                  style={{ height: itemHeight * 12 }}
-                >
-                  {decimalOptions.map((decimal) => (
-                    <div
-                      key={decimal}
-                      className={`h-[50px] flex items-center justify-center text-2xl font-medium cursor-pointer select-none text-center`}
-                      style={{
-                        scrollSnapAlign: 'center',
-                        color: decimal === selectedDecimal 
-                          ? (isDarkMode ? 'white' : 'black')
-                          : (isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.5)'),
-                      }}
-                      onClick={() => startEditing()}
-                    >
-                      {decimal}
-                    </div>
-                  ))}
-                </div>
-              </div>
+              ))}
+              <div style={{ height: padding }} />
             </div>
-          </>
-        )}
+          </div>
+        </div>
+        {/* Decimal column */}
+        <span className={`text-2xl font-medium mx-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>.</span>
+        <div
+          className="relative flex flex-col items-center justify-center overflow-hidden"
+          style={{ height: containerHeight, width: 64 }}
+        >
+          {/* Highlight box */}
+          <div className="absolute left-0 right-0 h-[50px] z-10 pointer-events-none" style={{ top: 100, background: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)', borderRadius: 8, border: isDarkMode ? '1px solid #222' : '1px solid #D1D5DB' }} />
+          <div
+            ref={decRef}
+            className="h-full overflow-y-auto scrollbar-hide flex flex-col items-center justify-center"
+            onScroll={() => { clearTimeout((decRef.current as any)?._snapTimeout); (decRef.current as any)._snapTimeout = setTimeout(handleDecScroll, 120); }}
+            style={{ scrollSnapType: 'y mandatory' }}
+          >
+            <div style={{ height: (decMax - decMin) * itemHeight + containerHeight }}>
+              <div style={{ height: padding }} />
+              {Array.from({ length: decMax - decMin + 1 }, (_, i) => decMin + i).map((item, idx, arr) => (
+                <div
+                  key={item}
+                  className={`h-[50px] flex items-center justify-center text-2xl font-medium select-none text-center`}
+                  style={{
+                    scrollSnapAlign: 'center',
+                    color: item === decPart ? (isDarkMode ? '#fff' : '#000') : (isDarkMode ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)'),
+                    fontWeight: item === decPart ? 600 : 400,
+                    border: idx === 0 || idx === arr.length - 1 ? '2px solid red' : undefined,
+                  }}
+                >
+                  {item}
+                </div>
+              ))}
+              <div style={{ height: padding }} />
+            </div>
+          </div>
+        </div>
       </div>
-
       {unit && (
         <span className={`text-2xl font-medium ${isDarkMode ? 'text-white' : 'text-black'} ml-1`}>{unit}</span>
       )}
@@ -253,4 +161,4 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
   );
 };
 
-export default VerticalPicker; 
+export default VerticalPicker;

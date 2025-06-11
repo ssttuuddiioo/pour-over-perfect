@@ -11,6 +11,7 @@ import SettingsModal from './SettingsModal';
 import NotesModal from './NotesModal';
 // FlavorEQ import removed
 import { useTheme } from '../context/ThemeContext';
+import AppleStylePicker from './AppleStylePicker';
 
 const defaultCoffeeOptions = [15, 30];
 const defaultRatioOptions = [15, 18];
@@ -261,6 +262,14 @@ function SettingsPage({
     }));
   };
 
+  useEffect(() => {
+    // Debug: log dose, ratio, and calculation results whenever they change
+    const dose = currentCoffeeSettings?.amount as number;
+    const ratio = currentCoffeeSettings?.ratio as number;
+    const brewPlan = calculateBrewTiming(currentGrindSize || 6, dose, ratio, 2);
+    console.log(`SCROLL dose ${dose.toFixed(1)} brew ${ratio.toFixed(1)} | total water: ${Math.round(dose * ratio)} | total time: ${brewPlan.totalTime}`);
+  }, [currentCoffeeSettings?.amount, currentCoffeeSettings?.ratio, currentGrindSize, 2]);
+
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
       <div className="h-full flex flex-col w-full max-w-[430px] mx-auto px-4 py-6">
@@ -277,48 +286,6 @@ function SettingsPage({
         {/* Main Content */}
         <main className="flex-1 space-y-6 overflow-y-auto">
           <form onSubmit={handleSettingsSave} className="space-y-8">
-            {/* Conditional summary */}
-            {(currentCoffeeSettings || brewingSettings) && (
-              <div>
-                <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-black'} mb-3`}>
-                  {isBrewLog ? 'Brewing Summary' : 'Current Settings'}
-                </h2>
-                <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'} rounded-lg p-4`}>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-400">Coffee:</span>
-                      <span className="text-white ml-2">
-                        {isBrewLog ? brewingSettings?.coffeeAmount : currentCoffeeSettings?.amount}g
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">Ratio:</span>
-                      <span className="text-white ml-2">
-                        1:{isBrewLog ? brewingSettings?.waterRatio : currentCoffeeSettings?.ratio}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-gray-400">Grind:</span>
-                      <span className="text-white ml-2">
-                        {(() => {
-                          const grind = isBrewLog ? brewingSettings?.grindSize : currentGrindSize;
-                          return grind === 3 ? 'Fine' : 
-                                 grind === 6 ? 'Medium' :
-                                 grind === 7 ? 'Medium-coarse' : 'Coarse';
-                        })()}
-                      </span>
-                    </div>
-                    {isBrewLog && brewingSettings && (
-                      <div>
-                        <span className="text-gray-400">Total Water:</span>
-                        <span className="text-white ml-2">{brewingSettings.totalWater}g</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Coffee Photo */}
             <div className="flex items-center space-x-4">
               <label htmlFor="coffee-image-upload" className="w-20 h-20 rounded-lg flex items-center justify-center border border-dashed border-gray-400 cursor-pointer">
@@ -334,42 +301,69 @@ function SettingsPage({
               </div>
             </div>
             
-            {/* Coffee Details Form */}
+            {/* Current Settings - moved under photo and renamed */}
+            {(currentCoffeeSettings || brewingSettings) && (
+              <div className="space-y-4">
+                <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                  Brew Recipe
+                </h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Coffee: </span>
+                    <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                      {isBrewLog ? brewingSettings?.coffeeAmount : currentCoffeeSettings?.amount}g
+                    </span>
+                  </div>
+                  <div>
+                    <span className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Ratio: </span>
+                    <span className={`font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                      1:{isBrewLog ? brewingSettings?.waterRatio : currentCoffeeSettings?.ratio}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-400">Name</label>
+                <label className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                  Name
+                </label>
                 <input type="text" name="name" value={settingsDraft.coffeeDetails?.name || ''} onChange={(e) => handleCoffeeDetailChange('name', e.target.value)} className={`w-full bg-transparent border-0 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-400'} focus:ring-0 focus:border-[#ff6700] py-2`} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-400">Roaster</label>
+                <label className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                  Roaster
+                </label>
                 <input type="text" name="roaster" value={settingsDraft.coffeeDetails?.roaster || ''} onChange={(e) => handleCoffeeDetailChange('roaster', e.target.value)} className={`w-full bg-transparent border-0 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-400'} focus:ring-0 focus:border-[#ff6700] py-2`} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-400">Roast Date</label>
+                <label className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                  Roast Date
+                </label>
                 <input type="date" name="roastDate" value={settingsDraft.coffeeDetails?.roastDate || ''} onChange={(e) => handleCoffeeDetailChange('roastDate', e.target.value)} className={`w-full bg-transparent border-0 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-400'} focus:ring-0 focus:border-[#ff6700] py-2`} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-400">Origin</label>
-                <input type="text" name="origin" value={settingsDraft.coffeeDetails?.origin || ''} onChange={(e) => handleCoffeeDetailChange('origin', e.target.value)} className={`w-full bg-transparent border-0 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-400'} focus:ring-0 focus:border-[#ff6700] py-2`} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400">Variety</label>
-                <input type="text" name="variety" value={settingsDraft.coffeeDetails?.variety || ''} onChange={(e) => handleCoffeeDetailChange('variety', e.target.value)} className={`w-full bg-transparent border-0 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-400'} focus:ring-0 focus:border-[#ff6700] py-2`} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400">Process</label>
-                <input type="text" name="process" value={settingsDraft.coffeeDetails?.process || ''} onChange={(e) => handleCoffeeDetailChange('process', e.target.value)} className={`w-full bg-transparent border-0 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-400'} focus:ring-0 focus:border-[#ff6700] py-2`} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400">Elevation</label>
-                <input type="text" name="elevation" value={settingsDraft.coffeeDetails?.elevation || ''} onChange={(e) => handleCoffeeDetailChange('elevation', e.target.value)} className={`w-full bg-transparent border-0 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-400'} focus:ring-0 focus:border-[#ff6700] py-2`} />
+                <label className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                  Notes
+                </label>
+                <textarea 
+                  name="notes" 
+                  value={settingsDraft.coffeeDetails?.notes || ''} 
+                  onChange={(e) => handleCoffeeDetailChange('notes', e.target.value)} 
+                  className={`w-full bg-transparent border-0 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-400'} focus:ring-0 focus:border-[#ff6700] py-2 resize-none`} 
+                  rows={3}
+                  placeholder="Add notes about this coffee..."
+                />
               </div>
             </div>
 
             {/* Brew Notes (if applicable) */}
             {isBrewLog && (
               <div>
-                <label className="block text-sm font-medium text-gray-400">Brew Notes</label>
+                <label className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                  Brew Notes
+                </label>
                 <textarea name="brewNotes" value={settingsDraft.brewNotes || ''} onChange={(e) => setSettingsDraft({ ...settingsDraft, brewNotes: e.target.value })} className={`w-full bg-transparent border-0 border-b ${isDarkMode ? 'border-gray-600' : 'border-gray-400'} focus:ring-0 focus:border-[#ff6700] py-2 resize-none`} rows={3} />
               </div>
             )}
@@ -794,15 +788,15 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
       try {
         const parsed = JSON.parse(savedSettings);
         return {
-          amount: parsed.amount || 15,
-          ratio: parsed.ratio || 15,
+          amount: (parsed.amount >= 1 && parsed.amount <= 50) ? parsed.amount : 1.0,
+          ratio: (parsed.ratio >= 1 && parsed.ratio <= 50) ? parsed.ratio : 1.0,
           bloomRatio: parsed.bloomRatio || 2
         };
       } catch (e) {
         console.error('Error loading saved settings:', e);
       }
     }
-    return { amount: 15, ratio: 15, bloomRatio: 2 };
+    return { amount: 1.0, ratio: 1.0, bloomRatio: 2 };
   };
 
   const [coffeeSettings, setCoffeeSettings] = useState<CoffeeSettings>(loadSavedSettings);
@@ -1176,6 +1170,14 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     localStorage.setItem('coffeeSettings', JSON.stringify(coffeeSettings));
   }, [coffeeSettings]);
 
+  useEffect(() => {
+    // Debug: log dose, ratio, and calculation results whenever they change
+    const dose = coffeeSettings.amount as number;
+    const ratio = coffeeSettings.ratio as number;
+    const brewPlan = calculateBrewTiming(grindSize, dose, ratio, coffeeSettings.bloomRatio);
+    console.log(`SCROLL dose ${dose.toFixed(1)} brew ${ratio.toFixed(1)} | total water: ${Math.round(dose * ratio)} | total time: ${brewPlan.totalTime}`);
+  }, [coffeeSettings.amount, coffeeSettings.ratio, grindSize, coffeeSettings.bloomRatio]);
+
   if (showInfo) {
     return <InfoPage onBack={() => setShowInfo(false)} />;
   }
@@ -1278,106 +1280,77 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
           {/* Coffee and Ratio Pickers */}
           <div className="grid grid-cols-2 gap-8">
             {/* Coffee Amount Picker */}
-            <div className="space-y-2">
-              <label className={`block text-sm font-medium ${isDarkMode ? 'text-white/60' : 'text-black/60'}`}>Coffee Dose (g)</label>
-              <VerticalPicker
-                value={coffeeSettings.amount}
-                onChange={handleCoffeeAmountChange}
-                hasDecimals={true}
-                isDarkMode={isDarkMode}
-                min={1}
-                max={50}
-              />
-            </div>
+            <AppleStylePicker
+              value={coffeeSettings.amount}
+              onChange={(amount) => setCoffeeSettings(prev => ({ ...prev, amount }))}
+              isDarkMode={isDarkMode}
+              label="Coffee (g)"
+            />
+            
+            {/* Coffee Ratio Picker */}
+            <AppleStylePicker
+              value={coffeeSettings.ratio}
+              onChange={(ratio) => setCoffeeSettings(prev => ({ ...prev, ratio }))}
+              isDarkMode={isDarkMode}
+              label="Ratio"
+            />
+          </div>
 
-            {/* Ratio Picker */}
-            <div className="space-y-2">
-              <label className={`block text-sm font-medium ${isDarkMode ? 'text-white/60' : 'text-black/60'}`}>Brew Ratio (x : 1)</label>
-              <VerticalPicker
-                value={coffeeSettings.ratio}
-                onChange={handleRatioChange}
-                hasDecimals={true}
-                isDarkMode={isDarkMode}
-                min={1}
-                max={50}
-              />
+          {/* Real-time Brew Info */}
+          <div className={`text-center space-y-2 py-4 px-6 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+            <div className="flex justify-between items-center">
+              <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Total Water:</span>
+              <span className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                {Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Total Time:</span>
+              <span className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                {formatTime(brewingTimings.totalTime)}
+              </span>
             </div>
           </div>
 
-          {/* Water Amount Display */}
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <div className="space-y-2">
-              <label className={`block text-sm font-medium text-center ${isDarkMode ? 'text-white/60' : 'text-black/60'}`}>Total Water (g)</label>
-              <div className="h-11 flex items-center justify-center border border-gray-300 rounded-lg text-center">
-                <span className={`text-xl font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>{Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g</span>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className={`block text-sm font-medium text-center ${isDarkMode ? 'text-white/60' : 'text-black/60'}`}>Total Time</label>
-              <div className="h-11 flex items-center justify-center border border-gray-300 rounded-lg text-center">
-                <span className={`text-xl font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>{formatTime(brewingTimings.totalTime)}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons Row: Details, Brews, Ready */}
-          <div className="grid grid-cols-4 gap-4 mb-8">
+          {/* Action Buttons */}
+          <div className="flex justify-center space-x-4">
             <button
-              onClick={openSettings}
-              className="h-11 border border-gray-300 rounded-lg text-sm font-medium text-center transition-colors hover:border-[#ff6700] col-span-1"
-              type="button"
-              aria-label="Add Details"
+              onClick={() => setShowSettings(true)}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
+                isDarkMode 
+                  ? 'border-gray-600 text-gray-300 hover:border-gray-500' 
+                  : 'border-gray-400 text-gray-600 hover:border-gray-500'
+              }`}
             >
-              Details
+              <SettingsIcon size={16} />
+              <span>Details</span>
             </button>
             <button
               onClick={() => setShowNotes(true)}
-              className="h-11 border border-gray-300 rounded-lg text-sm font-medium text-center transition-colors hover:border-[#ff6700] col-span-1"
-              aria-label="Past Brews"
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
+                isDarkMode 
+                  ? 'border-gray-600 text-gray-300 hover:border-gray-500' 
+                  : 'border-gray-400 text-gray-600 hover:border-gray-500'
+              }`}
             >
-              Brews
+              <ClipboardList size={16} />
+              <span>Brews</span>
             </button>
-            <div className="col-span-2">
-              <button
-                className="h-11 w-full border border-gray-300 rounded-lg text-sm font-medium text-center transition-colors hover:border-[#ff6700]"
-                onClick={handleStart}
-              >
-                Ready
-              </button>
-            </div>
+          </div>
+
+          {/* Brew Timer Button */}
+          <div className="mt-8 flex items-center justify-center">
+            <button
+              onClick={handleStart}
+              className={`py-2 px-8 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+            >
+              Ready to Pour
+            </button>
           </div>
         </main>
-
-        {/* Footer attribution */}
-        <div className="w-full flex justify-center items-center mt-8 mb-2">
-          <span className="text-xs text-gray-400">Made by </span>
-          <button
-            className="text-xs font-semibold underline hover:text-[#ff6700] focus:outline-none ml-1"
-            style={{ color: '#ff6700' }}
-            onClick={() => setShowAbout(true)}
-          >
-            Origen
-          </button>
-        </div>
-
-        {/* Modals as overlays */}
-        {showSettings && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-            <SettingsModal onClose={closeSettings} onSave={() => handleSettingsSave} />
-          </div>
-        )}
-        {showNotes && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-            <NotesModal onClose={() => setShowNotes(false)} notes={/* pass notes data here */[]} />
-          </div>
-        )}
       </div>
     </div>
   );
 };
 
 export default BrewingApp;
-
-// Removed mapGrindStringToValue as it's not used after GrindSelector removal
-// Ensure all imports are used or remove them.
-// Review any remaining console.logs or commented out code for cleanup.
