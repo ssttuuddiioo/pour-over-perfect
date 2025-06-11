@@ -1,72 +1,83 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 
 interface VerticalPickerProps {
-  items: number[];
   value: number;
   onChange: (value: number) => void;
   unit?: string;
   formatValue?: (value: number) => string;
   hasDecimals?: boolean;
   isDarkMode?: boolean;
+  min?: number;
+  max?: number;
 }
 
 const VerticalPicker: React.FC<VerticalPickerProps> = ({
-  items,
   value,
   onChange,
   unit = '',
   formatValue = (v) => v.toString(),
   hasDecimals = false,
   isDarkMode = true,
+  min = 5,
+  max = 50,
 }) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [selectedDecimal, setSelectedDecimal] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value.toString());
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const decimalContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const scrollEndTimer = useRef<NodeJS.Timeout>();
+
   const itemHeight = 50;
   const visibleItems = 5;
+
+  const items = useMemo(() => {
+    return Array.from({ length: (max - min) + 1 }, (_, i) => i + min);
+  }, [min, max]);
+
   const totalHeight = itemHeight * items.length;
   const containerHeight = itemHeight * visibleItems;
 
   const decimalOptions = Array.from({ length: 10 }, (_, i) => i);
 
   useEffect(() => {
-    if (!hasDecimals) {
-      const index = items.indexOf(Math.floor(value));
-      if (index !== -1) {
-        setSelectedIndex(index);
-        if (containerRef.current) {
-          containerRef.current.scrollTop = index * itemHeight;
-        }
+    if (isUserScrolling) return;
+
+    const wholeNumber = Math.floor(value);
+    const decimal = Math.round((value - wholeNumber) * 10);
+    const index = items.indexOf(wholeNumber);
+
+    if (index !== -1) {
+      setSelectedIndex(index);
+      if (containerRef.current) {
+        containerRef.current.scrollTop = index * itemHeight;
       }
-    } else {
-      const wholeNumber = Math.floor(value);
-      const decimal = Math.round((value - wholeNumber) * 10);
-      const index = items.indexOf(wholeNumber);
-      if (index !== -1) {
-        setSelectedIndex(index);
-        setSelectedDecimal(decimal);
-        if (containerRef.current) {
-          containerRef.current.scrollTop = index * itemHeight;
-        }
-        if (decimalContainerRef.current) {
-          decimalContainerRef.current.scrollTop = decimal * itemHeight;
-        }
+    }
+    if (hasDecimals) {
+      setSelectedDecimal(decimal);
+      if (decimalContainerRef.current) {
+        decimalContainerRef.current.scrollTop = decimal * itemHeight;
       }
     }
     setEditValue(value.toString());
-  }, [value, items, hasDecimals]);
+  }, [value, items, hasDecimals, isUserScrolling]);
 
   const handleScroll = () => {
+    setIsUserScrolling(true);
+    clearTimeout(scrollEndTimer.current);
+    scrollEndTimer.current = setTimeout(() => setIsUserScrolling(false), 250);
+
     if (!containerRef.current || isEditing) return;
     
     const scrollTop = containerRef.current.scrollTop;
-    const newIndex = Math.round(scrollTop / itemHeight);
+    let newIndex = Math.round(scrollTop / itemHeight);
+    newIndex = Math.max(0, Math.min(items.length - 1, newIndex));
     
-    if (newIndex >= 0 && newIndex < items.length && newIndex !== selectedIndex) {
+    if (newIndex !== selectedIndex) {
       setSelectedIndex(newIndex);
       const newValue = hasDecimals 
         ? items[newIndex] + (selectedDecimal / 10)
@@ -89,29 +100,24 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setEditValue(newValue);
-    
-    if (newValue === '') return;
-    
-    const numValue = parseFloat(newValue);
-    if (!isNaN(numValue) && numValue >= items[0] && numValue <= items[items.length - 1]) {
-      onChange(numValue);
-    }
+    setEditValue(e.target.value);
   };
 
   const handleInputBlur = () => {
     setIsEditing(false);
-    const numValue = parseFloat(editValue);
-    if (isNaN(numValue) || numValue < items[0] || numValue > items[items.length - 1]) {
+    let numValue = parseFloat(editValue);
+    if (!isNaN(numValue)) {
+      numValue = Math.max(min, Math.min(max, numValue));
+      onChange(numValue);
+      setEditValue(numValue.toString());
+    } else {
       setEditValue(value.toString());
     }
   };
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      setIsEditing(false);
-      handleInputBlur();
+      inputRef.current?.blur();
     }
   };
 
@@ -123,9 +129,7 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
 
   return (
     <div className="flex items-center space-x-1">
-      {/* Picker container with single border and matching button width */}
       <div className="flex flex-row items-center justify-center h-[250px] px-4 border border-gray-300 rounded-lg bg-transparent overflow-hidden w-full max-w-[180px] mx-auto">
-        {/* Whole number picker or input */}
         <div className="relative h-[250px] w-24 overflow-hidden flex flex-col items-center justify-center">
           {isEditing ? (
             <input
@@ -137,9 +141,9 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
               onKeyDown={handleInputKeyDown}
               className={`w-full h-full bg-transparent text-2xl font-medium ${isDarkMode ? 'text-white' : 'text-black'} text-center focus:outline-none focus:ring-2 focus:ring-opacity-50 rounded`}
               style={{ padding: '100px 0' }}
-              min={items[0]}
-              max={items[items.length - 1]}
               step={hasDecimals ? "0.1" : "1"}
+              min={min}
+              max={max}
             />
           ) : (
             <>
@@ -185,7 +189,6 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
           )}
         </div>
 
-        {/* Decimal picker (if enabled) */}
         {hasDecimals && !isEditing && (
           <>
             <span className={`text-2xl font-medium mx-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>.</span>
@@ -233,7 +236,6 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
         )}
       </div>
 
-      {/* Unit display */}
       {unit && (
         <span className={`text-2xl font-medium ${isDarkMode ? 'text-white' : 'text-black'} ml-1`}>{unit}</span>
       )}

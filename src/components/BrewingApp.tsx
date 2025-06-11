@@ -484,21 +484,13 @@ function BrewTimerPage({
             justifyContent: 'flex-start',
             position: 'relative',
             overflow: 'hidden',
+            padding: '1rem',
           }}
         >
-          {/* Step Instructions at the very top */}
-          {(() => {
-            // Keep spacing but remove instruction text
-            return (
-              <div className="w-full max-w-[430px] mx-auto px-8 mt-2 mb-2" style={{ minHeight: 20 }}>
-                {/* Intentionally left blank for spacing */}
-              </div>
-            );
-          })()}
           {/* Timers below instructions */}
-          <div className="h-full flex flex-col w-full max-w-[430px] mx-auto px-4 py-2 relative z-10">
+          <div className="flex flex-col w-full max-w-[430px] mx-auto px-1 py-1 relative z-10">
             {/* Top Info Bar */}
-            <div className="flex justify-between items-end mb-4 w-full">
+            <div className="flex justify-between items-end mb-6 w-full">
               <div className="flex flex-col items-start">
                 <div className="text-xs uppercase tracking-wider text-gray-400">Total time</div>
                 <div className="text-2xl font-light mt-1">{formatTime(totalTime)}</div>
@@ -514,7 +506,7 @@ function BrewTimerPage({
             </div>
 
             {/* Step List */}
-            <div className="flex-1 relative" style={{ minHeight: 420 }}>
+            <div className="relative overflow-y-auto" style={{ minHeight: 206, maxHeight: 'calc(100vh - 238px)' }}>
               {/* Animated highlight box */}
               {(() => {
                 // Dynamic step offset measurement for perfect highlight alignment
@@ -547,7 +539,7 @@ function BrewTimerPage({
                         boxShadow: isDarkMode ? '0 2px 8px #0002' : '0 2px 8px #0001',
                       }}
                     />
-                    <div className="space-y-2 relative z-10">
+                    <div className="space-y-0.5 relative z-10">
                       {fullStepSequence.slice(0, -1).map((step: any, index: number) => {
                         const isActive = index === fullCurrentStep;
                         const isCompleted = elapsed >= (fullStepEndTimes[index] || 0);
@@ -561,11 +553,11 @@ function BrewTimerPage({
                         return (
                           <div
                             key={index}
-                            className="py-3 relative"
-                            style={{ minHeight: 56 }}
+                            className="py-1 relative"
+                            style={{ minHeight: 19 }}
                             ref={el => (stepRefs.current[index] = el)}
                           >
-                            <div className={`flex flex-col justify-between p-3 h-full`}
+                            <div className={`flex flex-col justify-between p-2 h-full`}
                               style={{ transition: 'background 0.3s, box-shadow 0.3s, border 0.3s' }}
                             >
                               <div className="flex justify-between items-center">
@@ -606,7 +598,7 @@ function BrewTimerPage({
                               </div>
                               {/* Progress/Separator Line - now inside the step box */}
                               {index < fullStepSequence.length - 2 && (
-                                <div className="relative w-full mt-2">
+                                <div className="relative w-full mt-0.5">
                                   <div 
                                     className="w-full h-[2px]"
                                     style={{
@@ -640,38 +632,29 @@ function BrewTimerPage({
               })()}
             </div>
 
-            {/* Bottom Buttons */}
-            <footer className="mt-4 mb-2">
-              <div className="flex items-center justify-center space-x-8">
-                <button
-                  onClick={onBack}
-                  className={`py-2 px-8 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
-                >
-                  Back
-                </button>
-                <div className="w-2 h-2 bg-gray-200 rounded-full"></div>
-                <button
-                  onClick={() => {
-                    const isDrawdown = fullStepSequence[fullCurrentStep]?.label === 'Drawdown';
-                    if (isDrawdown) {
-                      onDone && onDone();
-                    } else if (timerActive && !timerPaused) {
-                      handlePause();
-                    } else {
-                      handleResume();
-                    }
-                  }}
-                  className={`py-2 px-8 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
-                  disabled={finished}
-                >
-                  {fullStepSequence[fullCurrentStep]?.label === 'Drawdown'
-                    ? 'Done'
-                    : timerActive && !timerPaused
-                    ? 'Pause'
-                    : 'Start'}
-                </button>
-              </div>
-            </footer>
+            {/* Buttons always below the step list */}
+            <div className="mt-12 flex items-center justify-center space-x-8">
+              <button
+                onClick={onBack}
+                className={`py-2 px-8 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+              >
+                Back
+              </button>
+              <div className="w-2 h-2 bg-gray-200 rounded-full"></div>
+              <button
+                onClick={() => {
+                  if (timerActive && !timerPaused) {
+                    handlePause();
+                  } else {
+                    handleResume();
+                  }
+                }}
+                className={`py-2 px-8 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+                disabled={finished}
+              >
+                {timerActive && !timerPaused ? 'Pause' : 'Start'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -811,15 +794,15 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
       try {
         const parsed = JSON.parse(savedSettings);
         return {
-          amount: parsed.amount || 15.2,
-          ratio: parsed.ratio || 14.5,
+          amount: parsed.amount || 15,
+          ratio: parsed.ratio || 15,
           bloomRatio: parsed.bloomRatio || 2
         };
       } catch (e) {
         console.error('Error loading saved settings:', e);
       }
     }
-    return { amount: 15.2, ratio: 14.5, bloomRatio: 2 };
+    return { amount: 15, ratio: 15, bloomRatio: 2 };
   };
 
   const [coffeeSettings, setCoffeeSettings] = useState<CoffeeSettings>(loadSavedSettings);
@@ -877,9 +860,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     grindSize, 
     coffeeSettings.amount, 
     coffeeSettings.ratio, 
-    coffeeSettings.bloomRatio,
-    50, // Default acidity for calculation (no EQ)
-    50  // Default fruitiness for calculation (no EQ)
+    coffeeSettings.bloomRatio
   );
 
   // Calculate step sequence
@@ -1032,11 +1013,13 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     if (!showBrewTimer || !stepSequence[currentStep]) return `Total brew time: ${formatTime(brewingTimings.totalTime)}`;
     
     const step = stepSequence[currentStep];
+    const targetWeight = step.water.match(/(\d+g)/);
+    if (targetWeight) {
+      return `Pour to ${targetWeight[0]}`;
+    }
+
     if (step.label === 'Finish') {
       return `Done! Total time: ${formatTime(totalTime)}`;
-    }
-    if (step.water) {
-      return step.water;
     }
     return step.label;
   };
@@ -1300,11 +1283,12 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
             <div className="space-y-2">
               <label className={`block text-sm font-medium ${isDarkMode ? 'text-white/60' : 'text-black/60'}`}>Coffee Dose (g)</label>
               <VerticalPicker
-                items={Array.from({ length: 41 }, (_, i) => i + 10)}
                 value={coffeeSettings.amount}
                 onChange={handleCoffeeAmountChange}
                 hasDecimals={true}
                 isDarkMode={isDarkMode}
+                min={5}
+                max={50}
               />
             </div>
 
@@ -1312,11 +1296,12 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
             <div className="space-y-2">
               <label className={`block text-sm font-medium ${isDarkMode ? 'text-white/60' : 'text-black/60'}`}>Brew Ratio (x : 1)</label>
               <VerticalPicker
-                items={Array.from({ length: 41 }, (_, i) => i + 10)}
                 value={coffeeSettings.ratio}
                 onChange={handleRatioChange}
                 hasDecimals={true}
                 isDarkMode={isDarkMode}
+                min={5}
+                max={50}
               />
             </div>
           </div>
