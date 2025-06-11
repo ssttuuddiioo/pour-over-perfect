@@ -19,15 +19,16 @@ export const calculateBrewTiming = (
   grindSize: number,
   coffeeAmount: number = 15,
   waterRatio: number = 15,
-  bloomRatio: number = 3 // Standard 3x bloom
+  bloomRatio: number = 2
 ): BrewingTimings => {
   // --- Water Calculations (Bottom-Up) ---
   const totalWater = Math.round(coffeeAmount * waterRatio);
   const bloomWater = Math.round(coffeeAmount * bloomRatio);
   const remainingWater = totalWater - bloomWater;
 
-  // 40/60 split for the two main pours after bloom
-  const firstPourVolume = Math.round(remainingWater * 0.6);
+  // 40/60 split for the two main pours after bloom.
+  // First pour is 40% of the remaining water, second is 60%.
+  const firstPourVolume = Math.round(remainingWater * 0.4);
   const secondPourVolume = remainingWater - firstPourVolume;
 
   const firstPourTarget = bloomWater + firstPourVolume;

@@ -1285,7 +1285,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
                 onChange={handleCoffeeAmountChange}
                 hasDecimals={true}
                 isDarkMode={isDarkMode}
-                min={5}
+                min={1}
                 max={50}
               />
             </div>
@@ -1298,7 +1298,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
                 onChange={handleRatioChange}
                 hasDecimals={true}
                 isDarkMode={isDarkMode}
-                min={5}
+                min={1}
                 max={50}
               />
             </div>
@@ -1363,7 +1363,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
         {/* Modals as overlays */}
         {showSettings && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-            <SettingsModal onClose={closeSettings} onSave={handleSettingsSave} />
+            <SettingsModal onClose={closeSettings} onSave={() => handleSettingsSave} />
           </div>
         )}
         {showNotes && (

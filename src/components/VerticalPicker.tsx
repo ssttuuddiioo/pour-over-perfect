@@ -18,7 +18,7 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
   formatValue = (v) => v.toString(),
   hasDecimals = false,
   isDarkMode = true,
-  min = 5,
+  min = 1,
   max = 50,
 }) => {
   const [isEditing, setIsEditing] = useState(false);

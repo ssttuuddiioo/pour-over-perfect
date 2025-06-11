@@ -164,12 +164,16 @@
   }
 }
 
-/* Hide scrollbars for all elements */
-::-webkit-scrollbar {
-  width: 0 !important;
-  background: transparent;
-}
-html, body, * {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
-}
+/* 
+  Scrollbar hiding was causing issues on desktop.
+  Commenting out for now.
+
+  ::-webkit-scrollbar {
+    width: 0 !important;
+    background: transparent;
+  }
+  html, body, * {
+    scrollbar-width: none; 
+    -ms-overflow-style: none;
+  } 
+*/
