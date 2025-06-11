@@ -869,8 +869,6 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     { label: 'First Pour', water: `Pour to ${brewingTimings.firstPourTarget}g`, duration: brewingTimings.firstPourDuration },
     { label: 'Wait', water: 'Let it steep', duration: brewingTimings.restDuration },
     { label: 'Second Pour', water: `Pour to ${brewingTimings.secondPourTarget}g`, duration: brewingTimings.secondPourDuration },
-    { label: 'Wait', water: 'Let it steep', duration: brewingTimings.secondRestDuration },
-    { label: 'Final Pour', water: `Pour to ${brewingTimings.thirdPourTarget}g`, duration: brewingTimings.thirdPourDuration },
     { label: 'Drawdown', water: 'Let coffee drip', duration: brewingTimings.drawdownDuration },
     { label: 'Finish', water: 'Enjoy your coffee!', duration: 0 }
   ];

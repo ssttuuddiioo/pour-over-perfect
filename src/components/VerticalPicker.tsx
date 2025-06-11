@@ -21,82 +21,93 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
   min = 5,
   max = 50,
 }) => {
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const [selectedDecimal, setSelectedDecimal] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value.toString());
-  const [isUserScrolling, setIsUserScrolling] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const decimalContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const scrollEndTimer = useRef<NodeJS.Timeout>();
+  const scrollTimeout = useRef<NodeJS.Timeout>();
 
   const itemHeight = 50;
-  const visibleItems = 5;
 
   const items = useMemo(() => {
     return Array.from({ length: (max - min) + 1 }, (_, i) => i + min);
   }, [min, max]);
 
-  const totalHeight = itemHeight * items.length;
-  const containerHeight = itemHeight * visibleItems;
+  const decimalOptions = useMemo(() => Array.from({ length: 10 }, (_, i) => i), []);
 
-  const decimalOptions = Array.from({ length: 10 }, (_, i) => i);
+  const selectedIndex = useMemo(() => items.indexOf(Math.floor(value)), [value, items]);
+  const selectedDecimal = useMemo(() => Math.round((value - Math.floor(value)) * 10), [value]);
+
+  // Effect to position the scroller based on the value.
+  // This is now the ONLY place where scroll is set programmatically.
+  useEffect(() => {
+    const scroller = containerRef.current;
+    if (scroller) {
+      const targetScrollTop = selectedIndex * itemHeight;
+      // We only scroll if the position is meaningfully different, to avoid fighting with user scroll.
+      if (Math.abs(scroller.scrollTop - targetScrollTop) > itemHeight / 2) {
+        scroller.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
+      }
+    }
+  }, [value, selectedIndex]); // It re-runs ONLY when the external value changes.
 
   useEffect(() => {
-    if (isUserScrolling) return;
-
-    const wholeNumber = Math.floor(value);
-    const decimal = Math.round((value - wholeNumber) * 10);
-    const index = items.indexOf(wholeNumber);
-
-    if (index !== -1) {
-      setSelectedIndex(index);
-      if (containerRef.current) {
-        containerRef.current.scrollTop = index * itemHeight;
-      }
-    }
-    if (hasDecimals) {
-      setSelectedDecimal(decimal);
-      if (decimalContainerRef.current) {
-        decimalContainerRef.current.scrollTop = decimal * itemHeight;
-      }
-    }
     setEditValue(value.toString());
-  }, [value, items, hasDecimals, isUserScrolling]);
+  }, [value]);
 
   const handleScroll = () => {
-    setIsUserScrolling(true);
-    clearTimeout(scrollEndTimer.current);
-    scrollEndTimer.current = setTimeout(() => setIsUserScrolling(false), 250);
-
-    if (!containerRef.current || isEditing) return;
+    if (!containerRef.current) return;
     
+    // Clear any existing timeout to avoid premature snapping
+    clearTimeout(scrollTimeout.current);
+
     const scrollTop = containerRef.current.scrollTop;
-    let newIndex = Math.round(scrollTop / itemHeight);
-    newIndex = Math.max(0, Math.min(items.length - 1, newIndex));
+    const newIndex = Math.round(scrollTop / itemHeight);
     
-    if (newIndex !== selectedIndex) {
-      setSelectedIndex(newIndex);
-      const newValue = hasDecimals 
-        ? items[newIndex] + (selectedDecimal / 10)
-        : items[newIndex];
-      onChange(newValue);
+    // Update the value based on scroll position
+    if (newIndex >= 0 && newIndex < items.length) {
+      const currentDecimal = hasDecimals ? selectedDecimal / 10 : 0;
+      const newValue = items[newIndex] + currentDecimal;
+      if (newValue !== value) {
+        onChange(newValue);
+      }
     }
-  };
-
-  const handleDecimalScroll = () => {
-    if (!decimalContainerRef.current || isEditing) return;
     
+    // After scrolling stops, snap to the nearest item.
+    scrollTimeout.current = setTimeout(() => {
+      const scroller = containerRef.current;
+      if (scroller) {
+        const finalIndex = Math.round(scroller.scrollTop / itemHeight);
+        const targetScrollTop = finalIndex * itemHeight;
+        scroller.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
+      }
+    }, 150);
+  };
+  
+  const handleDecimalScroll = () => {
+    if (!decimalContainerRef.current) return;
+    
+    clearTimeout(scrollTimeout.current);
+
     const scrollTop = decimalContainerRef.current.scrollTop;
     const newDecimal = Math.round(scrollTop / itemHeight);
     
-    if (newDecimal >= 0 && newDecimal < 10 && newDecimal !== selectedDecimal) {
-      setSelectedDecimal(newDecimal);
+    if (newDecimal >= 0 && newDecimal < 10) {
       const newValue = items[selectedIndex] + (newDecimal / 10);
-      onChange(newValue);
+      if (newValue !== value) {
+        onChange(newValue);
+      }
     }
+    
+    scrollTimeout.current = setTimeout(() => {
+      const scroller = decimalContainerRef.current;
+      if (scroller) {
+        const finalDecimal = Math.round(scroller.scrollTop / itemHeight);
+        scroller.scrollTo({ top: finalDecimal * itemHeight, behavior: 'smooth' });
+      }
+    }, 150);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,7 +120,6 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
     if (!isNaN(numValue)) {
       numValue = Math.max(min, Math.min(max, numValue));
       onChange(numValue);
-      setEditValue(numValue.toString());
     } else {
       setEditValue(value.toString());
     }
@@ -127,9 +137,13 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
     setTimeout(() => inputRef.current?.focus(), 0);
   };
 
+  const totalHeight = itemHeight * items.length;
+
   return (
     <div className="flex items-center space-x-1">
-      <div className="flex flex-row items-center justify-center h-[250px] px-4 border border-gray-300 rounded-lg bg-transparent overflow-hidden w-full max-w-[180px] mx-auto">
+      <div 
+        className="flex flex-row items-center justify-center h-[250px] px-4 border border-gray-300 rounded-lg bg-transparent overflow-hidden w-full max-w-[180px] mx-auto"
+      >
         <div className="relative h-[250px] w-24 overflow-hidden flex flex-col items-center justify-center">
           {isEditing ? (
             <input
@@ -160,8 +174,6 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
                 style={{
                   scrollSnapType: 'y mandatory',
                   scrollPadding: '100px 0',
-                  touchAction: 'pan-y',
-                  WebkitOverflowScrolling: 'touch',
                 }}
               >
                 <div 
@@ -206,8 +218,6 @@ const VerticalPicker: React.FC<VerticalPickerProps> = ({
                 style={{
                   scrollSnapType: 'y mandatory',
                   scrollPadding: '100px 0',
-                  touchAction: 'pan-y',
-                  WebkitOverflowScrolling: 'touch',
                 }}
               >
                 <div 

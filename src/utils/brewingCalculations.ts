@@ -13,87 +13,58 @@ export interface BrewingTimings {
   secondPourTarget: number;
   thirdPourTarget: number;
   totalTime: number;
-  pourVolume: number;
-  pulseCount?: number;
 }
 
 export const calculateBrewTiming = (
   grindSize: number,
   coffeeAmount: number = 15,
   waterRatio: number = 15,
-  bloomRatio: number = 2
+  bloomRatio: number = 3 // Standard 3x bloom
 ): BrewingTimings => {
+  // --- Water Calculations (Bottom-Up) ---
   const totalWater = Math.round(coffeeAmount * waterRatio);
   const bloomWater = Math.round(coffeeAmount * bloomRatio);
   const remainingWater = totalWater - bloomWater;
 
-  const pulseCount = 3; // Default to 3 pours
-
-  const firstPourVolume = Math.round(remainingWater * 0.4);
-  const secondPourVolume = Math.round(remainingWater * 0.35);
-  const thirdPourVolume = remainingWater - firstPourVolume - secondPourVolume;
+  // 40/60 split for the two main pours after bloom
+  const firstPourVolume = Math.round(remainingWater * 0.6);
+  const secondPourVolume = remainingWater - firstPourVolume;
 
   const firstPourTarget = bloomWater + firstPourVolume;
-  const secondPourTarget = firstPourTarget + secondPourVolume;
+  const secondPourTarget = totalWater;
+  
+  // Third pour is not used in this simplified 3-pour model (Bloom, Pour 1, Pour 2)
   const thirdPourTarget = totalWater;
 
-  const pourVolume = Math.round(remainingWater / pulseCount);
-
-  const baseTime = 120; // 2:00 base time
-  const doseAdjustment = (coffeeAmount - 15) * 5; 
-  const ratioAdjustment = (waterRatio - 15) * 4; 
+  // --- Time Calculations (Bottom-Up) ---
+  const pourRate = 5; // g/s - a consistent pour rate
+  const bloomDuration = 45; // seconds - increased for better saturation
+  const firstPourDuration = Math.round(firstPourVolume / pourRate);
+  const secondPourDuration = Math.round(secondPourVolume / pourRate);
   
-  const grindAdjustment = (() => {
-    switch (Number(grindSize)) {
-      case 3: return 15;
-      case 6: return 0;
-      case 7: return -8;
-      case 9: return -15;
-      default: return 0;
-    }
-  })();
+  // Rest duration is proportional to the preceding pour
+  const restDuration = Math.round(firstPourDuration * 1.5);
   
-  let targetTime = baseTime + doseAdjustment + ratioAdjustment + grindAdjustment;
-  targetTime = Math.max(90, Math.min(300, targetTime));
+  // Drawdown time is influenced by total water and grind size
+  const baseDrawdown = totalWater * 0.3; 
+  const grindAdjustment = (grindSize - 6) * 5; // ~5s per grind setting step from medium
+  const drawdownDuration = Math.round(baseDrawdown + grindAdjustment);
 
-  const totalPourTime = targetTime * 0.4;
-  const pourRate = totalWater / totalPourTime;
+  const totalTime = bloomDuration + firstPourDuration + restDuration + secondPourDuration + drawdownDuration;
 
-  const calculatePourDuration = (volume: number) => {
-    return volume > 0 ? Math.round(volume / pourRate) : 0;
-  };
-
-  const firstPourDuration = calculatePourDuration(firstPourVolume);
-  const secondPourDuration = calculatePourDuration(secondPourVolume);
-  const thirdPourDuration = calculatePourDuration(thirdPourVolume);
-
-  const bloomDuration = 30;
-  const totalPourDuration = firstPourDuration + secondPourDuration + thirdPourDuration;
-  const remainingTimeForRests = targetTime - totalPourDuration - bloomDuration;
-  
-  const restDuration = Math.round(remainingTimeForRests * 0.3);
-  const secondRestDuration = Math.round(remainingTimeForRests * 0.3);
-  const drawdownDuration = Math.round(remainingTimeForRests * 0.4);
-
-  const durations = {
+  return {
     bloomDuration,
     firstPourDuration,
     restDuration,
     secondPourDuration,
-    secondRestDuration,
-    thirdPourDuration,
-    drawdownDuration
-  };
-
-  return {
-    ...durations,
+    secondRestDuration: 0, // Not used
+    thirdPourDuration: 0, // Not used
+    drawdownDuration,
     bloomWater,
     firstPourTarget,
     secondPourTarget,
     thirdPourTarget,
-    totalTime: targetTime,
-    pourVolume,
-    pulseCount
+    totalTime,
   };
 };
 
