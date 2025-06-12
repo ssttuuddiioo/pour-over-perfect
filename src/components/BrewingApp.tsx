@@ -276,7 +276,7 @@ function SettingsPage({
         {/* Header */}
         <header className="flex justify-between items-center mb-6">
           <h1 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>
-            {isBrewLog ? 'Log Your Brew' : 'Details'}
+            {isBrewLog ? 'Log Your Brew' : 'Save'}
           </h1>
           <button onClick={onBack} className={`h-11 px-6 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg text-sm font-medium text-center transition-colors hover:border-[#ff6700]`}>
             Back
@@ -441,7 +441,8 @@ function BrewTimerPage({
   finished,
   formatTime,
   onBack,
-  onDone
+  onDone,
+  onSaveRecipe
 }: any) {
   const { isDarkMode } = useTheme();
   const totalTime = fullStepEndTimes[fullStepEndTimes.length - 1] || 1;
@@ -457,6 +458,9 @@ function BrewTimerPage({
     if (waterText && waterText.includes('Pour to')) return waterText.replace('Pour to ', '');
     return '';
   };
+
+  // Check if we're at the second pour step (index 3: Bloom=0, First Pour=1, Wait=2, Second Pour=3)
+  const isSecondPourActive = fullCurrentStep === 3;
 
   return (
     <div className={`min-h-screen flex flex-col relative ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
@@ -627,14 +631,19 @@ function BrewTimerPage({
             </div>
 
             {/* Buttons always below the step list */}
-            <div className="mt-12 flex items-center justify-center space-x-8">
+            <div className="mt-12 flex items-center justify-center space-x-4">
               <button
                 onClick={onBack}
-                className={`py-2 px-8 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+                className={`py-2 px-6 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
               >
                 Back
               </button>
-              <div className="w-2 h-2 bg-gray-200 rounded-full"></div>
+              <button
+                onClick={onSaveRecipe}
+                className={`py-2 px-6 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+              >
+                Save
+              </button>
               <button
                 onClick={() => {
                   if (timerActive && !timerPaused) {
@@ -643,10 +652,16 @@ function BrewTimerPage({
                     handleResume();
                   }
                 }}
-                className={`py-2 px-8 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+                className={`py-2 px-6 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
                 disabled={finished}
               >
                 {timerActive && !timerPaused ? 'Pause' : 'Start'}
+              </button>
+              <button
+                onClick={onDone}
+                className={`py-2 px-6 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+              >
+                Done
               </button>
             </div>
           </div>
@@ -1000,6 +1015,33 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     handleTimerReset();
   };
 
+  const handleSaveRecipe = () => {
+    // Take user directly to save page
+    setShowBrewTimer(false);
+    setShowSettings(true);
+    // Prepare settings draft for saving the recipe
+    const currentTime = new Date().toISOString();
+    setSettingsDraft({
+      ...settingsDraft,
+      brewNotes: `Recipe saved from timer at ${formatTime(elapsed)}`,
+      coffeeDetails: {
+        name: localStorage.getItem('coffeeDetails_name') || '',
+        roaster: localStorage.getItem('coffeeDetails_roaster') || '',
+        roastDate: localStorage.getItem('coffeeDetails_roastDate') || '',
+        origin: localStorage.getItem('coffeeDetails_origin') || '',
+        variety: localStorage.getItem('coffeeDetails_variety') || '',
+        process: localStorage.getItem('coffeeDetails_process') || '',
+        elevation: localStorage.getItem('coffeeDetails_elevation') || '',
+        image: localStorage.getItem('coffeeDetails_image') || ''
+      }
+    });
+  };
+
+  const handleTimerDone = () => {
+    // Show completion prompt (same as after drawdown)
+    setShowCompletionPrompt(true);
+  };
+
   const getStepInstruction = () => {
     if (isFinished) return 'Finished! Enjoy your coffee ☕';
     if (!showBrewTimer || !stepSequence[currentStep]) return `Total brew time: ${formatTime(brewingTimings.totalTime)}`;
@@ -1253,7 +1295,8 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
         finished={isFinished}
         formatTime={formatTime}
         onBack={handleBack}
-        onDone={() => setShowCompletionPrompt(true)}
+        onDone={handleTimerDone}
+        onSaveRecipe={handleSaveRecipe}
       />
     );
   }
@@ -1275,7 +1318,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
           />
         </div>
 
-        {/* Main Content - Optimized spacing */}
+        {/* Main Content - Balanced spacing */}
         <main className="flex-1 space-y-8">
           {/* Coffee and Ratio Pickers */}
           <div className="grid grid-cols-2 gap-8">
@@ -1296,20 +1339,11 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
             />
           </div>
 
-          {/* Real-time Brew Info */}
-          <div className={`text-center space-y-2 py-4 px-6 rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
-            <div className="flex justify-between items-center">
-              <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Total Water:</span>
-              <span className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-black'}`}>
-                {Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Total Time:</span>
-              <span className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-black'}`}>
-                {formatTime(brewingTimings.totalTime)}
-              </span>
-            </div>
+          {/* Compact Brew Info - Subtle line below pickers */}
+          <div className={`flex justify-center items-center space-x-6 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+            <span>{formatTime(brewingTimings.totalTime)}</span>
+            <div className={`w-1 h-1 rounded-full ${isDarkMode ? 'bg-gray-600' : 'bg-gray-400'}`}></div>
+            <span>{Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g water</span>
           </div>
 
           {/* Action Buttons */}
@@ -1323,7 +1357,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
               }`}
             >
               <SettingsIcon size={16} />
-              <span>Details</span>
+              <span>Save</span>
             </button>
             <button
               onClick={() => setShowNotes(true)}

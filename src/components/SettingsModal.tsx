@@ -36,7 +36,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onSave, initialS
       <div className="h-full flex flex-col w-full max-w-[430px] mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <h2 className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>Add Details</h2>
+          <h2 className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>Save</h2>
           <button
             onClick={onClose}
             className={`w-[25px] h-[25px] rounded-full ${isDarkMode ? 'bg-white/10' : 'bg-black/10'} hover:opacity-90 transition-opacity`}
