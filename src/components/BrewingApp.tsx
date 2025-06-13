@@ -486,7 +486,7 @@ function BrewTimerPage({
           }}
         >
           {/* Timers below instructions */}
-          <div className="flex flex-col w-full max-w-[430px] mx-auto px-1 py-1 relative z-10">
+          <div className="flex flex-col w-full max-w-[430px] mx-auto px-1 py-1 relative z-10" style={{ marginTop: '100px' }}>
             {/* Top Info Bar */}
             <div className="flex justify-between items-end mb-6 w-full">
               <div className="flex flex-col items-start">
@@ -631,38 +631,42 @@ function BrewTimerPage({
             </div>
 
             {/* Buttons always below the step list */}
-            <div className="mt-12 flex items-center justify-center space-x-4">
-              <button
-                onClick={onBack}
-                className={`py-2 px-6 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
-              >
-                Back
-              </button>
-              <button
-                onClick={onSaveRecipe}
-                className={`py-2 px-6 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
-              >
-                Save
-              </button>
-              <button
-                onClick={() => {
-                  if (timerActive && !timerPaused) {
-                    handlePause();
-                  } else {
-                    handleResume();
-                  }
-                }}
-                className={`py-2 px-6 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
-                disabled={finished}
-              >
-                {timerActive && !timerPaused ? 'Pause' : 'Start'}
-              </button>
-              <button
-                onClick={onDone}
-                className={`py-2 px-6 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
-              >
-                Done
-              </button>
+            <div className="mt-12 flex flex-col items-center justify-center space-y-4 w-full max-w-[430px]">
+              <div className="flex w-full justify-between gap-4">
+                <button
+                  onClick={onSaveRecipe}
+                  className={`py-3 px-8 flex-1 border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => {
+                    if (timerActive && !timerPaused) {
+                      handlePause();
+                    } else {
+                      handleResume();
+                    }
+                  }}
+                  className={`py-3 px-8 flex-1 border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+                  disabled={finished}
+                >
+                  {timerActive && !timerPaused ? 'Pause' : 'Start'}
+                </button>
+              </div>
+              <div className="flex w-full justify-between gap-4">
+                <button
+                  onClick={onBack}
+                  className={`py-3 px-8 flex-1 border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+                >
+                  Back
+                </button>
+                <button
+                  onClick={onDone}
+                  className={`py-3 px-8 flex-1 border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+                >
+                  Done
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1340,43 +1344,36 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
           </div>
 
           {/* Compact Brew Info - Subtle line below pickers */}
-          <div className={`flex justify-center items-center space-x-6 text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-            <span>{formatTime(brewingTimings.totalTime)}</span>
-            <div className={`w-1 h-1 rounded-full ${isDarkMode ? 'bg-gray-600' : 'bg-gray-400'}`}></div>
-            <span>{Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g water</span>
+          <div className="grid grid-cols-2 gap-8 mt-6">
+            <div className="flex flex-col items-center">
+              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-2`}>Total Time</span>
+              <div className="h-20 w-40 flex items-center justify-center border border-gray-300 rounded-lg text-center mb-4">
+                <span className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{formatTime(brewingTimings.totalTime)}</span>
+              </div>
+              <button
+                onClick={() => setShowNotes(true)}
+                className={`py-3 px-8 w-full border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] mb-4 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+              >
+                Brew History
+              </button>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-2`}>Total Water</span>
+              <div className="h-20 w-40 flex items-center justify-center border border-gray-300 rounded-lg text-center mb-4">
+                <span className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g</span>
+              </div>
+              <button
+                onClick={() => setShowSettings(true)}
+                className={`py-3 px-8 w-full border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] mb-4 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+              >
+                Save Beans
+              </button>
+            </div>
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex justify-center space-x-4">
-            <button
-              onClick={() => setShowSettings(true)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
-                isDarkMode 
-                  ? 'border-gray-600 text-gray-300 hover:border-gray-500' 
-                  : 'border-gray-400 text-gray-600 hover:border-gray-500'
-              }`}
-            >
-              <SettingsIcon size={16} />
-              <span>Save</span>
-            </button>
-            <button
-              onClick={() => setShowNotes(true)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
-                isDarkMode 
-                  ? 'border-gray-600 text-gray-300 hover:border-gray-500' 
-                  : 'border-gray-400 text-gray-600 hover:border-gray-500'
-              }`}
-            >
-              <ClipboardList size={16} />
-              <span>Brews</span>
-            </button>
-          </div>
-
-          {/* Brew Timer Button */}
-          <div className="mt-8 flex items-center justify-center">
+          <div className="flex justify-center mt-2">
             <button
               onClick={handleStart}
-              className={`py-2 px-8 border border-gray-300 rounded-lg text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+              className={`py-3 px-8 w-full max-w-[430px] border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
             >
               Ready to Pour
             </button>
