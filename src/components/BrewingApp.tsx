@@ -174,30 +174,25 @@ function CompletionPrompt({
   onSkip: () => void 
 }) {
   return (
-    <div className="antialiased h-screen flex items-center justify-center" style={{ backgroundColor: '#000000', color: '#FFFFFF' }}>
-      <div className="w-full max-w-md mx-auto text-center space-y-6" style={{ padding: '2rem' }}>
-        <div className="space-y-4">
-          <div className="text-6xl">☕</div>
-          <h1 className="text-3xl font-bold text-white">Brew Complete!</h1>
-          <p className="text-lg text-gray-400">
-            How was your pour-over? Would you like to log this brewing experience?
-          </p>
-        </div>
-        
-        <div className="space-y-3">
-          <button 
-            className="btn-primary w-full" 
-            onClick={onLogExperience}
-          >
-            Log This Brew
-          </button>
-          <button 
-            className="btn-secondary w-full" 
-            onClick={onSkip}
-          >
-            Skip for Now
-          </button>
-        </div>
+    <div className="min-h-screen flex flex-col bg-white text-black">
+      <div className="flex flex-col items-center w-full max-w-[430px] mx-auto px-4 py-12">
+        <div className="text-6xl mb-4">☕</div>
+        <h1 className="text-3xl font-bold mb-4 text-black">Brew Complete!</h1>
+        <p className="text-base text-gray-600 mb-8 text-center">
+          How was your pour-over? Would you like to log this brewing experience?
+        </p>
+        <button 
+          className="w-full py-2 mb-3 border border-gray-300 rounded-full text-sm font-medium transition-colors hover:border-[#ff6700] bg-black text-white"
+          onClick={onLogExperience}
+        >
+          Log This Brew
+        </button>
+        <button 
+          className="w-full py-2 border border-gray-300 rounded-full text-sm font-medium transition-colors hover:border-[#ff6700] bg-white text-black"
+          onClick={onSkip}
+        >
+          Skip for Now
+        </button>
       </div>
     </div>
   );
@@ -637,7 +632,7 @@ function BrewTimerPage({
                   onClick={onSaveRecipe}
                   className={`py-3 px-8 flex-1 border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
                 >
-                  Save
+                  Save This Recipe
                 </button>
                 <button
                   onClick={() => {
@@ -648,6 +643,7 @@ function BrewTimerPage({
                     }
                   }}
                   className={`py-3 px-8 flex-1 border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+                  style={{ background: 'rgba(255,103,0,0.15)' }}
                   disabled={finished}
                 >
                   {timerActive && !timerPaused ? 'Pause' : 'Start'}
@@ -771,29 +767,26 @@ function HistoryPage({ onBack }: { onBack: () => void }) {
 
 function AboutPage({ onBack }: { onBack: () => void }) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white px-4">
-      <div className="max-w-md w-full bg-zinc-900 rounded-xl shadow-lg p-8 flex flex-col items-center">
-        <h1 className="text-3xl font-bold mb-4">Origen</h1>
-        <p className="mb-6 text-center text-base">
-          Origen is a coffee project by Pablo Gnecco.<br/>
-          A quest to source, roast, and share ethically traded Colombian coffee.<br/>
-          This timer is an experiment.
+    <div className="min-h-screen flex flex-col bg-white text-black">
+      <div className="flex items-center gap-3 mb-8 pt-8 max-w-[430px] mx-auto px-4">
+        <span className="w-[25px] h-[25px] rounded-full bg-[#ff6700]" />
+        <h1 className="text-sm font-medium text-black">Pour Perfect</h1>
+      </div>
+      <main className="flex-1 flex flex-col items-center w-full max-w-[430px] mx-auto">
+        <p className="text-base leading-relaxed mb-8 text-black">
+          Pour Perfect is a tool by Origen, a small-batch coffee project shaped by a chance encounter in the Andes Mountains, people generous with their time and opinions, and a lot of learning along the way. From a hillside farm in Colombia to a co-roasting space in New York, Origen is fueled by questions and community.<br /><br />
+          To use this tool:<br /><br />
+          Start by choosing your coffee dose and brew ratio. The timer will guide you through the pour step by step. Adjust the settings as you go, take notes, and experiment.<br /><br />
+          There's no one perfect pour—just small tweaks and honest attempts.
         </p>
-        <a
-          href="https://www.buymeacoffee.com/origen.coffee"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-block mb-6 px-6 py-2 bg-yellow-400 text-black font-semibold rounded-lg shadow hover:bg-yellow-300 transition"
-        >
-          Buy me a coffee
-        </a>
+      
         <button
           onClick={onBack}
-          className="mt-2 px-6 py-2 border border-gray-300 rounded-lg text-base font-medium bg-black text-white hover:border-[#ff6700]"
+          className="mt-2 px-6 py-2 border border-gray-300 rounded-lg text-base font-medium bg-white text-black hover:border-[#ff6700]"
         >
           Back
         </button>
-      </div>
+      </main>
     </div>
   );
 }
@@ -1313,13 +1306,9 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
       <div className="h-full flex flex-col w-full max-w-[430px] mx-auto px-4 py-6 relative">
         {/* Header with Title and Dark Mode Toggle */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>Pour Perfect</h1>
-          <button
-            onClick={toggleDarkMode}
-            className="w-[25px] h-[25px] rounded-full bg-[#ff6700] hover:opacity-90 transition-opacity"
-            aria-label={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-          />
+        <div className="flex items-center gap-3 mb-8 pt-8 max-w-[430px] mx-auto px-4">
+          <span className="w-[25px] h-[25px] rounded-full bg-[#ff6700]" />
+          <h1 className="text-sm font-medium text-black">Pour Perfect</h1>
         </div>
 
         {/* Main Content - Balanced spacing */}
@@ -1352,7 +1341,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
               </div>
               <button
                 onClick={() => setShowNotes(true)}
-                className={`py-3 px-8 w-full border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] mb-4 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+                className={`py-2 px-6 w-full border border-gray-300 rounded-full text-sm font-medium transition-colors hover:border-[#ff6700] mb-4 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
               >
                 Brew History
               </button>
@@ -1364,9 +1353,9 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
               </div>
               <button
                 onClick={() => setShowSettings(true)}
-                className={`py-3 px-8 w-full border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] mb-4 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+                className={`py-2 px-6 w-full border border-gray-300 rounded-full text-sm font-medium transition-colors hover:border-[#ff6700] mb-4 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
               >
-                Save Beans
+                Log These Settings
               </button>
             </div>
           </div>
@@ -1378,7 +1367,18 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
               Ready to Pour
             </button>
           </div>
-        </main>
+        </main><br /><br />
+        {/* Footer: Made by origen */}
+        <div className="w-full flex justify-center mt-6 mb-2">
+          <span className="text-xs text-gray-400">made by </span>
+          <button
+            onClick={() => setShowAbout(true)}
+            className="text-xs font-semibold ml-1 text-[#ff6700] hover:underline focus:outline-none"
+            style={{ color: '#ff6700' }}
+          >
+            Origen
+          </button>
+        </div>
       </div>
     </div>
   );
