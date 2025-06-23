@@ -22,6 +22,8 @@
   html {
     font-family: 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    height: 100vh;
   }
 
   body {
@@ -30,6 +32,10 @@
     background-color: #000000;
     color: #FFFFFF;
     min-height: max(884px, 100dvh);
+    overflow: hidden;
+    height: 100vh;
+    position: fixed;
+    width: 100%;
   }
 }
 

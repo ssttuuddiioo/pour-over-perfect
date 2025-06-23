@@ -525,7 +525,7 @@ function BrewTimerPage({
                         transition: 'top 400ms cubic-bezier(0.4, 0, 0.2, 1), height 200ms cubic-bezier(0.4, 0, 0.2, 1)',
                         pointerEvents: 'none',
                         borderRadius: 8,
-                        border: isDarkMode ? '1px solid #222' : '1px solid #D1D5DB',
+                        border: '1px solid #ff6700',
                         background: isDarkMode
                           ? 'linear-gradient(rgba(60,60,60,0.2), rgba(60,60,60,0.2)), #000'
                           : 'linear-gradient(rgba(120,120,120,0.08), rgba(120,120,120,0.08)), #F3F4F6',
@@ -608,7 +608,7 @@ function BrewTimerPage({
                                       className="absolute top-0 h-[2px] transition-all duration-100 ease-linear"
                                       style={{ 
                                         width: `${stepProgress}%`,
-                                        background: isDarkMode ? '#fff' : '#000',
+                                        background: '#ff6700',
                                         transformOrigin: step.label.includes('Wait') || step.label.includes('Drawdown') ? 'right' : 'left'
                                       }}
                                     />
@@ -1144,8 +1144,10 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   };
 
   const handleTimerDone = () => {
-    // Show completion prompt (same as after drawdown)
-    setShowCompletionPrompt(true);
+    // Go to start/settings page after drawdown is complete
+    setShowBrewTimer(false);
+    setShowBrewLog(true);
+    handleTimerReset();
   };
 
   const getStepInstruction = () => {
@@ -1533,7 +1535,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
         </main>
         
         {/* Footer: Made by origen - Better positioning */}
-        <div className="w-full flex justify-center mt-4 mb-2">
+        <div className="w-full flex justify-center mt-8 mb-2">
           <span className="text-xs text-gray-400">made by </span>
           <button
             onClick={() => setShowAbout(true)}
