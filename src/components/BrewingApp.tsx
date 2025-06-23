@@ -715,10 +715,10 @@ function NotesPage({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
-      <div className="h-full flex flex-col w-full max-w-[430px] mx-auto px-4 py-6">
+    <div className={`fixed inset-0 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
+      <div className="h-full flex flex-col w-full max-w-[430px] mx-auto">
         {/* Header */}
-        <header className="flex justify-between items-center mb-6">
+        <header className="flex justify-between items-center p-4 pb-2 flex-shrink-0">
           <h1 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>Notes</h1>
           <button onClick={onBack} className={`h-11 px-6 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg text-sm font-medium text-center transition-colors hover:border-[#ff6700]`}>
             Back
@@ -727,13 +727,13 @@ function NotesPage({ onBack }: { onBack: () => void }) {
 
         {/* Success Message */}
         {showSavedMessage && (
-          <div className="mb-4 p-3 bg-green-600 text-white rounded-lg text-center">
+          <div className="mx-4 mb-4 p-3 bg-green-600 text-white rounded-lg text-center flex-shrink-0">
             Note saved successfully!
           </div>
         )}
 
-        {/* Main Content */}
-        <main className="flex-1 space-y-6 overflow-y-auto">
+        {/* Main Content - Scrollable */}
+        <main className="flex-1 px-4 pb-4 overflow-y-auto space-y-6">
           {/* Add New Note Form */}
           <form onSubmit={handleSave} className="space-y-4">
             <div className="space-y-2">
