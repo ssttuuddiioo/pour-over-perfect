@@ -454,8 +454,8 @@ function BrewTimerPage({
     return '';
   };
 
-  // Check if we're at the second pour step (index 3: Bloom=0, First Pour=1, Wait=2, Second Pour=3)
-  const isSecondPourActive = fullCurrentStep === 3;
+  // Check if the second pour is finished (step 3 completed)
+  const isSecondPourFinished = elapsed >= (fullStepEndTimes[3] || 0);
 
   return (
     <div className={`min-h-screen flex flex-col relative ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
@@ -626,29 +626,7 @@ function BrewTimerPage({
             </div>
 
             {/* Buttons always below the step list */}
-            <div className="mt-12 flex flex-col items-center justify-center space-y-4 w-full max-w-[430px]">
-              <div className="flex w-full justify-between gap-4">
-              <button
-                  onClick={onSaveRecipe}
-                  className={`py-3 px-8 flex-1 border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
-              >
-                  Save This Recipe
-              </button>
-              <button
-                onClick={() => {
-                  if (timerActive && !timerPaused) {
-                    handlePause();
-                  } else {
-                    handleResume();
-                  }
-                }}
-                  className={`py-3 px-8 flex-1 border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
-                  style={{ background: 'rgba(255,103,0,0.15)' }}
-                disabled={finished}
-              >
-                {timerActive && !timerPaused ? 'Pause' : 'Start'}
-              </button>
-              </div>
+            <div className="mt-12 flex flex-col items-center justify-center w-full max-w-[430px]">
               <div className="flex w-full justify-between gap-4">
                 <button
                   onClick={onBack}
@@ -657,8 +635,27 @@ function BrewTimerPage({
                   Back
                 </button>
                 <button
-                  onClick={onDone}
+                  onClick={() => {
+                    if (timerActive && !timerPaused) {
+                      handlePause();
+                    } else {
+                      handleResume();
+                    }
+                  }}
                   className={`py-3 px-8 flex-1 border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+                  style={{ background: 'rgba(255,103,0,0.15)' }}
+                  disabled={finished}
+                >
+                  {timerActive && !timerPaused ? 'Pause' : 'Start'}
+                </button>
+                <button
+                  onClick={onDone}
+                  className={`py-3 px-8 flex-1 border border-gray-300 rounded-full text-base font-medium transition-colors ${
+                    isSecondPourFinished 
+                      ? `hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}` 
+                      : `${isDarkMode ? 'bg-gray-800 text-gray-500 border-gray-700' : 'bg-gray-100 text-gray-400 border-gray-200'} cursor-not-allowed`
+                  }`}
+                  disabled={!isSecondPourFinished}
                 >
                   Done
                 </button>
@@ -671,22 +668,51 @@ function BrewTimerPage({
   );
 }
 
-function HistoryPage({ onBack }: { onBack: () => void }) {
+function NotesPage({ onBack }: { onBack: () => void }) {
   const { isDarkMode } = useTheme();
-  const [brewLogs, setBrewLogs] = useState<any[]>([]);
+  const [notes, setNotes] = useState<any[]>([]);
+  const [currentNote, setCurrentNote] = useState({
+    coffeeType: '',
+    roaster: '',
+    date: new Date().toISOString().split('T')[0],
+    brand: '',
+    notes: ''
+  });
+  const [showSavedMessage, setShowSavedMessage] = useState(false);
 
   useEffect(() => {
-    const logs = JSON.parse(localStorage.getItem('brewLogs') || '[]');
-    setBrewLogs(logs);
+    const savedNotes = JSON.parse(localStorage.getItem('coffeeNotes') || '[]');
+    setNotes(savedNotes);
   }, []);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: 'numeric'
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    const newNote = {
+      ...currentNote,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString()
+    };
+    const updatedNotes = [newNote, ...notes];
+    setNotes(updatedNotes);
+    localStorage.setItem('coffeeNotes', JSON.stringify(updatedNotes));
+    
+    // Reset form
+    setCurrentNote({
+      coffeeType: '',
+      roaster: '',
+      date: new Date().toISOString().split('T')[0],
+      brand: '',
+      notes: ''
     });
+    
+    setShowSavedMessage(true);
+    setTimeout(() => setShowSavedMessage(false), 2000);
+  };
+
+  const handleDelete = (id: string) => {
+    const updatedNotes = notes.filter(note => note.id !== id);
+    setNotes(updatedNotes);
+    localStorage.setItem('coffeeNotes', JSON.stringify(updatedNotes));
   };
 
   return (
@@ -694,66 +720,153 @@ function HistoryPage({ onBack }: { onBack: () => void }) {
       <div className="h-full flex flex-col w-full max-w-[430px] mx-auto px-4 py-6">
         {/* Header */}
         <header className="flex justify-between items-center mb-6">
-          <h1 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>Brew History</h1>
+          <h1 className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>Notes</h1>
           <button onClick={onBack} className={`h-11 px-6 border ${isDarkMode ? 'border-gray-700' : 'border-gray-300'} rounded-lg text-sm font-medium text-center transition-colors hover:border-[#ff6700]`}>
             Back
           </button>
         </header>
+
+        {/* Success Message */}
+        {showSavedMessage && (
+          <div className="mb-4 p-3 bg-green-600 text-white rounded-lg text-center">
+            Note saved successfully!
+          </div>
+        )}
+
         {/* Main Content */}
-        <main className="flex-1 space-y-4 overflow-y-auto">
-          {brewLogs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center space-y-4">
-              <div className="text-6xl opacity-50">📚</div>
-              <h2 className="text-xl font-semibold text-gray-400">No brew logs yet</h2>
-              <p className="text-gray-500">Complete a brew and log your experience to see it here!</p>
+        <main className="flex-1 space-y-6 overflow-y-auto">
+          {/* Add New Note Form */}
+          <form onSubmit={handleSave} className="space-y-4">
+            <div className="space-y-2">
+              <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Coffee Type
+              </label>
+              <input
+                type="text"
+                value={currentNote.coffeeType}
+                onChange={(e) => setCurrentNote({ ...currentNote, coffeeType: e.target.value })}
+                placeholder="e.g., Ethiopian Yirgacheffe"
+                className={`w-full p-3 border rounded-lg text-sm ${
+                  isDarkMode 
+                    ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-black placeholder-gray-500'
+                }`}
+                required
+              />
             </div>
-          ) : (
+
+            <div className="space-y-2">
+              <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Roaster
+              </label>
+              <input
+                type="text"
+                value={currentNote.roaster}
+                onChange={(e) => setCurrentNote({ ...currentNote, roaster: e.target.value })}
+                placeholder="e.g., Blue Bottle Coffee"
+                className={`w-full p-3 border rounded-lg text-sm ${
+                  isDarkMode 
+                    ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-black placeholder-gray-500'
+                }`}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Date
+              </label>
+              <input
+                type="date"
+                value={currentNote.date}
+                onChange={(e) => setCurrentNote({ ...currentNote, date: e.target.value })}
+                className={`w-full p-3 border rounded-lg text-sm ${
+                  isDarkMode 
+                    ? 'bg-gray-800 border-gray-700 text-white' 
+                    : 'bg-white border-gray-300 text-black'
+                }`}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Brand
+              </label>
+              <input
+                type="text"
+                value={currentNote.brand}
+                onChange={(e) => setCurrentNote({ ...currentNote, brand: e.target.value })}
+                placeholder="e.g., Giant Steps"
+                className={`w-full p-3 border rounded-lg text-sm ${
+                  isDarkMode 
+                    ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-black placeholder-gray-500'
+                }`}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Notes
+              </label>
+              <textarea
+                value={currentNote.notes}
+                onChange={(e) => setCurrentNote({ ...currentNote, notes: e.target.value })}
+                placeholder="Tasting notes, brewing observations, etc."
+                rows={4}
+                className={`w-full p-3 border rounded-lg text-sm resize-none ${
+                  isDarkMode 
+                    ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-black placeholder-gray-500'
+                }`}
+              />
+            </div>
+
+            <button 
+              type="submit"
+              className="w-full h-11 bg-[#ff6700] text-white rounded-lg text-sm font-medium hover:bg-[#e55a00] transition-colors"
+            >
+              Save Note
+            </button>
+          </form>
+
+          {/* Saved Notes */}
+          {notes.length > 0 && (
             <div className="space-y-4">
-              {brewLogs.map((log, index) => (
-                <div key={index} className="bg-gray-800 rounded-lg p-4 flex items-center space-x-4">
-                  {/* Coffee Image */}
-                  <div className="flex-shrink-0">
-                    {log.coffeeDetails?.image ? (
-                      <img 
-                        src={log.coffeeDetails.image} 
-                        alt={log.coffeeDetails.name || 'Coffee'} 
-                        className="w-16 h-16 object-cover rounded-lg"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 bg-gray-700 rounded-lg flex items-center justify-center">
-                        <span className="text-2xl">☕</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Coffee Info */}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-white truncate">
-                      {log.coffeeDetails?.name || 'Unnamed Coffee'}
+              <h2 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                Saved Notes
+              </h2>
+              {notes.map((note) => (
+                <div key={note.id} className={`p-4 border rounded-lg ${
+                  isDarkMode 
+                    ? 'bg-gray-800 border-gray-700' 
+                    : 'bg-gray-50 border-gray-200'
+                }`}>
+                  <div className="flex justify-between items-start mb-2">
+                    <h3 className={`font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                      {note.coffeeType}
                     </h3>
-                    <p className="text-sm text-gray-400">
-                      {log.coffeeDetails?.roaster && `${log.coffeeDetails.roaster} • `}
-                      {formatDate(log.createdAt)}
-                    </p>
-                    <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                      <span>{log.brewingSettings?.coffeeAmount}g</span>
-                      <span>1:{log.brewingSettings?.waterRatio}</span>
-                      <span>{log.brewingSettings?.totalWater}g water</span>
-                    </div>
-                    {log.brewNotes && (
-                      <p className="text-sm text-gray-300 mt-2 line-clamp-2">
-                        {log.brewNotes}
-                      </p>
-                    )}
+                    <button
+                      onClick={() => handleDelete(note.id)}
+                      className={`text-xs px-2 py-1 rounded ${
+                        isDarkMode 
+                          ? 'text-red-400 hover:bg-red-900/20' 
+                          : 'text-red-600 hover:bg-red-50'
+                      }`}
+                    >
+                      Delete
+                    </button>
                   </div>
-
-                  {/* Date Badge */}
-                  <div className="flex-shrink-0 text-right">
-                    <div className="text-xs text-gray-500">
-                      {new Date(log.createdAt).toLocaleDateString('en-US', { 
-                        weekday: 'short'
-                      })}
-                    </div>
+                  <div className={`text-sm space-y-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    <p><span className="font-medium">Roaster:</span> {note.roaster}</p>
+                    <p><span className="font-medium">Brand:</span> {note.brand}</p>
+                    <p><span className="font-medium">Date:</span> {new Date(note.date).toLocaleDateString()}</p>
+                    {note.notes && (
+                      <p><span className="font-medium">Notes:</span> {note.notes}</p>
+                    )}
                   </div>
                 </div>
               ))}
@@ -768,24 +881,18 @@ function HistoryPage({ onBack }: { onBack: () => void }) {
 function AboutPage({ onBack }: { onBack: () => void }) {
   return (
     <div className="min-h-screen flex flex-col bg-white text-black">
-      <div className="flex items-center gap-3 mb-8 pt-8 max-w-[430px] mx-auto px-4">
-        <span className="w-[25px] h-[25px] rounded-full bg-[#ff6700]" />
-        <h1 className="text-sm font-medium text-black">Pour Perfect</h1>
-      </div>
-      <main className="flex-1 flex flex-col items-center w-full max-w-[430px] mx-auto">
-        <p className="text-base leading-relaxed mb-8 text-black">
-          Pour Perfect is a tool by Origen, a small-batch coffee project shaped by a chance encounter in the Andes Mountains, people generous with their time and opinions, and a lot of learning along the way. From a hillside farm in Colombia to a co-roasting space in New York, Origen is fueled by questions and community.<br /><br />
-          To use this tool:<br /><br />
-          Start by choosing your coffee dose and brew ratio. The timer will guide you through the pour step by step. Adjust the settings as you go, take notes, and experiment.<br /><br />
-          There's no one perfect pour—just small tweaks and honest attempts.
-        </p>
-      
+      <main className="flex-1 flex flex-col w-full max-w-[430px] mx-auto px-4 pt-8">
         <button
           onClick={onBack}
-          className="mt-2 px-6 py-2 border border-gray-300 rounded-lg text-base font-medium bg-white text-black hover:border-[#ff6700]"
+          className="text-base font-medium text-black mb-8 self-start"
         >
           Back
         </button>
+        <p className="text-base leading-relaxed mb-16 text-black">
+          Pour Perfect is a tool by Origen, a small-batch coffee project shaped by a chance encounter in the Andes Mountains, generous people, and a lot of learning along the way. From a hillside farm in Colombia to a co-roasting space in New York, Origen is fueled by curiosity and community.<br /><br />
+          I built this tool to help me dial in my Hario v60 morning routine. Adjust the setting and the timer will guide you through the pour step by step, take notes, and experiment. There's no one perfect pour—just small tweaks and honest attempts.
+        </p>
+        <span className="w-[25px] h-[25px] rounded-full bg-[#ff6700] self-center" />
       </main>
     </div>
   );
@@ -869,12 +976,15 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     coffeeSettings.bloomRatio
   );
 
-  // Calculate step sequence
+  // Calculate step sequence - Updated for 4-phase recipe (bloom + 3 pours)
   const stepSequence = [
     { label: 'Bloom', water: `Pour to ${brewingTimings.bloomWater}g`, duration: brewingTimings.bloomDuration },
     { label: 'First Pour', water: `Pour to ${brewingTimings.firstPourTarget}g`, duration: brewingTimings.firstPourDuration },
-    { label: 'Wait', water: 'Let it steep', duration: brewingTimings.restDuration },
+    { label: 'Rest', water: 'Let it steep', duration: brewingTimings.restDuration },
     { label: 'Second Pour', water: `Pour to ${brewingTimings.secondPourTarget}g`, duration: brewingTimings.secondPourDuration },
+    { label: 'Rest', water: 'Let it steep', duration: brewingTimings.secondRestDuration },
+    { label: 'Third Pour', water: `Pour to ${brewingTimings.thirdPourTarget}g`, duration: brewingTimings.thirdPourDuration },
+    { label: 'Rest', water: 'Let it steep', duration: brewingTimings.thirdRestDuration },
     { label: 'Drawdown', water: 'Let coffee drip', duration: brewingTimings.drawdownDuration },
     { label: 'Finish', water: 'Enjoy your coffee!', duration: 0 }
   ];
@@ -909,6 +1019,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
               completedStep.label === 'Bloom' || 
               completedStep.label === 'First Pour' || 
               completedStep.label === 'Second Pour' || 
+              completedStep.label === 'Third Pour' ||
               completedStep.label === 'Final Pour' ||
               completedStep.label === 'Pour'
             );
@@ -1255,7 +1366,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   }
 
   if (showNotes) {
-    return <HistoryPage onBack={() => setShowNotes(false)} />;
+    return <NotesPage onBack={() => setShowNotes(false)} />;
   }
 
   if (showProPours) {
@@ -1317,8 +1428,24 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
 
         {/* Main Content - Simplified Layout */}
         <main className="flex-1 space-y-6">
+          {/* Total Time and Water Display - Moved above scrollers */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col items-center space-y-1">
+              <span className={`text-xs ${isDarkMode ? 'text-white' : 'text-black'}`}>Total Time</span>
+              <div className="h-12 w-full flex items-center justify-center border border-gray-300 rounded-lg">
+                <span className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{formatTime(brewingTimings.totalTime)}</span>
+              </div>
+            </div>
+            <div className="flex flex-col items-center space-y-1">
+              <span className={`text-xs ${isDarkMode ? 'text-white' : 'text-black'}`}>Total Water</span>
+              <div className="h-12 w-full flex items-center justify-center border border-gray-300 rounded-lg">
+                <span className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g</span>
+              </div>
+            </div>
+          </div>
+
           {/* Coffee and Ratio Pickers */}
-          <div className="grid grid-cols-2 gap-0">
+          <div className="grid grid-cols-2 gap-10 pb-1">
             {/* Coffee Amount Picker */}
             <div className="flex flex-col items-center">
               <AppleStylePicker
@@ -1342,6 +1469,14 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
 
           {/* Grind Size Slider - Simple Design */}
           <div className="flex flex-col space-y-4">
+            {/* Label and value display - moved above */}
+            <div className="flex justify-between items-center">
+              <span className={`text-sm ${isDarkMode ? 'text-white' : 'text-black'}`}>Grind Size</span>
+              <span className={`text-sm ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                {grindSize.toFixed(1)}
+              </span>
+            </div>
+            
             <div className="w-full relative">
               {/* Tick marks for whole integers */}
               <div className="absolute w-full -top-3 flex justify-between">
@@ -1379,46 +1514,22 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
                 />
               </div>
             </div>
-            
-            {/* Label and value display */}
-            <div className="flex justify-between items-center">
-              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Grind Size</span>
-              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                {grindSize.toFixed(1)}
-              </span>
-            </div>
-          </div>
-
-          {/* Total Time and Water Display */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col items-center space-y-2">
-              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Time</span>
-              <div className="h-20 w-full flex items-center justify-center border border-gray-300 rounded-lg">
-                <span className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{formatTime(brewingTimings.totalTime)}</span>
-              </div>
-            </div>
-            <div className="flex flex-col items-center space-y-2">
-              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Water</span>
-              <div className="h-20 w-full flex items-center justify-center border border-gray-300 rounded-lg">
-                <span className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g</span>
-              </div>
-            </div>
           </div>
 
           {/* Two Main Buttons */}
-          <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={() => setShowNotes(true)}
+              className={`py-3 px-8 w-full border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+            >
+              Notes
+            </button>
+            
             <button
               onClick={handleStart}
               className={`py-3 px-8 w-full border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
             >
-              Ready to Pour
-            </button>
-            
-            <button
-              onClick={() => setShowNotes(true)}
-              className={`py-2 px-8 w-full border border-gray-300 rounded-full text-sm font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
-            >
-              Brew History
+              Ready
             </button>
           </div>
         </main>

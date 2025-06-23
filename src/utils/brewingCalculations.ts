@@ -11,18 +11,17 @@ export interface BrewingTimings {
 }
 
 /**
- * Generate a very clear, three-phase pour-over recipe.
+ * Generate a four-phase pour-over recipe with bloom + three main pours.
  *
- * Phases
- * 1. Bloom – fixed 30 s using bloomRatio × dose.
- * 2. First Pour – 40 % of the remaining water, poured at ~5 g / s.
- *    30 s rest afterwards.
- * 3. Second Pour – 60 % of the remaining water, poured at ~5 g / s.
- *    Draw-down time depends on total water and grind size.
+ * Phases:
+ * 1. Bloom – 2× dose for 30s
+ * 2. First Pour – 30% of remaining water + 10s rest
+ * 3. Second Pour – 35% of remaining water + 10s rest  
+ * 4. Third Pour – 35% of remaining water + drawdown
  */
 export function generateBrewPlan({
   dose, // coffee in grams
-  ratio, // water : coffee ratio (e.g. 15)
+  ratio, // water : coffee ratio (e.g. 18)
   grindSize = 6, // 1–10 where 6 ≈ medium
   bloomRatio = 2, // bloom water multiplier of dose
   pourRate = 5, // g / s
@@ -33,38 +32,50 @@ export function generateBrewPlan({
   bloomRatio?: number;
   pourRate?: number;
 }): BrewingTimings {
-  // ---------- WATER ----------
+  // CONSTANTS
+  const BLOOM_MULT = bloomRatio;
+  const FRACTIONS = [0.30, 0.35, 0.35]; // three pours after bloom
+  const POUR_RATE = pourRate;
+  const T_BLOOM = 30; // s
+  const T_REST = 10; // s after each main pour
+  const DRAW_BASE = 45; // s for 250g water @ grind 6
+  const GRIND_ADJ = 5; // s per step finer/coarser
+  const VOL_ADJ = 5; // s per extra 50g above 250g
+
+  // VOLUMES
   const totalWater = Math.round(dose * ratio);
-  const bloomWater = Math.round(dose * bloomRatio);
-  const remainingWater = totalWater - bloomWater;
+  const bloomWater = Math.round(dose * BLOOM_MULT);
+  const remWater = totalWater - bloomWater;
+  const pourWater = FRACTIONS.map(f => Math.round(remWater * f));
 
-  const firstPourWater = Math.round(remainingWater * 0.4);
-  const secondPourWater = remainingWater - firstPourWater; // whatever is left (60 %)
+  // Cumulative targets for each step
+  const bloomTarget = bloomWater;
+  const firstPourTarget = bloomTarget + pourWater[0];
+  const secondPourTarget = firstPourTarget + pourWater[1];
+  const thirdPourTarget = secondPourTarget + pourWater[2]; // should equal totalWater
 
-  // cumulative targets
-  const firstTarget = bloomWater + firstPourWater; // after first pour
-  const finalTarget = totalWater; // after second pour
+  // POUR TIMES
+  const pourTime = pourWater.map(w => Math.ceil(w / POUR_RATE));
 
-  // ---------- TIME ----------
-  const bloomDuration = 30; // s
-  const firstPourDuration = Math.ceil(firstPourWater / pourRate);
-  const restDuration = 30; // s wait after first pour
-  const secondPourDuration = Math.ceil(secondPourWater / pourRate);
+  // DRAWDOWN
+  const drawdown = Math.max(20, 
+    DRAW_BASE
+    + (6 - grindSize) * GRIND_ADJ // finer → longer
+    + Math.max(0, Math.ceil((totalWater - 250) / 50)) * VOL_ADJ
+  );
 
-  // Draw-down gets slower with finer grinds & more water.
-  const drawdownBase = 45; // baseline seconds
-  const grindAdjustment = (grindSize - 6) * 5; // ±5 s per step from medium
-  const waterAdjustment = Math.ceil((totalWater - 250) / 50) * 5; // +5 s per extra 50 g over 250 g
-  const drawdownDuration = Math.max(30, drawdownBase + grindAdjustment + waterAdjustment);
-
-  const totalTime = bloomDuration + firstPourDuration + restDuration + secondPourDuration + drawdownDuration;
+  // TOTAL BREW TIME
+  const totalTime = T_BLOOM + pourTime.reduce((sum, t) => sum + t, 0) + T_REST * pourTime.length + drawdown;
 
   const steps: BrewingTimings['steps'] = [
-    { label: 'Bloom',        targetWater: bloomWater,  duration: bloomDuration },
-    { label: 'First Pour',   targetWater: firstTarget, duration: firstPourDuration },
-    { label: 'Wait',         targetWater: firstTarget, duration: restDuration },
-    { label: 'Second Pour',  targetWater: finalTarget, duration: secondPourDuration },
-    { label: 'Drawdown',     targetWater: finalTarget, duration: drawdownDuration },
+    { label: 'Bloom', targetWater: bloomTarget, duration: T_BLOOM },
+    { label: 'First Pour', targetWater: firstPourTarget, duration: pourTime[0] },
+    { label: 'Rest', targetWater: firstPourTarget, duration: T_REST },
+    { label: 'Second Pour', targetWater: secondPourTarget, duration: pourTime[1] },
+    { label: 'Rest', targetWater: secondPourTarget, duration: T_REST },
+    { label: 'Third Pour', targetWater: thirdPourTarget, duration: pourTime[2] },
+    { label: 'Rest', targetWater: thirdPourTarget, duration: T_REST },
+    { label: 'Drawdown', targetWater: thirdPourTarget, duration: drawdown },
   ];
 
   return { steps, totalWater, totalTime };
@@ -93,23 +104,24 @@ export function calculateBrewTiming(
   });
 
   // Deconstruct steps for easy access
-  const [bloom, firstPour, waitStep, secondPour, drawdown] = plan.steps;
+  const [bloom, firstPour, firstRest, secondPour, secondRest, thirdPour, thirdRest, drawdown] = plan.steps;
 
   return {
     // Durations
     bloomDuration: bloom.duration,
     firstPourDuration: firstPour.duration,
-    restDuration: waitStep.duration,
+    restDuration: firstRest.duration,
     secondPourDuration: secondPour.duration,
-    secondRestDuration: 0,
-    thirdPourDuration: 0,
+    secondRestDuration: secondRest.duration,
+    thirdPourDuration: thirdPour.duration,
+    thirdRestDuration: thirdRest.duration,
     drawdownDuration: drawdown.duration,
 
     // Water targets
     bloomWater: bloom.targetWater,
     firstPourTarget: firstPour.targetWater,
     secondPourTarget: secondPour.targetWater,
-    thirdPourTarget: plan.totalWater,
+    thirdPourTarget: thirdPour.targetWater,
 
     // Totals
     totalTime: plan.totalTime,
