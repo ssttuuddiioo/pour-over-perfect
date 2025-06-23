@@ -17,13 +17,13 @@ const DripperIcon = () => (
 const steps = [
   { phase: 1, label: 'Pour 60ml hot water', duration: 10, color: 'green' },
   { phase: 1, label: 'Wait', duration: 20, color: 'red' },
-  { phase: 2, label: 'Pour 60ml more (now 120ml total)', duration: 10, color: 'green' },
+      { phase: 2, label: 'Pour 60ml more (now 120ml target)', duration: 10, color: 'green' },
   { phase: 2, label: 'Wait and add cold water to kettle', duration: 35, color: 'red' },
-  { phase: 3, label: 'Pour 60ml cooler water (now 180ml total)', duration: 10, color: 'green' },
+      { phase: 3, label: 'Pour 60ml cooler water (now 180ml target)', duration: 10, color: 'green' },
   { phase: 3, label: 'Wait', duration: 10, color: 'red' },
-  { phase: 4, label: 'Pour 60ml cooler water (now 240ml total)', duration: 10, color: 'green' },
+      { phase: 4, label: 'Pour 60ml cooler water (now 240ml target)', duration: 10, color: 'green' },
   { phase: 4, label: 'Wait and open the switch', duration: 10, color: 'red' },
-  { phase: 5, label: 'Pour final 40ml (now 280ml total)', duration: 10, color: 'green' },
+      { phase: 5, label: 'Pour final 40ml (now 280ml target)', duration: 10, color: 'green' },
   { phase: 5, label: 'Wait for drawdown to finish', duration: 55, color: 'red' },
 ];
 

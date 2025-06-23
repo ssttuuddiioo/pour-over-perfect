@@ -177,7 +177,7 @@ const FlavorEQ: React.FC<FlavorEQProps> = ({
               <span className="text-white">{Math.round(adjustedSettings.amount * adjustedSettings.bloomRatio)}g</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">First Pour Total:</span>
+                              <span className="text-gray-400">First Pour Target:</span>
               <span className="text-white">{brewingTimings.firstPourTarget}g</span>
             </div>
             <div className="flex justify-between">
@@ -189,11 +189,11 @@ const FlavorEQ: React.FC<FlavorEQProps> = ({
               <span className="text-white">{brewingTimings.pulseCount} pulses</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">Total Water:</span>
+                              <span className="text-gray-400">Target Water:</span>
               <span className="text-white">{brewingTimings.thirdPourTarget}g</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">Total Brew Time:</span>
+                              <span className="text-gray-400">Target Brew Time:</span>
               <span className="text-white">{formatTime(brewingTimings.totalTime)}</span>
             </div>
           </div>

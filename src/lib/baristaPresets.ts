@@ -46,7 +46,7 @@ export const baristaPresets: BaristaPreset[] = [
     signature: [
       { phase: 'Bloom', text: '60g bloom, swirl' },
       { phase: 'First Pour', text: '240g pour' },
-      { phase: 'Second Pour', text: '200g pour, total ~3:30, hot (≈100°C) water.' }
+      { phase: 'Second Pour', text: '200g pour, target ~3:30, hot (≈100°C) water.' }
     ]
   },
   {
@@ -55,7 +55,7 @@ export const baristaPresets: BaristaPreset[] = [
     dose: 15.5,
     ratio: 16,
     signature: [
-      { phase: 'Other', text: 'Five equal 50g pulses every 30s in Origami dripper; 91°C water; 2min 40s total.' }
+      { phase: 'Other', text: 'Five equal 50g pulses every 30s in Origami dripper; 91°C water; 2min 40s target.' }
     ]
   },
   {

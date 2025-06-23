@@ -481,11 +481,11 @@ function BrewTimerPage({
           }}
         >
           {/* Timers below instructions */}
-          <div className="flex flex-col w-full max-w-[430px] mx-auto px-1 py-1 relative z-10" style={{ marginTop: '100px' }}>
+          <div className="flex flex-col w-full max-w-[430px] mx-auto px-4 py-6 relative z-10" style={{ marginTop: '100px' }}>
             {/* Top Info Bar */}
             <div className="flex justify-between items-end mb-6 w-full">
               <div className="flex flex-col items-start">
-                <div className="text-xs uppercase tracking-wider text-gray-400">Total time</div>
+                <div className="text-xs uppercase tracking-wider text-gray-400">Target time</div>
                 <div className="text-2xl font-light mt-1">{formatTime(totalTime)}</div>
               </div>
               <div className="flex flex-col items-center flex-1">
@@ -597,9 +597,9 @@ function BrewTimerPage({
                                     style={{
                                       backgroundImage: isCompleted 
                                         ? 'none'
-                                        : `radial-gradient(circle, #D1D5DB 2px, transparent 2px)`,
+                                        : `radial-gradient(circle, ${isDarkMode ? '#6B7280' : '#D1D5DB'} 1px, transparent 1px)`,
                                       backgroundColor: isCompleted ? '#E5E7EB' : 'transparent',
-                                      backgroundSize: '16px 2px',
+                                      backgroundSize: '8px 2px',
                                       backgroundRepeat: 'repeat-x'
                                     }}
                                   />
@@ -630,9 +630,20 @@ function BrewTimerPage({
               <div className="flex w-full justify-between gap-4">
                 <button
                   onClick={onBack}
-                  className={`py-3 px-8 flex-1 border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+                  className={`py-3 px-8 flex-1 rounded-full text-base font-medium transition-colors ${isDarkMode ? 'text-white hover:bg-gray-900' : 'text-black hover:bg-gray-50'}`}
                 >
                   Back
+                </button>
+                <button
+                  onClick={onDone}
+                  className={`py-3 px-8 flex-1 rounded-full text-base font-medium transition-colors ${
+                    isSecondPourFinished 
+                      ? `${isDarkMode ? 'text-white hover:bg-gray-900' : 'text-black hover:bg-gray-50'}` 
+                      : `${isDarkMode ? 'text-gray-500' : 'text-gray-400'} cursor-not-allowed`
+                  }`}
+                  disabled={!isSecondPourFinished}
+                >
+                  Done
                 </button>
                 <button
                   onClick={() => {
@@ -642,22 +653,10 @@ function BrewTimerPage({
                       handleResume();
                     }
                   }}
-                  className={`py-3 px-8 flex-1 border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
-                  style={{ background: 'rgba(255,103,0,0.15)' }}
+                  className={`py-3 px-8 flex-1 rounded-full text-base font-medium transition-colors ${isDarkMode ? 'text-white hover:bg-gray-900' : 'text-black hover:bg-gray-50'}`}
                   disabled={finished}
                 >
                   {timerActive && !timerPaused ? 'Pause' : 'Start'}
-                </button>
-                <button
-                  onClick={onDone}
-                  className={`py-3 px-8 flex-1 border border-gray-300 rounded-full text-base font-medium transition-colors ${
-                    isSecondPourFinished 
-                      ? `hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}` 
-                      : `${isDarkMode ? 'bg-gray-800 text-gray-500 border-gray-700' : 'bg-gray-100 text-gray-400 border-gray-200'} cursor-not-allowed`
-                  }`}
-                  disabled={!isSecondPourFinished}
-                >
-                  Done
                 </button>
               </div>
             </div>
@@ -984,7 +983,6 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     { label: 'Second Pour', water: `Pour to ${brewingTimings.secondPourTarget}g`, duration: brewingTimings.secondPourDuration },
     { label: 'Rest', water: 'Let it steep', duration: brewingTimings.secondRestDuration },
     { label: 'Third Pour', water: `Pour to ${brewingTimings.thirdPourTarget}g`, duration: brewingTimings.thirdPourDuration },
-    { label: 'Rest', water: 'Let it steep', duration: brewingTimings.thirdRestDuration },
     { label: 'Drawdown', water: 'Let coffee drip', duration: brewingTimings.drawdownDuration },
     { label: 'Finish', water: 'Enjoy your coffee!', duration: 0 }
   ];
@@ -1152,7 +1150,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
 
   const getStepInstruction = () => {
     if (isFinished) return 'Finished! Enjoy your coffee ☕';
-    if (!showBrewTimer || !stepSequence[currentStep]) return `Total brew time: ${formatTime(brewingTimings.totalTime)}`;
+    if (!showBrewTimer || !stepSequence[currentStep]) return `Target brew time: ${formatTime(brewingTimings.totalTime)}`;
     
     const step = stepSequence[currentStep];
     const targetWeight = step.water.match(/(\d+g)/);
@@ -1161,7 +1159,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
     }
 
     if (step.label === 'Finish') {
-      return `Done! Total time: ${formatTime(totalTime)}`;
+      return `Done! Target time: ${formatTime(totalTime)}`;
     }
     return step.label;
   };
@@ -1428,16 +1426,16 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
 
         {/* Main Content - Simplified Layout */}
         <main className="flex-1 space-y-6">
-          {/* Total Time and Water Display - Moved above scrollers */}
+          {/* Target Time and Water Display - Moved above scrollers */}
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col items-center space-y-1">
-              <span className={`text-xs ${isDarkMode ? 'text-white' : 'text-black'}`}>Total Time</span>
+              <span className={`text-xs ${isDarkMode ? 'text-white' : 'text-black'}`}>Target Time</span>
               <div className="h-12 w-full flex items-center justify-center border border-gray-300 rounded-lg">
                 <span className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{formatTime(brewingTimings.totalTime)}</span>
               </div>
             </div>
             <div className="flex flex-col items-center space-y-1">
-              <span className={`text-xs ${isDarkMode ? 'text-white' : 'text-black'}`}>Total Water</span>
+              <span className={`text-xs ${isDarkMode ? 'text-white' : 'text-black'}`}>Target Water</span>
               <div className="h-12 w-full flex items-center justify-center border border-gray-300 rounded-lg">
                 <span className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g</span>
               </div>
