@@ -636,12 +636,7 @@ function BrewTimerPage({
                 </button>
                 <button
                   onClick={onDone}
-                  className={`py-3 px-8 flex-1 rounded-full text-base font-medium transition-colors ${
-                    isSecondPourFinished 
-                      ? `${isDarkMode ? 'text-white hover:bg-gray-900' : 'text-black hover:bg-gray-50'}` 
-                      : `${isDarkMode ? 'text-gray-500' : 'text-gray-400'} cursor-not-allowed`
-                  }`}
-                  disabled={!isSecondPourFinished}
+                  className={`py-3 px-8 flex-1 rounded-full text-base font-medium transition-colors ${isDarkMode ? 'text-white hover:bg-gray-900' : 'text-black hover:bg-gray-50'}`}
                 >
                   Done
                 </button>
@@ -1146,6 +1141,22 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   const handleTimerDone = () => {
     // Go to start/settings page after drawdown is complete
     setShowBrewTimer(false);
+    // Initialize settings draft before showing brew log
+    setSettingsDraft({
+      ...settingsDraft,
+      coffeeDetails: {
+        name: localStorage.getItem('coffeeDetails_name') || '',
+        roaster: localStorage.getItem('coffeeDetails_roaster') || '',
+        roastDate: localStorage.getItem('coffeeDetails_roastDate') || '',
+        origin: localStorage.getItem('coffeeDetails_origin') || '',
+        variety: localStorage.getItem('coffeeDetails_variety') || '',
+        process: localStorage.getItem('coffeeDetails_process') || '',
+        elevation: localStorage.getItem('coffeeDetails_elevation') || '',
+        image: localStorage.getItem('coffeeDetails_image') || ''
+      },
+      generalNotes: localStorage.getItem('generalNotes') || '',
+      brewNotes: ''
+    });
     setShowBrewLog(true);
     handleTimerReset();
   };
