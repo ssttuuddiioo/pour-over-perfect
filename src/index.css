@@ -24,6 +24,9 @@
     -webkit-font-smoothing: antialiased;
     overflow: hidden;
     height: 100vh;
+    /* Prevent mobile zoom on input focus */
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
   }
 
   body {
@@ -159,6 +162,23 @@
 
   .no-spinners[type=number] {
     -moz-appearance: textfield;
+  }
+
+  /* Prevent mobile zoom and remove focus highlighting on inputs */
+  input, textarea, select {
+    font-size: 16px !important; /* Prevents mobile zoom */
+    outline: none !important; /* Removes focus outline */
+    -webkit-tap-highlight-color: transparent !important; /* Removes tap highlight */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+  }
+
+  /* Remove focus rings and highlights */
+  input:focus, textarea:focus, select:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-tap-highlight-color: transparent !important;
   }
 
   /* Line clamp utilities */
