@@ -662,7 +662,7 @@ function BrewTimerPage({
   );
 }
 
-function NotesPage({ onBack }: { onBack: () => void }) {
+function NotesPage({ onBack, dose, ratio }: { onBack: () => void, dose: number, ratio: number }) {
   const { isDarkMode } = useTheme();
   const [notes, setNotes] = useState<any[]>([]);
   const [currentNote, setCurrentNote] = useState({
@@ -670,7 +670,7 @@ function NotesPage({ onBack }: { onBack: () => void }) {
     roaster: '',
     date: new Date().toISOString().split('T')[0],
     brand: '',
-    notes: ''
+    notes: `Dose: ${dose}g, Ratio: 1:${ratio}`
   });
   const [showSavedMessage, setShowSavedMessage] = useState(false);
 
@@ -696,7 +696,7 @@ function NotesPage({ onBack }: { onBack: () => void }) {
       roaster: '',
       date: new Date().toISOString().split('T')[0],
       brand: '',
-      notes: ''
+      notes: `Dose: ${dose}g, Ratio: 1:${ratio}`
     });
     
     setShowSavedMessage(true);
@@ -1036,10 +1036,10 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
           
           setCurrentStep(actualNewStep);
           
-          // Stop if finished
+          // Stop if finished and go back to homepage
           if (newElapsed >= totalTime) {
             setIsRunning(false);
-            setShowCompletionPrompt(true);
+            setShowBrewTimer(false);
             return totalTime;
           }
           
@@ -1139,25 +1139,8 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   };
 
   const handleTimerDone = () => {
-    // Go to start/settings page after drawdown is complete
+    // Go back to homepage when Done is clicked
     setShowBrewTimer(false);
-    // Initialize settings draft before showing brew log
-    setSettingsDraft({
-      ...settingsDraft,
-      coffeeDetails: {
-        name: localStorage.getItem('coffeeDetails_name') || '',
-        roaster: localStorage.getItem('coffeeDetails_roaster') || '',
-        roastDate: localStorage.getItem('coffeeDetails_roastDate') || '',
-        origin: localStorage.getItem('coffeeDetails_origin') || '',
-        variety: localStorage.getItem('coffeeDetails_variety') || '',
-        process: localStorage.getItem('coffeeDetails_process') || '',
-        elevation: localStorage.getItem('coffeeDetails_elevation') || '',
-        image: localStorage.getItem('coffeeDetails_image') || ''
-      },
-      generalNotes: localStorage.getItem('generalNotes') || '',
-      brewNotes: ''
-    });
-    setShowBrewLog(true);
     handleTimerReset();
   };
 
@@ -1377,7 +1360,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   }
 
   if (showNotes) {
-    return <NotesPage onBack={() => setShowNotes(false)} />;
+    return <NotesPage onBack={() => setShowNotes(false)} dose={coffeeSettings.amount} ratio={coffeeSettings.ratio} />;
   }
 
   if (showProPours) {
