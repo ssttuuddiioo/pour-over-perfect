@@ -162,6 +162,285 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+
+  /* Custom slider styles for grind size */
+  .slider {
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #ff6700;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+    border: none;
+    box-shadow: 0 2px 6px rgba(255, 103, 0, 0.3);
+  }
+
+  .slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 3px 8px rgba(255, 103, 0, 0.4);
+  }
+
+  .slider::-webkit-slider-thumb:active {
+    transform: scale(1.2);
+  }
+
+  .slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #ff6700;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 6px rgba(255, 103, 0, 0.3);
+    transition: transform 0.1s ease;
+  }
+
+  .slider::-moz-range-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 3px 8px rgba(255, 103, 0, 0.4);
+  }
+
+  .slider::-moz-range-thumb:active {
+    transform: scale(1.2);
+  }
+
+  .slider::-webkit-slider-track {
+    background: transparent;
+  }
+
+  .slider::-moz-range-track {
+    background: transparent;
+  }
+
+  /* Clean slider styles matching the design */
+  .slider-clean {
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .slider-clean::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ff6700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: none;
+    box-shadow: 0 2px 8px rgba(255, 103, 0, 0.4);
+  }
+
+  .slider-clean::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+    box-shadow: 0 3px 12px rgba(255, 103, 0, 0.5);
+  }
+
+  .slider-clean::-webkit-slider-thumb:active {
+    transform: scale(1.25);
+    box-shadow: 0 4px 16px rgba(255, 103, 0, 0.6);
+  }
+
+  .slider-clean::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ff6700;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 8px rgba(255, 103, 0, 0.4);
+    transition: all 0.15s ease;
+  }
+
+  .slider-clean::-moz-range-thumb:hover {
+    transform: scale(1.15);
+    box-shadow: 0 3px 12px rgba(255, 103, 0, 0.5);
+  }
+
+  .slider-clean::-moz-range-thumb:active {
+    transform: scale(1.25);
+    box-shadow: 0 4px 16px rgba(255, 103, 0, 0.6);
+  }
+
+  .slider-clean::-webkit-slider-track {
+    background: transparent;
+    height: 0;
+  }
+
+  .slider-clean::-moz-range-track {
+    background: transparent;
+    height: 0;
+  }
+
+  /* Precision instrument slider */
+  .precision-slider {
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .precision-slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #FF6A00;
+    cursor: pointer;
+    transition: all 120ms cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.2);
+    position: relative;
+    z-index: 10;
+    margin-top: -18px; /* Center knob on the 4px track */
+  }
+
+  .precision-slider::-webkit-slider-thumb:hover {
+    box-shadow: 0 6px 6px rgba(0, 0, 0, 0.25);
+  }
+
+  .precision-slider::-webkit-slider-thumb:active {
+    box-shadow: 0 8px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .precision-slider::-moz-range-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #FF6A00;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.2);
+    transition: all 120ms cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 10;
+  }
+
+  .precision-slider::-moz-range-thumb:hover {
+    box-shadow: 0 6px 6px rgba(0, 0, 0, 0.25);
+  }
+
+  .precision-slider::-moz-range-thumb:active {
+    box-shadow: 0 8px 8px rgba(0, 0, 0, 0.3);
+  }
+
+  .precision-slider::-webkit-slider-track {
+    background: transparent;
+    height: 4px;
+    position: relative;
+  }
+
+  .precision-slider::-moz-range-track {
+    background: transparent;
+    height: 4px;
+    position: relative;
+  }
+
+  /* Simple slider styles - completely remove all browser defaults */
+  .simple-slider {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: transparent !important;
+    cursor: pointer;
+    outline: none;
+    border: none;
+  }
+
+  .simple-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #ff6700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: none;
+    box-shadow: 0 2px 6px rgba(255, 103, 0, 0.3);
+  }
+
+  .simple-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 3px 8px rgba(255, 103, 0, 0.4);
+  }
+
+  .simple-slider::-webkit-slider-thumb:active {
+    transform: scale(1.2);
+  }
+
+  .simple-slider::-moz-range-thumb {
+    -moz-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #ff6700;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 6px rgba(255, 103, 0, 0.3);
+    transition: all 0.15s ease;
+  }
+
+  .simple-slider::-moz-range-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 3px 8px rgba(255, 103, 0, 0.4);
+  }
+
+  .simple-slider::-moz-range-thumb:active {
+    transform: scale(1.2);
+  }
+
+  /* Completely hide all track elements */
+  .simple-slider::-webkit-slider-track {
+    background: transparent !important;
+    border: none !important;
+    height: 0 !important;
+    width: 100% !important;
+    -webkit-appearance: none !important;
+  }
+
+  .simple-slider::-webkit-slider-runnable-track {
+    background: transparent !important;
+    border: none !important;
+    height: 0 !important;
+    width: 100% !important;
+    -webkit-appearance: none !important;
+  }
+
+  .simple-slider::-moz-range-track {
+    background: transparent !important;
+    border: none !important;
+    height: 0 !important;
+    width: 100% !important;
+    -moz-appearance: none !important;
+  }
+
+  .simple-slider::-moz-range-progress {
+    background: transparent !important;
+    height: 0 !important;
+  }
+
+  .simple-slider::-ms-track {
+    background: transparent !important;
+    border: none !important;
+    height: 0 !important;
+    color: transparent !important;
+  }
+
+  .simple-slider::-ms-fill-lower {
+    background: transparent !important;
+  }
+
+  .simple-slider::-ms-fill-upper {
+    background: transparent !important;
+  }
 }
 
 /* 

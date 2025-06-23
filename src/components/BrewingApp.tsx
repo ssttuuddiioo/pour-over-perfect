@@ -1304,9 +1304,9 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
-      <div className="h-full flex flex-col w-full max-w-[430px] mx-auto py-4 relative">
+      <div className="h-full flex flex-col w-full max-w-[430px] mx-auto py-4 px-4 sm:px-6 md:px-8 relative">
         {/* Header with Title and Dark Mode Toggle */}
-        <div className="flex items-center gap-3 mb-6 pt-4 px-6">
+        <div className="flex items-center gap-3 mb-6 pt-4">
           <button 
             onClick={toggleDarkMode}
             className="w-[25px] h-[25px] rounded-full bg-[#ff6700] hover:opacity-80 transition-opacity cursor-pointer"
@@ -1315,10 +1315,10 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
           <h1 className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>Pour Perfect</h1>
         </div>
 
-        {/* Main Content - Bento Box Layout */}
-        <main className="flex-1 space-y-4 px-6">
+        {/* Main Content - Simplified Layout */}
+        <main className="flex-1 space-y-6">
           {/* Coffee and Ratio Pickers */}
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-2 gap-0">
             {/* Coffee Amount Picker */}
             <div className="flex flex-col items-center">
               <AppleStylePicker
@@ -1340,47 +1340,91 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
             </div>
           </div>
 
+          {/* Grind Size Slider - Simple Design */}
+          <div className="flex flex-col space-y-4">
+            <div className="w-full relative">
+              {/* Tick marks for whole integers */}
+              <div className="absolute w-full -top-3 flex justify-between">
+                {Array.from({ length: 11 }, (_, i) => (
+                  <div key={i + 1} className="flex flex-col items-center">
+                    <div 
+                      className={`w-px h-2 ${isDarkMode ? 'bg-gray-400' : 'bg-gray-500'}`}
+                    />
+                    <span className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {i + 1}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Track container */}
+              <div className="w-full relative h-1 mt-6">
+                {/* Single track with gradient fill */}
+                <div 
+                  className="w-full h-1 rounded-full transition-all duration-150 ease-out"
+                  style={{ 
+                    background: `linear-gradient(to right, #ff6700 0%, #ff6700 ${(grindSize - 1) * 10}%, ${isDarkMode ? '#4b5563' : '#d1d5db'} ${(grindSize - 1) * 10}%, ${isDarkMode ? '#4b5563' : '#d1d5db'} 100%)`
+                  }}
+                />
+                
+                {/* Slider input */}
+                <input
+                  type="range"
+                  min="1"
+                  max="11"
+                  step="0.1"
+                  value={grindSize}
+                  onChange={(e) => setGrindSize(Number(e.target.value))}
+                  className="absolute top-0 w-full h-4 -mt-1.5 appearance-none cursor-pointer bg-transparent simple-slider"
+                />
+              </div>
+            </div>
+            
+            {/* Label and value display */}
+            <div className="flex justify-between items-center">
+              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Grind Size</span>
+              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                {grindSize.toFixed(1)}
+              </span>
+            </div>
+          </div>
+
           {/* Total Time and Water Display */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col items-center space-y-3">
+            <div className="flex flex-col items-center space-y-2">
               <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Time</span>
               <div className="h-20 w-full flex items-center justify-center border border-gray-300 rounded-lg">
                 <span className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{formatTime(brewingTimings.totalTime)}</span>
               </div>
-              <button
-                onClick={() => setShowNotes(true)}
-                className={`py-2 px-4 w-full border border-gray-300 rounded-full text-sm font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
-              >
-                Brew History
-              </button>
             </div>
-            <div className="flex flex-col items-center space-y-3">
+            <div className="flex flex-col items-center space-y-2">
               <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Water</span>
               <div className="h-20 w-full flex items-center justify-center border border-gray-300 rounded-lg">
                 <span className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g</span>
               </div>
-              <button
-                onClick={() => setShowSettings(true)}
-                className={`py-2 px-4 w-full border border-gray-300 rounded-full text-sm font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
-              >
-                Log These Settings
-              </button>
             </div>
           </div>
-          
-          {/* Ready to Pour Button */}
-          <div className="mt-2">
+
+          {/* Two Main Buttons */}
+          <div className="space-y-4">
             <button
               onClick={handleStart}
               className={`py-3 px-8 w-full border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
             >
               Ready to Pour
             </button>
+            
+            <button
+              onClick={() => setShowNotes(true)}
+              className={`py-2 px-8 w-full border border-gray-300 rounded-full text-sm font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+            >
+              Brew History
+            </button>
           </div>
         </main>
         
         {/* Footer: Made by origen - Better positioning */}
-        <div className="w-full flex justify-center mt-4 mb-2 px-6">
+        <div className="w-full flex justify-center mt-4 mb-2">
           <span className="text-xs text-gray-400">made by </span>
           <button
             onClick={() => setShowAbout(true)}
