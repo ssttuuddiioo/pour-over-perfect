@@ -481,7 +481,7 @@ function BrewTimerPage({
           }}
         >
           {/* Timers below instructions */}
-          <div className="flex flex-col w-full max-w-[430px] mx-auto px-4 py-6 relative z-10" style={{ marginTop: '100px' }}>
+          <div className="flex flex-col w-full max-w-[430px] mx-auto px-4 py-6 relative z-10">
             {/* Top Info Bar */}
             <div className="flex justify-between items-end mb-6 w-full">
               <div className="flex flex-col items-start">
