@@ -179,20 +179,20 @@ function CompletionPrompt({
         <div className="text-6xl mb-4">☕</div>
         <h1 className="text-3xl font-bold mb-4 text-black">Brew Complete!</h1>
         <p className="text-base text-gray-600 mb-8 text-center">
-          How was your pour-over? Would you like to log this brewing experience?
-        </p>
-        <button 
+            How was your pour-over? Would you like to log this brewing experience?
+          </p>
+          <button 
           className="w-full py-2 mb-3 border border-gray-300 rounded-full text-sm font-medium transition-colors hover:border-[#ff6700] bg-black text-white"
-          onClick={onLogExperience}
-        >
-          Log This Brew
-        </button>
-        <button 
+            onClick={onLogExperience}
+          >
+            Log This Brew
+          </button>
+          <button 
           className="w-full py-2 border border-gray-300 rounded-full text-sm font-medium transition-colors hover:border-[#ff6700] bg-white text-black"
-          onClick={onSkip}
-        >
-          Skip for Now
-        </button>
+            onClick={onSkip}
+          >
+            Skip for Now
+          </button>
       </div>
     </div>
   );
@@ -628,26 +628,26 @@ function BrewTimerPage({
             {/* Buttons always below the step list */}
             <div className="mt-12 flex flex-col items-center justify-center space-y-4 w-full max-w-[430px]">
               <div className="flex w-full justify-between gap-4">
-                <button
+              <button
                   onClick={onSaveRecipe}
                   className={`py-3 px-8 flex-1 border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
-                >
+              >
                   Save This Recipe
-                </button>
-                <button
-                  onClick={() => {
-                    if (timerActive && !timerPaused) {
-                      handlePause();
-                    } else {
-                      handleResume();
-                    }
-                  }}
+              </button>
+              <button
+                onClick={() => {
+                  if (timerActive && !timerPaused) {
+                    handlePause();
+                  } else {
+                    handleResume();
+                  }
+                }}
                   className={`py-3 px-8 flex-1 border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
                   style={{ background: 'rgba(255,103,0,0.15)' }}
-                  disabled={finished}
-                >
-                  {timerActive && !timerPaused ? 'Pause' : 'Start'}
-                </button>
+                disabled={finished}
+              >
+                {timerActive && !timerPaused ? 'Pause' : 'Start'}
+              </button>
               </div>
               <div className="flex w-full justify-between gap-4">
                 <button
@@ -1304,72 +1304,83 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   
   return (
     <div className={`min-h-screen ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}>
-      <div className="h-full flex flex-col w-full max-w-[430px] mx-auto px-4 py-6 relative">
+      <div className="h-full flex flex-col w-full max-w-[430px] mx-auto py-4 relative">
         {/* Header with Title and Dark Mode Toggle */}
-        <div className="flex items-center gap-3 mb-8 pt-8 max-w-[430px] mx-auto px-4">
-          <span className="w-[25px] h-[25px] rounded-full bg-[#ff6700]" />
-          <h1 className="text-sm font-medium text-black">Pour Perfect</h1>
+        <div className="flex items-center gap-3 mb-6 pt-4 px-6">
+          <button 
+            onClick={toggleDarkMode}
+            className="w-[25px] h-[25px] rounded-full bg-[#ff6700] hover:opacity-80 transition-opacity cursor-pointer"
+            aria-label="Toggle dark mode"
+          />
+          <h1 className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>Pour Perfect</h1>
         </div>
 
-        {/* Main Content - Balanced spacing */}
-        <main className="flex-1 space-y-8">
+        {/* Main Content - Bento Box Layout */}
+        <main className="flex-1 space-y-4 px-6">
           {/* Coffee and Ratio Pickers */}
           <div className="grid grid-cols-2 gap-8">
             {/* Coffee Amount Picker */}
-            <AppleStylePicker
-              value={coffeeSettings.amount}
-              onChange={(amount) => setCoffeeSettings(prev => ({ ...prev, amount }))}
-              isDarkMode={isDarkMode}
-              label="Coffee (g)"
-            />
+            <div className="flex flex-col items-center">
+              <AppleStylePicker
+                value={coffeeSettings.amount}
+                onChange={(amount) => setCoffeeSettings(prev => ({ ...prev, amount }))}
+                isDarkMode={isDarkMode}
+                label="Coffee (g)"
+              />
+            </div>
             
             {/* Coffee Ratio Picker */}
-            <AppleStylePicker
-              value={coffeeSettings.ratio}
-              onChange={(ratio) => setCoffeeSettings(prev => ({ ...prev, ratio }))}
-              isDarkMode={isDarkMode}
-              label="Ratio"
-            />
+            <div className="flex flex-col items-center">
+              <AppleStylePicker
+                value={coffeeSettings.ratio}
+                onChange={(ratio) => setCoffeeSettings(prev => ({ ...prev, ratio }))}
+                isDarkMode={isDarkMode}
+                label="Ratio"
+              />
+            </div>
           </div>
 
-          {/* Compact Brew Info - Subtle line below pickers */}
-          <div className="grid grid-cols-2 gap-8 mt-6">
-            <div className="flex flex-col items-center">
-              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-2`}>Total Time</span>
-              <div className="h-20 w-40 flex items-center justify-center border border-gray-300 rounded-lg text-center mb-4">
+          {/* Total Time and Water Display */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col items-center space-y-3">
+              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Time</span>
+              <div className="h-20 w-full flex items-center justify-center border border-gray-300 rounded-lg">
                 <span className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{formatTime(brewingTimings.totalTime)}</span>
               </div>
               <button
                 onClick={() => setShowNotes(true)}
-                className={`py-2 px-6 w-full border border-gray-300 rounded-full text-sm font-medium transition-colors hover:border-[#ff6700] mb-4 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+                className={`py-2 px-4 w-full border border-gray-300 rounded-full text-sm font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
               >
                 Brew History
               </button>
             </div>
-            <div className="flex flex-col items-center">
-              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-2`}>Total Water</span>
-              <div className="h-20 w-40 flex items-center justify-center border border-gray-300 rounded-lg text-center mb-4">
+            <div className="flex flex-col items-center space-y-3">
+              <span className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Water</span>
+              <div className="h-20 w-full flex items-center justify-center border border-gray-300 rounded-lg">
                 <span className={`text-4xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g</span>
               </div>
               <button
                 onClick={() => setShowSettings(true)}
-                className={`py-2 px-6 w-full border border-gray-300 rounded-full text-sm font-medium transition-colors hover:border-[#ff6700] mb-4 ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+                className={`py-2 px-4 w-full border border-gray-300 rounded-full text-sm font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
               >
                 Log These Settings
               </button>
             </div>
           </div>
-          <div className="flex justify-center mt-2">
+          
+          {/* Ready to Pour Button */}
+          <div className="mt-2">
             <button
               onClick={handleStart}
-              className={`py-3 px-8 w-full max-w-[430px] border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+              className={`py-3 px-8 w-full border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
             >
               Ready to Pour
             </button>
           </div>
-        </main><br /><br />
-        {/* Footer: Made by origen */}
-        <div className="w-full flex justify-center mt-6 mb-2">
+        </main>
+        
+        {/* Footer: Made by origen - Better positioning */}
+        <div className="w-full flex justify-center mt-4 mb-2 px-6">
           <span className="text-xs text-gray-400">made by </span>
           <button
             onClick={() => setShowAbout(true)}

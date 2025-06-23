@@ -13,71 +13,43 @@ const AppleStylePicker: React.FC<AppleStylePickerProps> = ({
   isDarkMode = true,
   label = ''
 }) => {
-  const intRef = useRef<HTMLDivElement>(null);
-  const decRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [isScrolling, setIsScrolling] = useState(false);
-
-  const intPart = Math.floor(value);
-  const decPart = Math.round((value - intPart) * 10);
 
   const itemHeight = 40;
   const visibleItems = 5;
   const containerHeight = itemHeight * visibleItems;
 
-  // Generate integer values 1-50
-  const intValues = Array.from({ length: 50 }, (_, i) => i + 1);
-  // Generate decimal values 0-9
-  const decValues = Array.from({ length: 10 }, (_, i) => i);
+  // Generate values from 1.0 to 50.0 in 0.1 increments
+  const values = Array.from({ length: 491 }, (_, i) => (i + 10) / 10);
+
+  // Find current value index
+  const currentIndex = values.findIndex(val => Math.abs(val - value) < 0.05);
 
   // Scroll to correct position when value changes externally
   useEffect(() => {
-    if (!isScrolling) {
-      if (intRef.current) {
-        const scrollTop = (intPart - 1) * itemHeight;
-        intRef.current.scrollTo({ top: scrollTop, behavior: 'smooth' });
-      }
-      if (decRef.current) {
-        const scrollTop = decPart * itemHeight;
-        decRef.current.scrollTo({ top: scrollTop, behavior: 'smooth' });
-      }
+    if (!isScrolling && scrollRef.current && currentIndex >= 0) {
+      const scrollTop = currentIndex * itemHeight;
+      scrollRef.current.scrollTo({ top: scrollTop, behavior: 'smooth' });
     }
-  }, [intPart, decPart, isScrolling]);
+  }, [value, isScrolling, currentIndex]);
 
-  const handleIntScroll = () => {
-    if (!intRef.current) return;
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
     
-    const scrollTop = intRef.current.scrollTop;
+    const scrollTop = scrollRef.current.scrollTop;
     const index = Math.round(scrollTop / itemHeight);
-    const clampedIndex = Math.max(0, Math.min(intValues.length - 1, index));
-    const newIntValue = intValues[clampedIndex];
+    const clampedIndex = Math.max(0, Math.min(values.length - 1, index));
+    const newValue = values[clampedIndex];
     
-    if (newIntValue !== intPart) {
-      onChange(parseFloat(`${newIntValue}.${decPart}`));
+    if (Math.abs(newValue - value) > 0.05) {
+      onChange(newValue);
     }
     
     // Snap to position
     const targetScrollTop = clampedIndex * itemHeight;
     if (Math.abs(scrollTop - targetScrollTop) > 1) {
-      intRef.current.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
-    }
-  };
-
-  const handleDecScroll = () => {
-    if (!decRef.current) return;
-    
-    const scrollTop = decRef.current.scrollTop;
-    const index = Math.round(scrollTop / itemHeight);
-    const clampedIndex = Math.max(0, Math.min(decValues.length - 1, index));
-    const newDecValue = decValues[clampedIndex];
-    
-    if (newDecValue !== decPart) {
-      onChange(parseFloat(`${intPart}.${newDecValue}`));
-    }
-    
-    // Snap to position
-    const targetScrollTop = clampedIndex * itemHeight;
-    if (Math.abs(scrollTop - targetScrollTop) > 1) {
-      decRef.current.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
+      scrollRef.current.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
     }
   };
 
@@ -90,10 +62,10 @@ const AppleStylePicker: React.FC<AppleStylePickerProps> = ({
       )}
       
       <div className="flex items-center justify-center">
-        {/* Integer Picker */}
+        {/* Single Value Picker */}
         <div className="relative">
           <div 
-            className={`w-16 overflow-hidden rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}
+            className={`w-48 overflow-hidden rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}
             style={{ height: containerHeight }}
           >
             {/* Selection highlight */}
@@ -107,26 +79,26 @@ const AppleStylePicker: React.FC<AppleStylePickerProps> = ({
             />
             
             <div
-              ref={intRef}
+              ref={scrollRef}
               className="h-full overflow-y-scroll scrollbar-hide"
               style={{ scrollSnapType: 'y mandatory' }}
               onScroll={() => {
                 setIsScrolling(true);
-                clearTimeout((intRef.current as any)?._scrollTimeout);
-                (intRef.current as any)._scrollTimeout = setTimeout(() => {
+                clearTimeout((scrollRef.current as any)?._scrollTimeout);
+                (scrollRef.current as any)._scrollTimeout = setTimeout(() => {
                   setIsScrolling(false);
-                  handleIntScroll();
+                  handleScroll();
                 }, 150);
               }}
             >
               {/* Top padding */}
               <div style={{ height: itemHeight * 2 }} />
               
-              {intValues.map((val) => (
+              {values.map((val) => (
                 <div
                   key={val}
                   className={`flex items-center justify-center text-lg font-medium select-none transition-opacity duration-200 ${
-                    val === intPart 
+                    Math.abs(val - value) < 0.05 
                       ? (isDarkMode ? 'text-white opacity-100' : 'text-black opacity-100')
                       : (isDarkMode ? 'text-gray-400 opacity-60' : 'text-gray-600 opacity-60')
                   }`}
@@ -135,67 +107,7 @@ const AppleStylePicker: React.FC<AppleStylePickerProps> = ({
                     scrollSnapAlign: 'center'
                   }}
                 >
-                  {val}
-                </div>
-              ))}
-              
-              {/* Bottom padding */}
-              <div style={{ height: itemHeight * 2 }} />
-            </div>
-          </div>
-        </div>
-
-        {/* Decimal point */}
-        <div className={`mx-2 text-lg font-medium ${isDarkMode ? 'text-white' : 'text-black'}`}>
-          .
-        </div>
-
-        {/* Decimal Picker */}
-        <div className="relative">
-          <div 
-            className={`w-16 overflow-hidden rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}
-            style={{ height: containerHeight }}
-          >
-            {/* Selection highlight */}
-            <div 
-              className={`absolute left-0 right-0 pointer-events-none z-10 ${isDarkMode ? 'bg-white bg-opacity-10' : 'bg-black bg-opacity-10'} rounded`}
-              style={{ 
-                top: itemHeight * 2, 
-                height: itemHeight,
-                border: isDarkMode ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(0,0,0,0.2)'
-              }}
-            />
-            
-            <div
-              ref={decRef}
-              className="h-full overflow-y-scroll scrollbar-hide"
-              style={{ scrollSnapType: 'y mandatory' }}
-              onScroll={() => {
-                setIsScrolling(true);
-                clearTimeout((decRef.current as any)?._scrollTimeout);
-                (decRef.current as any)._scrollTimeout = setTimeout(() => {
-                  setIsScrolling(false);
-                  handleDecScroll();
-                }, 150);
-              }}
-            >
-              {/* Top padding */}
-              <div style={{ height: itemHeight * 2 }} />
-              
-              {decValues.map((val) => (
-                <div
-                  key={val}
-                  className={`flex items-center justify-center text-lg font-medium select-none transition-opacity duration-200 ${
-                    val === decPart 
-                      ? (isDarkMode ? 'text-white opacity-100' : 'text-black opacity-100')
-                      : (isDarkMode ? 'text-gray-400 opacity-60' : 'text-gray-600 opacity-60')
-                  }`}
-                  style={{ 
-                    height: itemHeight,
-                    scrollSnapAlign: 'center'
-                  }}
-                >
-                  {val}
+                  {val.toFixed(1)}
                 </div>
               ))}
               
