@@ -30,6 +30,12 @@
   </head>
   <body>
     <div id="root"></div>
+    
+    <!-- Hidden form for Netlify Forms detection -->
+    <form name="newsletter" netlify netlify-honeypot="bot-field" hidden>
+      <input type="email" name="email" />
+    </form>
+    
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

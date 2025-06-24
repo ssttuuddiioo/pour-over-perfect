@@ -873,6 +873,38 @@ function NotesPage({ onBack, dose, ratio }: { onBack: () => void, dose: number, 
 }
 
 function AboutPage({ onBack }: { onBack: () => void }) {
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('form-name', 'newsletter');
+      formData.append('email', email);
+
+      const response = await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(formData as any).toString()
+      });
+
+      if (response.ok) {
+        setIsSubmitted(true);
+        setEmail('');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-white text-black">
       <main className="flex-1 flex flex-col w-full max-w-[430px] mx-auto px-4 pt-8">
@@ -882,10 +914,51 @@ function AboutPage({ onBack }: { onBack: () => void }) {
         >
           Back
         </button>
-        <p className="text-base leading-relaxed mb-16 text-black">
-          Pour Perfect is a tool by Origen, a small-batch coffee project shaped by a chance encounter in the Andes Mountains, generous people, and a lot of learning along the way. From a hillside farm in Colombia to a co-roasting space in New York, Origen is fueled by curiosity and community.<br /><br />
-          I built this tool to help me dial in my Hario v60 morning routine. Adjust the setting and the timer will guide you through the pour step by step, take notes, and experiment. There's no one perfect pour—just small tweaks and honest attempts.
+        <p className="text-base leading-relaxed mb-8 text-black">
+          Adjust settings, take notes, experiment—there's no single perfect cup, only honest attempts.<br /><br />
+          Origen is a small-batch Colombian coffee project.<br /><br />
+          After I dropped out of a bike-packing race across the Andes I met Oscar Castro, whose family farms coffee in Charalá, Santander.<br /><br />
+          I asked Oscar for a bag to roast in New York, not knowing a thing of the whole process but eager to learn. I've learned so much a long this journey. Soon, I'll have another batch to roast.<br /><br />
+          Add your email below if you'd like a heads-up on the next batch.
         </p>
+        
+        {/* Newsletter Signup Form */}
+        <form 
+          name="newsletter" 
+          method="POST" 
+          data-netlify="true" 
+          onSubmit={handleSubmit}
+          className="mb-8"
+        >
+          <input type="hidden" name="form-name" value="newsletter" />
+          
+          {isSubmitted ? (
+            <div className="text-center py-4">
+              <p className="text-green-600 font-medium">Thanks for signing up!</p>
+            </div>
+          ) : (
+            <div className="flex flex-col space-y-3">
+              <input
+                type="email"
+                name="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                required
+                className="w-full p-3 border border-gray-300 rounded-lg text-base bg-white text-black placeholder-gray-500 focus:outline-none focus:border-[#ff6700]"
+                style={{ fontSize: '16px' }} // Prevent zoom on iOS
+              />
+              <button
+                type="submit"
+                disabled={isSubmitting || !email}
+                className="w-full h-12 bg-[#ff6700] text-white rounded-lg text-base font-medium hover:bg-[#e55a00] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Signing up...' : 'Sign up for newsletter'}
+              </button>
+            </div>
+          )}
+        </form>
+        
         <span className="w-[25px] h-[25px] rounded-full bg-[#ff6700] self-center" />
       </main>
     </div>
