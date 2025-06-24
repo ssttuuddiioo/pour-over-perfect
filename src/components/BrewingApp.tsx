@@ -158,7 +158,11 @@ function InfoPage({ onBack }: { onBack: () => void }) {
 
           <div className="pt-2 border-t border-gray-700">
             <h3 className="text-lg font-semibold mb-1">Why I made this</h3>
-            <p className="text-sm mb-3">I wanted a simple, beautiful way to track and improve my home coffee brewing—without logins, ads, or distractions. I hope it helps you enjoy your coffee ritual even more!</p>
+            <p className="text-sm mb-3">Adjust settings, pour, drink coffee, take notes, repeat.<br /><br />
+              After I dropped out of a bike-packing race across the Andes I met Oscar Castro, whose family farms coffee in Charalá, Santander. Inspired, I decided I would try to go all the way.<br /><br />
+              A few months later back in Brooklyn I imported my first bulto. I've learned so much along the way. It's been a learning process but the next shipment is coming in soon.<br /><br />
+              Add your email below if you'd like a heads-up on the next batch.
+            </p>
           </div>
         </div>
       </div>
@@ -915,10 +919,9 @@ function AboutPage({ onBack }: { onBack: () => void }) {
           Back
         </button>
         <p className="text-base leading-relaxed mb-8 text-black">
-          Adjust settings, take notes, experiment—there's no single perfect cup, only honest attempts.<br /><br />
-          Origen is a small-batch Colombian coffee project.<br /><br />
-          After I dropped out of a bike-packing race across the Andes I met Oscar Castro, whose family farms coffee in Charalá, Santander.<br /><br />
-          I asked Oscar for a bag to roast in New York, not knowing a thing of the whole process but eager to learn. I've learned so much a long this journey. Soon, I'll have another batch to roast.<br /><br />
+          Adjust settings, pour, drink coffee, take notes, repeat.<br /><br />
+          After I dropped out of a bike-packing race across the Andes I met Oscar Castro, whose family farms coffee in Charalá, Santander. Inspired, I decided I would try to go all the way.<br /><br />
+          A few months later back in Brooklyn I imported my first bulto. I've learned so much along the way. It's been a learning process but the next shipment is coming in soon.<br /><br />
           Add your email below if you'd like a heads-up on the next batch.
         </p>
         
