@@ -918,7 +918,7 @@ function AboutPage({ onBack }: { onBack: () => void }) {
         >
           Back
         </button>
-        <p className="text-base leading-relaxed mb-8 text-black">
+        <p className="text-sm leading-relaxed mb-8 text-black">
           Adjust settings, pour, drink coffee, take notes, repeat.<br /><br />
           After I dropped out of a bike-packing race across the Andes I met Oscar Castro, whose family farms coffee in Charalá, Santander. Inspired, I decided I would try to go all the way.<br /><br />
           A few months later back in Brooklyn I imported my first bulto. I've learned so much along the way. It's been a learning process but the next shipment is coming in soon.<br /><br />
