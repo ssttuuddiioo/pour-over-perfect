@@ -158,10 +158,9 @@ function InfoPage({ onBack }: { onBack: () => void }) {
 
           <div className="pt-2 border-t border-gray-700">
             <h3 className="text-lg font-semibold mb-1">Why I made this</h3>
-            <p className="text-sm mb-3">Adjust settings, pour, drink coffee, take notes, repeat.<br /><br />
-              After I dropped out of a bike-packing race across the Andes I met Oscar Castro, whose family farms coffee in Charalá, Santander. Inspired, I decided I would try to go all the way.<br /><br />
-              A few months later back in Brooklyn I imported my first bulto. I've learned so much along the way. It's been a learning process but the next shipment is coming in soon.<br /><br />
-              Add your email below if you'd like a heads-up on the next batch.
+            <p className="text-sm mb-3">Origen is a small-batch Colombian coffee project by Pablo Gnecco.<br /><br />
+              After quitting a grueling bike-packing race across the Andes mountains I met Oscar Castro in Charalá, Santander. I visited his farm and shipped forty pounds of parchment beans to Brooklyn. I've been roasting in small batches because I've had to manually hull… I'm diving into the world of single origin, direct-to-consumer sourcing, buying, import, roasting, packaging—the adventure never ends.<br /><br />
+              Sign up to stay in the loop and to get a reminder for the next roast.
             </p>
           </div>
         </div>
@@ -919,10 +918,9 @@ function AboutPage({ onBack }: { onBack: () => void }) {
           Back
         </button>
         <p className="text-sm leading-relaxed mb-8 text-black">
-          Adjust settings, pour, drink coffee, take notes, repeat.<br /><br />
-          After I dropped out of a bike-packing race across the Andes I met Oscar Castro, whose family farms coffee in Charalá, Santander. Inspired, I decided I would try to go all the way.<br /><br />
-          A few months later back in Brooklyn I imported my first bulto. I've learned so much along the way. It's been a learning process but the next shipment is coming in soon.<br /><br />
-          Add your email below if you'd like a heads-up on the next batch.
+          Origen is a small-batch Colombian coffee project by Pablo Gnecco.<br /><br />
+          After quitting a grueling bike-packing race across the Andes mountains I met Oscar Castro in Charalá, Santander. I visited his farm and shipped forty pounds of parchment beans to Brooklyn. I've been roasting in small batches because I've had to manually hull… I'm diving into the world of single origin, direct-to-consumer sourcing, buying, import, roasting, packaging—the adventure never ends.<br /><br />
+          Sign up to stay in the loop and to get a reminder for the next roast.
         </p>
         
         {/* Newsletter Signup Form */}
