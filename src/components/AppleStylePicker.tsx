@@ -16,7 +16,7 @@ const AppleStylePicker: React.FC<AppleStylePickerProps> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isScrolling, setIsScrolling] = useState(false);
 
-  const itemHeight = 40;
+  const itemHeight = 28; // Reduced from 40 to 28 (30% reduction)
   const visibleItems = 5;
   const containerHeight = itemHeight * visibleItems;
 
@@ -65,7 +65,7 @@ const AppleStylePicker: React.FC<AppleStylePickerProps> = ({
         {/* Single Value Picker */}
         <div className="relative">
           <div 
-            className={`w-48 overflow-hidden rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}
+            className={`w-60 max-w-[180px] overflow-hidden rounded-lg px-4 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}
             style={{ height: containerHeight }}
           >
             {/* Selection highlight */}
@@ -97,7 +97,7 @@ const AppleStylePicker: React.FC<AppleStylePickerProps> = ({
               {values.map((val) => (
                 <div
                   key={val}
-                  className={`flex items-center justify-center text-lg font-medium select-none transition-opacity duration-200 ${
+                  className={`flex items-center justify-center text-lg font-normal select-none transition-opacity duration-200 ${
                     Math.abs(val - value) < 0.05 
                       ? (isDarkMode ? 'text-white opacity-100' : 'text-black opacity-100')
                       : (isDarkMode ? 'text-gray-400 opacity-60' : 'text-gray-600 opacity-60')

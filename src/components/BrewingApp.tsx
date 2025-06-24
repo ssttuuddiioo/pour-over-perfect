@@ -1426,20 +1426,20 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col items-center space-y-1">
               <span className={`text-xs ${isDarkMode ? 'text-white' : 'text-black'}`}>Target Time</span>
-              <div className="h-12 w-full flex items-center justify-center border border-gray-300 rounded-lg">
-                <span className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{formatTime(brewingTimings.totalTime)}</span>
+              <div className={`h-12 w-full flex items-center justify-center rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                <span className={`text-2xl font-normal ${isDarkMode ? 'text-white' : 'text-black'}`}>{formatTime(brewingTimings.totalTime)}</span>
               </div>
             </div>
             <div className="flex flex-col items-center space-y-1">
               <span className={`text-xs ${isDarkMode ? 'text-white' : 'text-black'}`}>Target Water</span>
-              <div className="h-12 w-full flex items-center justify-center border border-gray-300 rounded-lg">
-                <span className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>{Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g</span>
+              <div className={`h-12 w-full flex items-center justify-center rounded-lg ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                <span className={`text-2xl font-normal ${isDarkMode ? 'text-white' : 'text-black'}`}>{Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g</span>
               </div>
             </div>
           </div>
 
           {/* Coffee and Ratio Pickers */}
-          <div className="grid grid-cols-2 gap-10 pb-1">
+          <div className="grid grid-cols-2 gap-10 pb-1 px-2">
             {/* Coffee Amount Picker */}
             <div className="flex flex-col items-center">
               <AppleStylePicker
@@ -1510,20 +1510,20 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
             </div>
           </div>
 
-          {/* Two Main Buttons */}
-          <div className="grid grid-cols-2 gap-4">
+          {/* Two Main Buttons - Styled like Time and Water displays */}
+          <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => setShowNotes(true)}
-              className={`py-3 px-8 w-full border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+              className={`h-12 w-full flex items-center justify-center rounded-lg transition-colors hover:opacity-80 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}
             >
-              Notes
+              <span className={`text-2xl font-normal ${isDarkMode ? 'text-white' : 'text-black'}`}>Notes</span>
             </button>
             
             <button
               onClick={handleStart}
-              className={`py-3 px-8 w-full border border-gray-300 rounded-full text-base font-medium transition-colors hover:border-[#ff6700] ${isDarkMode ? 'bg-black text-white' : 'bg-white text-black'}`}
+              className={`h-12 w-full flex items-center justify-center rounded-lg transition-colors hover:opacity-80 ${isDarkMode ? 'bg-gray-800' : 'bg-gray-100'}`}
             >
-              Ready
+              <span className={`text-2xl font-normal ${isDarkMode ? 'text-white' : 'text-black'}`}>Ready</span>
             </button>
           </div>
         </main>
