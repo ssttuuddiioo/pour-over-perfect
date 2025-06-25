@@ -9,8 +9,8 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Pour Perfect',
-        short_name: 'PourPerfect',
+        name: 'Origen',
+        short_name: 'Origen',
         description: 'Brew and save your perfect coffee recipes!',
         theme_color: '#171717',
         background_color: '#171717',
