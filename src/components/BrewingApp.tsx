@@ -1606,7 +1606,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
         <div className="w-full flex justify-center mt-8 mb-2">
           <span className="text-xs text-gray-400">made by </span>
           <button
-            onClick={() => setShowAbout(true)}
+            onClick={onShowAbout}
             className="text-xs font-semibold ml-1 text-[#ff6700] hover:underline focus:outline-none"
             style={{ color: '#ff6700' }}
           >
