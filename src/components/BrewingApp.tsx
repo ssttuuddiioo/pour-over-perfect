@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 // import GrindSelector from './GrindSelector'; // Assuming this is not used or will be re-evaluated
 import { Notes } from './Notes';
 import { CoffeeSettings } from '../types/brewing'; // BrewingPhase might not be needed
@@ -966,7 +967,8 @@ function AboutPage({ onBack }: { onBack: () => void }) {
   );
 }
 
-const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => {
+const BrewingApp: React.FC = () => {
+  const navigate = useNavigate();
   const { isDarkMode, toggleDarkMode } = useTheme();
   // Load initial settings from localStorage or use defaults
   const loadSavedSettings = () => {
@@ -1606,7 +1608,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
         <div className="w-full flex justify-center mt-8 mb-2">
           <span className="text-xs text-gray-400">made by </span>
           <button
-            onClick={onShowAbout}
+            onClick={() => navigate('/')}
             className="text-xs font-semibold ml-1 text-[#ff6700] hover:underline focus:outline-none"
             style={{ color: '#ff6700' }}
           >

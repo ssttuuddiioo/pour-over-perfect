@@ -1,50 +1,24 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import BrewingApp from './components/BrewingApp';
 import FrontPage from './components/FrontPage';
 import CoffeePage from './components/CoffeePage';
+import AboutPage from './components/AboutPage';
+import ContactPage from './components/ContactPage';
 import { ThemeProvider } from './context/ThemeContext';
 
-type View = 'front' | 'timer' | 'coffee';
-
 const App: React.FC = () => {
-  const [view, setView] = useState<View>('front');
-
   return (
     <ThemeProvider>
-      {view === 'front' && (
-        <FrontPage 
-          onTimer={() => setView('timer')} 
-          onCoffee={() => setView('coffee')} 
-          onAbout={() => {
-            // Trigger slow scroll to reveal "It all started here"
-            const targetScroll = window.innerHeight * 2;
-            const startScroll = window.scrollY;
-            const distance = targetScroll - startScroll;
-            const duration = 3000; // 3 seconds
-            const startTime = performance.now();
-            
-            const smoothScroll = (currentTime: number) => {
-              const elapsed = currentTime - startTime;
-              const progress = Math.min(elapsed / duration, 1);
-              
-              // Ease out function for smooth deceleration
-              const easeOut = 1 - Math.pow(1 - progress, 3);
-              
-              window.scrollTo(0, startScroll + distance * easeOut);
-              
-              if (progress < 1) {
-                requestAnimationFrame(smoothScroll);
-              }
-            };
-            
-            requestAnimationFrame(smoothScroll);
-          }}
-        />
-      )}
-
-      {view === 'timer' && <BrewingApp onShowAbout={() => setView('front')} />}
-
-      {view === 'coffee' && <CoffeePage onBack={() => setView('front')} />}
+      <Router>
+        <Routes>
+          <Route path="/" element={<FrontPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/coffee" element={<CoffeePage />} />
+          <Route path="/timer" element={<BrewingApp />} />
+          <Route path="/contact" element={<ContactPage />} />
+        </Routes>
+      </Router>
     </ThemeProvider>
   );
 };

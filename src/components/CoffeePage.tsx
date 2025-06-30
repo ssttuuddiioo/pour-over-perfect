@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
-interface CoffeePageProps {
-  onBack: () => void;
-}
-
-const CoffeePage: React.FC<CoffeePageProps> = ({ onBack }) => {
+const CoffeePage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
@@ -43,7 +40,7 @@ const CoffeePage: React.FC<CoffeePageProps> = ({ onBack }) => {
         </form>
       )}
 
-      <button onClick={onBack} className="text-sm text-gray-600 hover:text-black underline">Back to Home</button>
+      <Link to="/" className="text-sm text-gray-600 hover:text-black underline">Back to Home</Link>
     </div>
   );
 };

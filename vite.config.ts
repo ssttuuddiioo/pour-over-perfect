@@ -32,6 +32,18 @@ export default defineConfig({
   ],
   server: {
     port: 3005,
-    open: true
+    open: true,
+    historyApiFallback: true
+  },
+  preview: {
+    port: 3005,
+    historyApiFallback: true
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
+      }
+    }
   }
 });
