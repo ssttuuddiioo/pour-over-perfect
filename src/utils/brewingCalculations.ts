@@ -37,7 +37,7 @@ export function generateBrewPlan({
   const FRACTIONS = [0.30, 0.35, 0.35]; // three pours after bloom
   const POUR_RATE = pourRate;
   const T_BLOOM = 30; // s
-  const T_REST = 10; // s after each main pour
+  const T_REST = 15; // s after each main pour
   const DRAW_BASE = 45; // s for 250g water @ grind 6
   const GRIND_ADJ = 5; // s per step finer/coarser
   const VOL_ADJ = 5; // s per extra 50g above 250g
