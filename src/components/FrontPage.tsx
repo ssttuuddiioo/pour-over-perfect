@@ -352,11 +352,11 @@ const FrontPage: React.FC = () => {
     // Clear any existing scroll triggers
     ScrollTrigger.getAll().forEach(st => st.kill());
 
-    // Enable scrolling for this page only
-    document.body.style.overflow = 'auto';
+    // Enable scrolling for this page - now with improved overflow handling
+    document.body.style.overflow = 'visible';
     document.body.style.position = 'static';
     document.body.style.height = 'auto';
-    document.documentElement.style.overflow = 'auto';
+    document.documentElement.style.overflow = 'visible';
     document.documentElement.style.height = 'auto';
 
     // Reset circle to base state
@@ -424,12 +424,12 @@ const FrontPage: React.FC = () => {
 
     return () => {
       ctx.revert();
-      // Restore original scroll-disabled state when leaving this page
-      document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.height = '100vh';
-      document.documentElement.style.overflow = 'hidden';
-      document.documentElement.style.height = '100vh';
+      // Reset to default state when leaving this page
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.height = '';
+      document.documentElement.style.overflow = '';
+      document.documentElement.style.height = '';
     };
   }, []);
 
@@ -438,11 +438,12 @@ const FrontPage: React.FC = () => {
       <div ref={smoothContentRef} id="smooth-content">
         <section ref={containerRef} className="relative h-screen bg-white">
           {/* Pinned Navigation - Corner Layout */}
-          <nav ref={navRef} className="fixed inset-0 z-20 pointer-events-none">
+          <nav ref={navRef} className="fixed inset-0 z-30 pointer-events-none">
             {/* Top Left */}
             <button 
               onClick={handleAboutClick}
-              className="absolute top-6 left-6 text-base font-medium text-black hover:text-[#ff6700] transition-colors pointer-events-auto"
+              className="absolute top-3 left-3 p-3 text-base font-medium text-black hover:text-[#ff6700] transition-colors pointer-events-auto touch-manipulation"
+              style={{ marginTop: 'env(safe-area-inset-top, 0)', marginLeft: 'env(safe-area-inset-left, 0)' }}
             >
               origen
             </button>
@@ -450,7 +451,8 @@ const FrontPage: React.FC = () => {
             {/* Top Right */}
             <Link 
               to="/coffee"
-              className="absolute top-6 right-6 text-base font-medium text-black hover:text-[#ff6700] transition-colors pointer-events-auto"
+              className="absolute top-3 right-3 p-3 text-base font-medium text-black hover:text-[#ff6700] transition-colors pointer-events-auto touch-manipulation"
+              style={{ marginTop: 'env(safe-area-inset-top, 0)', marginRight: 'env(safe-area-inset-right, 0)' }}
             >
               buy coffee
             </Link>
@@ -458,7 +460,8 @@ const FrontPage: React.FC = () => {
             {/* Bottom Left */}
             <Link 
               to="/timer"
-              className="absolute bottom-6 left-6 text-base font-medium text-black hover:text-[#ff6700] transition-colors pointer-events-auto"
+              className="absolute bottom-3 left-3 p-3 text-base font-medium text-black hover:text-[#ff6700] transition-colors pointer-events-auto touch-manipulation"
+              style={{ marginBottom: 'env(safe-area-inset-bottom, 0)', marginLeft: 'env(safe-area-inset-left, 0)' }}
             >
               timer
             </Link>
@@ -466,7 +469,8 @@ const FrontPage: React.FC = () => {
             {/* Bottom Right */}
             <Link 
               to="/about"
-              className="absolute bottom-6 right-6 text-base font-medium text-black hover:text-[#ff6700] transition-colors pointer-events-auto"
+              className="absolute bottom-3 right-3 p-3 text-base font-medium text-black hover:text-[#ff6700] transition-colors pointer-events-auto touch-manipulation"
+              style={{ marginBottom: 'env(safe-area-inset-bottom, 0)', marginRight: 'env(safe-area-inset-right, 0)' }}
             >
               about
             </Link>
