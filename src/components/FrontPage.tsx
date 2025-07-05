@@ -454,7 +454,7 @@ const FrontPage: React.FC = () => {
               className="absolute top-3 right-3 p-3 text-base font-medium text-black hover:text-[#ff6700] transition-colors pointer-events-auto touch-manipulation"
               style={{ marginTop: 'env(safe-area-inset-top, 0)', marginRight: 'env(safe-area-inset-right, 0)' }}
             >
-              buy coffee
+              coffee
             </Link>
             
             {/* Bottom Left */}
