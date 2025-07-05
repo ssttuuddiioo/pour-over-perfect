@@ -472,7 +472,7 @@ const FrontPage: React.FC = () => {
               className="absolute bottom-3 right-3 p-3 text-base font-medium text-black hover:text-[#ff6700] transition-colors pointer-events-auto touch-manipulation"
               style={{ marginBottom: 'env(safe-area-inset-bottom, 0)', marginRight: 'env(safe-area-inset-right, 0)' }}
             >
-              about
+              nyc
             </Link>
           </nav>
 
