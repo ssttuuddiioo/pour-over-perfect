@@ -263,10 +263,11 @@ const CalmPage: React.FC = () => {
       gsap.killTweensOf(circleRef.current);
       
       gsap.to(circleRef.current, {
-        width: 480,
-        height: 480,
-        duration: 0.8,
-        ease: "power2.out"
+        width: 60,
+        height: 60,
+        scale: 1,
+        duration: 1.0,
+        ease: "power2.inOut"
       });
     }
   };
@@ -295,7 +296,7 @@ const CalmPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden text-white">
       <div className="text-center space-y-8">
         <h1 className="text-2xl font-bold text-black mb-8">Calm</h1>
         

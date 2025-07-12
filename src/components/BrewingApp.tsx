@@ -15,7 +15,7 @@ function CompletionPrompt({
   onSkip: () => void 
 }) {
   return (
-    <div className="min-h-screen flex flex-col bg-white text-black">
+    <div className="min-h-screen flex flex-col bg-gray-100 text-black">
       <div className="flex flex-col items-center w-full max-w-[430px] mx-auto px-4 py-12">
         <div className="text-6xl mb-4">☕</div>
         <h1 className="text-3xl font-bold mb-4 text-black">Brew Complete!</h1>
@@ -73,7 +73,7 @@ function BrewTimerPage({
   };
 
   React.useEffect(() => {
-    document.body.style.backgroundColor = '#ffffff';
+    document.body.style.backgroundColor = '#f5f5f5';
     document.body.style.color = '#000000';
     return () => {
       document.body.style.backgroundColor = ''; // Revert to default
@@ -82,15 +82,8 @@ function BrewTimerPage({
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-black">
-       <nav className="fixed left-0 top-0 h-full z-50 pointer-events-none">
-        <div className="h-full flex flex-col justify-between py-8 pl-3" style={{ marginLeft: 'env(safe-area-inset-left, 0)' }}>
-          <button onClick={() => navigate('/')} className="p-3 text-base font-medium hover:text-[#ff6700] transition-colors pointer-events-auto touch-manipulation text-black">origen</button>
-          <button onClick={() => navigate('/about')} className="p-3 text-base font-medium hover:text-[#ff6700] transition-colors pointer-events-auto touch-manipulation text-black">about</button>
-          <button onClick={() => navigate('/coffee')} className="p-3 text-base font-medium hover:text-[#ff6700] transition-colors pointer-events-auto touch-manipulation text-black">coffee</button>
-          <button className="p-3 text-base font-medium text-[#ff6700] transition-colors pointer-events-auto touch-manipulation">timer</button>
-        </div>
-      </nav>
+    <div className="min-h-screen flex flex-col bg-gray-100 text-black">
+       {/* Hide navigation on timer page */}
       <div className="flex flex-col items-center justify-center w-full h-full">
         <div className="w-full max-w-[430px] mx-auto px-4 py-6 relative">
           <div className="flex flex-col w-full relative z-40">
@@ -368,19 +361,16 @@ const BrewingApp: React.FC = () => {
 
   // Main page UI
   return (
-    <div className="min-h-screen bg-white text-black">
-      <nav className="fixed left-0 top-0 h-full z-30 pointer-events-none">
-        <div className="h-full flex flex-col justify-between py-8 pl-3" style={{ marginLeft: 'env(safe-area-inset-left, 0)' }}>
-          <button onClick={() => navigate('/')} className="p-3 text-base font-medium hover:text-[#ff6700] transition-colors pointer-events-auto touch-manipulation text-black">origen</button>
-          <button onClick={() => navigate('/about')} className="p-3 text-base font-medium hover:text-[#ff6700] transition-colors pointer-events-auto touch-manipulation text-black">about</button>
-          <button onClick={() => navigate('/coffee')} className="p-3 text-base font-medium hover:text-[#ff6700] transition-colors pointer-events-auto touch-manipulation text-black">coffee</button>
-          <button onClick={() => navigate('/timer')} className="p-3 text-base font-medium text-[#ff6700] transition-colors pointer-events-auto touch-manipulation">timer</button>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-gray-100 text-black">
+      {/* Hide navigation on timer page */}
       
       <div className="h-full flex flex-col w-full max-w-[430px] mx-auto py-4 px-4 sm:px-6 md:px-8 relative z-20">
         <div className="flex items-center gap-3 mb-6 pt-4">
-          <div className="w-[25px] h-[25px] rounded-full bg-[#ff6700]"></div>
+          <button 
+            onClick={() => navigate('/')} 
+            className="w-[25px] h-[25px] rounded-full bg-[#ff6700] hover:bg-[#e55a00] transition-colors cursor-pointer"
+            title="Return to homepage"
+          />
           <h1 className="text-sm font-medium text-black">Pour Perfect</h1>
         </div>
 
