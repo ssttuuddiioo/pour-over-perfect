@@ -586,10 +586,7 @@
   }
 }
 
-/* Ensure navigation stays above content */
-nav {
-  backdrop-filter: blur(10px);
-}
+
 
 /* Improved mobile navigation shadows */
 @media (max-width: 768px) {
