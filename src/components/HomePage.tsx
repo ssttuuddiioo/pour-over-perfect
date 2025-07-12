@@ -13,9 +13,31 @@ const HomePage: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    
+    try {
+      const formData = new FormData(e.target as HTMLFormElement);
+      
+      const response = await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(formData as any).toString(),
+      });
+      
+      if (response.ok) {
+        setSubmitted(true);
+        setEmail(''); // Clear the email field
+      } else {
+        console.error('Form submission failed');
+        // Still show success message for UX, but log error
+        setSubmitted(true);
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      // Still show success message for UX, but log error
+      setSubmitted(true);
+    }
   };
 
   // Smooth scroll function
@@ -363,9 +385,19 @@ const HomePage: React.FC = () => {
               {/* Improved email form */}
               <div className="section-content">
                 {!submitted ? (
-                  <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                  <form 
+                    name="newsletter" 
+                    method="POST" 
+                    data-netlify="true"
+                    data-netlify-honeypot="bot-field"
+                    onSubmit={handleSubmit} 
+                    className="flex flex-col gap-4"
+                  >
+                    <input type="hidden" name="form-name" value="newsletter" />
+                    <input type="hidden" name="bot-field" />
                     <input
                       type="email"
+                      name="email"
                       id="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
