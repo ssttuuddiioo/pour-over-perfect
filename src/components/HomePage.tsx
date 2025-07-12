@@ -54,29 +54,38 @@ const HomePage: React.FC = () => {
     // Detect mobile device
     const isMobile = window.innerWidth <= 768;
     
-    // Common initialization function - always center on mobile
+    // Common initialization function - always center and make immediately visible
     const initializeCircle = () => {
       const initialConfig = sectionConfigs[0];
       gsap.set(circleRef.current, {
+        // Size and scale
         width: initialConfig.size,
         height: initialConfig.size,
         scale: initialConfig.scale,
-        transformOrigin: "center center",
-        force3D: true,
-        willChange: "transform, width, height",
-        backfaceVisibility: "hidden",
-        perspective: 1000,
-        // Always center the circle
-        zIndex: isMobile ? -1 : 0, // Pin to back on mobile
+        // Positioning - FIXED in center
         position: "fixed",
         left: "50%",
         top: "50%",
         xPercent: -50,
         yPercent: -50,
-        // Ensure perfect centering on mobile
-        transform: isMobile ? "translate(-50%, -50%)" : "translate(-50%, -50%)"
+        transform: "translate(-50%, -50%)",
+        transformOrigin: "center center",
+        // Layer positioning
+        zIndex: isMobile ? -1 : 0, // Pin to back on mobile
+        // Performance optimizations
+        force3D: true,
+        willChange: "transform, width, height",
+        backfaceVisibility: "hidden",
+        perspective: 1000,
+        // Ensure immediate visibility
+        opacity: 1,
+        visibility: "visible",
+        display: "flex"
       });
     };
+    
+    // Initialize circle immediately to prevent white screen
+    initializeCircle();
     
     // Smooth mobile experience with 60fps circle animation
     if (isMobile) {
@@ -108,8 +117,10 @@ const HomePage: React.FC = () => {
            xPercent: -50,
            yPercent: -50,
            transformOrigin: "center center",
-           // Force center positioning
-           transform: "translate(-50%, -50%)"
+           // Force center positioning and make immediately visible
+           transform: "translate(-50%, -50%)",
+           opacity: 1,
+           visibility: "visible"
          });
          
          const scrollTrigger = ScrollTrigger.create({
@@ -132,7 +143,7 @@ const HomePage: React.FC = () => {
              const size = gsap.utils.interpolate(currentConfig.size, nextConfig.size, sectionProgress);
              const scale = gsap.utils.interpolate(currentConfig.scale, nextConfig.scale, sectionProgress);
              
-             // Ultra smooth scaling with hardware acceleration - keep centered
+             // Ultra smooth scaling with hardware acceleration - ONLY scale, never move
              gsap.set(circleRef.current, {
                width: size,
                height: size,
@@ -141,12 +152,8 @@ const HomePage: React.FC = () => {
                transformOrigin: "center center",
                willChange: "transform, width, height",
                backfaceVisibility: "hidden", // Prevent flickering
-               perspective: 1000, // Enhance 3D rendering
-               // Maintain center position during scaling
-               left: "50%",
-               top: "50%",
-               xPercent: -50,
-               yPercent: -50
+               perspective: 1000 // Enhance 3D rendering
+               // DO NOT set position properties here - circle must stay fixed in center
              });
            },
            onRefresh: self => {
@@ -169,12 +176,8 @@ const HomePage: React.FC = () => {
                transformOrigin: "center center",
                willChange: "transform, width, height",
                backfaceVisibility: "hidden",
-               perspective: 1000,
-               // Maintain center position during refresh
-               left: "50%",
-               top: "50%",
-               xPercent: -50,
-               yPercent: -50
+               perspective: 1000
+               // DO NOT set position properties during refresh - circle must stay fixed in center
              });
            }
          });
@@ -185,9 +188,6 @@ const HomePage: React.FC = () => {
          return scrollTrigger;
        };
 
-       // Initialize circle size
-       initializeCircle();
-       
        // Initialize smooth animation
        const scrollTrigger = createSmoothCircleAnimation();
        
@@ -227,7 +227,9 @@ const HomePage: React.FC = () => {
         gsap.set(circleRef.current, {
           width: size,
           height: size,
-          scale: scale
+          scale: scale,
+          // Only scale, never move position
+          force3D: true
         });
       },
       onRefresh: self => {
@@ -245,7 +247,9 @@ const HomePage: React.FC = () => {
         gsap.set(circleRef.current, {
           width: size,
           height: size,
-          scale: scale
+          scale: scale,
+          // Only scale, never move position
+          force3D: true
         });
       }
     });
@@ -290,9 +294,6 @@ const HomePage: React.FC = () => {
       }
     });
 
-    // Initialize circle size
-    initializeCircle();
-    
     // Initialize with first section
     setActiveSection('home');
     

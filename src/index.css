@@ -595,15 +595,21 @@
   }
 }
 
-/* Smooth circle animation optimizations */
+/* Smooth circle animation optimizations - always visible and centered */
 .fixed.bg-\[#FF6700\].rounded-full {
   /* Hardware acceleration for smooth 60fps animation */
-  transform: translateZ(0);
+  transform: translate(-50%, -50%) translateZ(0) !important;
   will-change: transform, width, height;
   backface-visibility: hidden;
   perspective: 1000px;
-  /* Pin to background layer on mobile */
-  z-index: -1;
+  /* Pin to background layer and ensure visibility */
+  z-index: -1 !important;
+  position: fixed !important;
+  left: 50% !important;
+  top: 50% !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: flex !important;
 }
 
 /* Mobile-specific circle optimizations - always centered */
