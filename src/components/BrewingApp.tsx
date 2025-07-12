@@ -82,9 +82,11 @@ function BrewTimerPage({
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-100 text-black flex items-center justify-center">
-      <div className="w-full max-w-[430px] mx-auto px-4 py-6 relative">
-        <div className="flex flex-col w-full relative z-40">
+    <div className="min-h-screen flex flex-col bg-gray-100 text-black">
+       {/* Hide navigation on timer page */}
+      <div className="flex flex-col items-center justify-center w-full h-full">
+        <div className="w-full max-w-[430px] mx-auto px-4 py-6 relative">
+          <div className="flex flex-col w-full relative z-40">
             {/* Top Info Bar */}
             <div className="flex justify-between items-end mb-6 w-full">
               <div className="flex flex-col items-start">
@@ -359,8 +361,10 @@ const BrewingApp: React.FC = () => {
 
   // Main page UI
   return (
-    <div className="min-h-screen bg-gray-100 text-black flex items-center justify-center">
-      <div className="w-full max-w-[430px] mx-auto py-4 px-4 sm:px-6 md:px-8 relative z-20">
+    <div className="min-h-screen bg-gray-100 text-black">
+      {/* Hide navigation on timer page */}
+      
+      <div className="h-full flex flex-col w-full max-w-[430px] mx-auto py-4 px-4 sm:px-6 md:px-8 relative z-20">
         <div className="flex items-center gap-3 mb-6 pt-4">
           <button 
             onClick={() => navigate('/')} 

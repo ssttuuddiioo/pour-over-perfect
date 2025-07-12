@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import GrindSelector from './GrindSelector';
 import BrewingTimer from './BrewingTimer';
 import { Notes } from './Notes';
@@ -347,6 +348,25 @@ function BrewTimerPage({
 }
 
 const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => {
+  const navigate = useNavigate();
+  const [activeSection, setActiveSection] = useState('timer');
+  
+  // Smooth scroll function for homepage sections
+  const scrollToSection = (sectionId: string) => {
+    if (sectionId === 'timer') {
+      // Already on timer page, do nothing
+      return;
+    }
+    navigate('/');
+    // Add a small delay to ensure navigation completes before scrolling
+    setTimeout(() => {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  };
+
   const [grindSize, setGrindSize] = useState<number>(6);
   const [isBrewActive, setIsBrewActive] = useState<boolean>(false);
   const [currentPhase, setCurrentPhase] = useState<BrewingPhase | null>(null);
@@ -586,34 +606,86 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   };
 
   if (showInfo) {
-    return <InfoPage onBack={() => setShowInfo(false)} />;
+    return (
+      <div className="min-h-screen">
+        {/* Top Navigation */}
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur-sm border-b border-gray-200">
+          <div className="flex justify-center items-center py-4 px-4 sm:px-6">
+            <div className="flex space-x-4 sm:space-x-6 md:space-x-8 lg:space-x-10">
+              <button onClick={() => scrollToSection('home')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">home</button>
+              <button onClick={() => scrollToSection('origen')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">origen</button>
+              <button onClick={() => scrollToSection('coffee')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">coffee</button>
+              <button onClick={() => scrollToSection('buy')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">buy</button>
+              <button className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black underline">timer</button>
+            </div>
+          </div>
+        </nav>
+        <div className="min-h-screen flex items-center justify-center pt-20 pb-8 px-4">
+          <InfoPage onBack={() => setShowInfo(false)} />
+        </div>
+      </div>
+    );
   }
 
   if (showSettings) {
-    return <SettingsPage onBack={closeSettings} settingsDraft={settingsDraft} setSettingsDraft={setSettingsDraft} handleSettingsSave={handleSettingsSave} closeSettings={closeSettings} />;
+    return (
+      <div className="min-h-screen">
+        {/* Top Navigation */}
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur-sm border-b border-gray-200">
+          <div className="flex justify-center items-center py-4 px-4 sm:px-6">
+            <div className="flex space-x-4 sm:space-x-6 md:space-x-8 lg:space-x-10">
+              <button onClick={() => scrollToSection('home')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">home</button>
+              <button onClick={() => scrollToSection('origen')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">origen</button>
+              <button onClick={() => scrollToSection('coffee')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">coffee</button>
+              <button onClick={() => scrollToSection('buy')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">buy</button>
+              <button className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black underline">timer</button>
+            </div>
+          </div>
+        </nav>
+        <div className="min-h-screen flex items-center justify-center pt-20 pb-8 px-4">
+          <SettingsPage onBack={closeSettings} settingsDraft={settingsDraft} setSettingsDraft={setSettingsDraft} handleSettingsSave={handleSettingsSave} closeSettings={closeSettings} />
+        </div>
+      </div>
+    );
   }
 
   if (showNotes) {
     return (
-      <div className="w-full max-w-sm">
-        <div className="card">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Brewing Notes</h2>
-            <button 
-              onClick={() => setShowNotes(false)}
-              className="btn btn-secondary"
-            >
-              Back
-            </button>
+      <div className="min-h-screen">
+        {/* Top Navigation */}
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur-sm border-b border-gray-200">
+          <div className="flex justify-center items-center py-4 px-4 sm:px-6">
+            <div className="flex space-x-4 sm:space-x-6 md:space-x-8 lg:space-x-10">
+              <button onClick={() => scrollToSection('home')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">home</button>
+              <button onClick={() => scrollToSection('origen')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">origen</button>
+              <button onClick={() => scrollToSection('coffee')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">coffee</button>
+              <button onClick={() => scrollToSection('buy')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">buy</button>
+              <button className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black underline">timer</button>
+            </div>
           </div>
-          <Notes 
-            brewingSettings={{
-            grindSize,
-            coffeeAmount: coffeeSettings.amount,
-            waterRatio: coffeeSettings.ratio,
-            totalWater: brewingTimings.thirdPourTarget
-            }}
-          />
+        </nav>
+        <div className="min-h-screen flex items-center justify-center pt-20 pb-8 px-4">
+          <div className="w-full max-w-sm">
+            <div className="card">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Brewing Notes</h2>
+                <button 
+                  onClick={() => setShowNotes(false)}
+                  className="btn btn-secondary"
+                >
+                  Back
+                </button>
+              </div>
+              <Notes 
+                brewingSettings={{
+                grindSize,
+                coffeeAmount: coffeeSettings.amount,
+                waterRatio: coffeeSettings.ratio,
+                totalWater: brewingTimings.thirdPourTarget
+                }}
+              />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -621,16 +693,32 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
 
   if (showProPours) {
     return (
-      <div className="w-full max-w-sm mx-auto">
-        <div className="card p-6">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex flex-col pl-0">
-              <span className="text-lg font-bold leading-tight">Tetsu Kasuya</span>
-              <span className="text-sm font-normal leading-tight">4:6 Method</span>
+      <div className="min-h-screen">
+        {/* Top Navigation */}
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur-sm border-b border-gray-200">
+          <div className="flex justify-center items-center py-4 px-4 sm:px-6">
+            <div className="flex space-x-4 sm:space-x-6 md:space-x-8 lg:space-x-10">
+              <button onClick={() => scrollToSection('home')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">home</button>
+              <button onClick={() => scrollToSection('origen')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">origen</button>
+              <button onClick={() => scrollToSection('coffee')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">coffee</button>
+              <button onClick={() => scrollToSection('buy')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">buy</button>
+              <button className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black underline">timer</button>
             </div>
-            <button onClick={() => setShowProPours(false)} className="btn btn-secondary">Back</button>
           </div>
-          <ProPours />
+        </nav>
+        <div className="min-h-screen flex items-center justify-center pt-20 pb-8 px-4">
+          <div className="w-full max-w-sm mx-auto">
+            <div className="card p-6">
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex flex-col pl-0">
+                  <span className="text-lg font-bold leading-tight">Tetsu Kasuya</span>
+                  <span className="text-sm font-normal leading-tight">4:6 Method</span>
+                </div>
+                <button onClick={() => setShowProPours(false)} className="btn btn-secondary">Back</button>
+              </div>
+              <ProPours />
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -638,157 +726,215 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
   
   if (showBrewTimer) {
     return (
-      <BrewTimerPage
-        elapsed={elapsed}
-        getStepInstruction={getStepInstruction}
-        fullStepSequence={fullStepSequence}
-        fullCurrentStep={fullCurrentStep}
-        fullStepEndTimes={fullStepEndTimes}
-        handlePause={handlePause}
-        handleResume={handleResume}
-        handleReset={handleReset}
-        timerActive={timerActive}
-        timerPaused={timerPaused}
-        finished={finished}
-        formatTime={formatTime}
-        onBack={handleBack}
-      />
+      <div className="min-h-screen">
+        {/* Top Navigation */}
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur-sm border-b border-gray-200">
+          <div className="flex justify-center items-center py-4 px-4 sm:px-6">
+            <div className="flex space-x-4 sm:space-x-6 md:space-x-8 lg:space-x-10">
+              <button onClick={() => scrollToSection('home')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">home</button>
+              <button onClick={() => scrollToSection('origen')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">origen</button>
+              <button onClick={() => scrollToSection('coffee')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">coffee</button>
+              <button onClick={() => scrollToSection('buy')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">buy</button>
+              <button className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black underline">timer</button>
+            </div>
+          </div>
+        </nav>
+        <div className="min-h-screen flex items-center justify-center pt-20 pb-8 px-4">
+          <BrewTimerPage
+            elapsed={elapsed}
+            getStepInstruction={getStepInstruction}
+            fullStepSequence={fullStepSequence}
+            fullCurrentStep={fullCurrentStep}
+            fullStepEndTimes={fullStepEndTimes}
+            handlePause={handlePause}
+            handleResume={handleResume}
+            handleReset={handleReset}
+            timerActive={timerActive}
+            timerPaused={timerPaused}
+            finished={finished}
+            formatTime={formatTime}
+            onBack={handleBack}
+          />
+        </div>
+      </div>
     );
   }
   
   return (
-    <div className="w-full max-w-sm">
-      <div className="card space-y-6">
-        {!isBrewActive ? (
-          <>
-            <div className="flex justify-between items-center mb-4">
-              <h1 className="text-xl font-semibold">Pour Perfect</h1>
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => setShowNotes(true)}
-                  className="btn btn-secondary p-2"
-                  aria-label="Notes"
-                >
-                  <span role="img" aria-label="Notes" className="text-lg">🗒️</span>
-                </button>
-                <button
-                  onClick={() => setShowProPours(true)}
-                  className="btn btn-secondary p-2"
-                  aria-label="Pro Pours"
-                >
-                  <span role="img" aria-label="Pro Pours" className="text-lg">🏆</span>
-                </button>
-                <button
-                  onClick={openSettings}
-                  className="btn btn-secondary p-2"
-                  type="button"
-                  aria-label="Settings"
-                >
-                  <span role="img" aria-label="Settings" className="text-lg">⚙️</span>
-                </button>
-              <button 
-                  onClick={() => setShowInfo(true)}
-                className="btn btn-secondary p-2"
-                  type="button"
-                  aria-label="Info"
-              >
-                  <span role="img" aria-label="Info" className="text-lg">ℹ️</span>
-              </button>
-              </div>
-            </div>
-            {/* Coffee and Ratio Selectors */}
-            <div className="flex gap-2 mb-3">
-              <div className="flex-1 flex flex-col gap-1">
-                <span className="text-xs font-medium text-gray-400 mb-1 ml-1">Coffee</span>
-                <div className="grid grid-cols-2 gap-2">
-                  {coffeeOptions.map(amount => (
-                    <button
-                      key={amount}
-                      className={`w-full px-0 py-2 rounded-[4px] text-sm font-semibold transition-colors bg-gray-800 ${coffeeSettings.amount === amount ? 'text-white border-2 border-green-400' : 'text-gray-300 border border-transparent'}`}
-                      onClick={() => handleCoffeeAmountChange(amount)}
+    <div className="min-h-screen">
+      {/* Top Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur-sm border-b border-gray-200">
+        <div className="flex justify-center items-center py-4 px-4 sm:px-6">
+          <div className="flex space-x-4 sm:space-x-6 md:space-x-8 lg:space-x-10">
+            <button
+              onClick={() => scrollToSection('home')}
+              className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline"
+            >
+              home
+            </button>
+            <button
+              onClick={() => scrollToSection('origen')}
+              className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline"
+            >
+              origen
+            </button>
+            <button
+              onClick={() => scrollToSection('coffee')}
+              className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline"
+            >
+              coffee
+            </button>
+            <button
+              onClick={() => scrollToSection('buy')}
+              className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline"
+            >
+              buy
+            </button>
+            <button
+              className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black underline"
+            >
+              timer
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content - Centered Vertically */}
+      <div className="min-h-screen flex items-center justify-center pt-20 pb-8 px-4">
+        <div className="w-full max-w-sm">
+          <div className="card space-y-6">
+            {!isBrewActive ? (
+              <>
+                <div className="flex justify-between items-center mb-4">
+                  <h1 className="text-xl font-semibold">Pour Perfect</h1>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setShowNotes(true)}
+                      className="btn btn-secondary p-2"
+                      aria-label="Notes"
                     >
-                      {amount}g
+                      <span role="img" aria-label="Notes" className="text-lg">🗒️</span>
                     </button>
-                  ))}
+                    <button
+                      onClick={() => setShowProPours(true)}
+                      className="btn btn-secondary p-2"
+                      aria-label="Pro Pours"
+                    >
+                      <span role="img" aria-label="Pro Pours" className="text-lg">🏆</span>
+                    </button>
+                    <button
+                      onClick={openSettings}
+                      className="btn btn-secondary p-2"
+                      type="button"
+                      aria-label="Settings"
+                    >
+                      <span role="img" aria-label="Settings" className="text-lg">⚙️</span>
+                    </button>
+                  <button 
+                      onClick={() => setShowInfo(true)}
+                    className="btn btn-secondary p-2"
+                      type="button"
+                      aria-label="Info"
+                  >
+                      <span role="img" aria-label="Info" className="text-lg">ℹ️</span>
+                  </button>
+                  </div>
                 </div>
-              </div>
-              <div className="flex-1 flex flex-col gap-1">
-                <span className="text-xs font-medium text-gray-400 mb-1 ml-1">Ratio</span>
-                <div className="grid grid-cols-2 gap-2">
-                  {ratioOptions.map(ratio => (
-                    <button
-                      key={ratio}
-                      className={`w-full px-0 py-2 rounded-[4px] text-sm font-semibold transition-colors bg-gray-800 ${coffeeSettings.ratio === ratio ? 'text-white border-2 border-green-400' : 'text-gray-300 border border-transparent'}`}
-                      onClick={() => handleRatioChange(ratio)}
-                    >
-                      1:{ratio}
-                    </button>
-                  ))}
+                {/* Coffee and Ratio Selectors */}
+                <div className="flex gap-2 mb-3">
+                  <div className="flex-1 flex flex-col gap-1">
+                    <span className="text-xs font-medium text-gray-400 mb-1 ml-1">Coffee</span>
+                    <div className="grid grid-cols-2 gap-2">
+                      {coffeeOptions.map(amount => (
+                        <button
+                          key={amount}
+                          className={`w-full px-0 py-2 rounded-[4px] text-sm font-semibold transition-colors bg-gray-800 ${coffeeSettings.amount === amount ? 'text-white border-2 border-green-400' : 'text-gray-300 border border-transparent'}`}
+                          onClick={() => handleCoffeeAmountChange(amount)}
+                        >
+                          {amount}g
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex-1 flex flex-col gap-1">
+                    <span className="text-xs font-medium text-gray-400 mb-1 ml-1">Ratio</span>
+                    <div className="grid grid-cols-2 gap-2">
+                      {ratioOptions.map(ratio => (
+                        <button
+                          key={ratio}
+                          className={`w-full px-0 py-2 rounded-[4px] text-sm font-semibold transition-colors bg-gray-800 ${coffeeSettings.ratio === ratio ? 'text-white border-2 border-green-400' : 'text-gray-300 border border-transparent'}`}
+                          onClick={() => handleRatioChange(ratio)}
+                        >
+                          1:{ratio}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            {/* Grind Selector */}
-            <div className="mb-3">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm font-medium text-gray-300">Grind</span>
-              </div>
-              <div className="flex gap-2">
-                {['Fine', 'Medium', 'Medium-coarse', 'Coarse'].map((label, idx) => {
-                  const grindMap = [3, 6, 7, 9];
-                  return (
-                    <button
-                      key={label}
-                      className={`flex-1 px-0 py-2 rounded-[4px] text-sm font-semibold transition-colors bg-gray-800 ${grindSize === grindMap[idx] ? 'text-white border-2 border-green-400' : 'text-gray-300 border border-transparent'}`}
-                      onClick={() => setGrindSize(grindMap[idx])}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-              </div>
-            {/* Brew Time and Total Water - compact row */}
-            <div className="flex gap-2 mb-3">
-              <div className="flex-1 flex flex-col items-center">
-                <span className="text-xs font-medium text-gray-400 mb-1">Brew Time</span>
-                <div className="w-full bg-gray-800 rounded-[4px] px-0 py-2 text-base font-bold text-center text-white">{formatTime(brewingTimings.totalTime)}</div>
-              </div>
-              <div className="flex-1 flex flex-col items-center">
-                <span className="text-xs font-medium text-gray-400 mb-1">Total Water</span>
-                <div className="w-full bg-gray-800 rounded-[4px] px-0 py-2 text-base font-bold text-center text-white">{brewingTimings.thirdPourTarget}ml</div>
-              </div>
-            </div>
-            {/* Timer and instruction in a rectangle, instruction left, timer right */}
-            <div className="flex items-center justify-between mb-3 bg-green-900 rounded-[4px] px-4 py-2" style={{ minHeight: 48 }}>
-              <span className="text-sm text-green-100 font-semibold min-w-0 truncate">{getStepInstruction()}</span>
-              <span className="text-2xl font-mono font-bold text-green-200 ml-4">{formatTime(Math.floor(elapsed))}</span>
-            </div>
-            {!showBrewTimer && (
-              <button className="btn btn-primary w-full mt-4" onClick={handleStart}>
-                Start
-              </button>
+                {/* Grind Selector */}
+                <div className="mb-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm font-medium text-gray-300">Grind</span>
+                  </div>
+                  <div className="flex gap-2">
+                    {['Fine', 'Medium', 'Medium-coarse', 'Coarse'].map((label, idx) => {
+                      const grindMap = [3, 6, 7, 9];
+                      return (
+                        <button
+                          key={label}
+                          className={`flex-1 px-0 py-2 rounded-[4px] text-sm font-semibold transition-colors bg-gray-800 ${grindSize === grindMap[idx] ? 'text-white border-2 border-green-400' : 'text-gray-300 border border-transparent'}`}
+                          onClick={() => setGrindSize(grindMap[idx])}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  </div>
+                {/* Brew Time and Total Water - compact row */}
+                <div className="flex gap-2 mb-3">
+                  <div className="flex-1 flex flex-col items-center">
+                    <span className="text-xs font-medium text-gray-400 mb-1">Brew Time</span>
+                    <div className="w-full bg-gray-800 rounded-[4px] px-0 py-2 text-base font-bold text-center text-white">{formatTime(brewingTimings.totalTime)}</div>
+                  </div>
+                  <div className="flex-1 flex flex-col items-center">
+                    <span className="text-xs font-medium text-gray-400 mb-1">Total Water</span>
+                    <div className="w-full bg-gray-800 rounded-[4px] px-0 py-2 text-base font-bold text-center text-white">{brewingTimings.thirdPourTarget}ml</div>
+                  </div>
+                </div>
+                {/* Timer and instruction in a rectangle, instruction left, timer right */}
+                <div className="flex items-center justify-between mb-3 bg-green-900 rounded-[4px] px-4 py-2" style={{ minHeight: 48 }}>
+                  <span className="text-sm text-green-100 font-semibold min-w-0 truncate">{getStepInstruction()}</span>
+                  <span className="text-2xl font-mono font-bold text-green-200 ml-4">{formatTime(Math.floor(elapsed))}</span>
+                </div>
+                {!showBrewTimer && (
+                  <button className="btn btn-primary w-full mt-4" onClick={handleStart}>
+                    Start
+                  </button>
+                )}
+              </>
+            ) : (
+              <BrewingTimer 
+                brewingTimings={brewingTimings}
+                currentPhase={currentPhase}
+                onPhaseChange={handlePhaseChange}
+                onStop={stopBrewing}
+                coffeeSettings={coffeeSettings}
+              />
             )}
-          </>
-        ) : (
-          <BrewingTimer 
-            brewingTimings={brewingTimings}
-            currentPhase={currentPhase}
-            onPhaseChange={handlePhaseChange}
-            onStop={stopBrewing}
-            coffeeSettings={coffeeSettings}
-          />
-        )}
+          </div>
+          {/* Add fade-in-scale animation */}
+          <style>{`
+            .animate-fade-in-scale {
+              animation: fadeInScale 0.5s cubic-bezier(0.4,0,0.2,1);
+            }
+            @keyframes fadeInScale {
+              0% { opacity: 0; transform: scale(0.95); }
+              100% { opacity: 1; transform: scale(1); }
+            }
+          `}</style>
+        </div>
       </div>
-      {/* Add fade-in-scale animation */}
-      <style>{`
-        .animate-fade-in-scale {
-          animation: fadeInScale 0.5s cubic-bezier(0.4,0,0.2,1);
-        }
-        @keyframes fadeInScale {
-          0% { opacity: 0; transform: scale(0.95); }
-          100% { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
     </div>
   );
 };
