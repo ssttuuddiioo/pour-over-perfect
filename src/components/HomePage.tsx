@@ -54,9 +54,9 @@ const HomePage: React.FC = () => {
     // Detect mobile device
     const isMobile = window.innerWidth <= 768;
     
-    // Simplified mobile experience - reduce complex animations
+    // Smooth mobile experience with 60fps circle animation
     if (isMobile) {
-      // Set up basic section detection for navigation
+      // Set up section detection for navigation
       sectionConfigs.forEach((config) => {
         const element = document.getElementById(config.id);
         if (!element) return;
@@ -71,46 +71,56 @@ const HomePage: React.FC = () => {
         });
       });
 
-      // Simplified circle animation for mobile
-      const handleMobileScroll = () => {
-        const scrollPercent = window.pageYOffset / (document.body.scrollHeight - window.innerHeight);
-        const sectionIndex = Math.floor(scrollPercent * (sectionConfigs.length - 1));
-        const config = sectionConfigs[sectionIndex] || sectionConfigs[0];
+      // Smooth circle animation with interpolation for mobile
+      const createSmoothCircleAnimation = () => {
+        const totalSections = sectionConfigs.length;
         
-        gsap.set(circleRef.current, {
-          width: config.size,
-          height: config.size,
-          scale: config.scale,
-          force3D: true,
-          transformOrigin: "center center"
+        ScrollTrigger.create({
+          trigger: document.body,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 0.1, // Very smooth scrub for mobile
+          refreshPriority: -1,
+          onUpdate: self => {
+            const progress = self.progress;
+            const sectionIndex = Math.floor(progress * (totalSections - 1));
+            const sectionProgress = (progress * (totalSections - 1)) - sectionIndex;
+            
+            // Get current and next section configs
+            const currentConfig = sectionConfigs[sectionIndex];
+            const nextConfig = sectionConfigs[Math.min(sectionIndex + 1, totalSections - 1)];
+            
+            // Smooth interpolation between sections
+            const size = gsap.utils.interpolate(currentConfig.size, nextConfig.size, sectionProgress);
+            const scale = gsap.utils.interpolate(currentConfig.scale, nextConfig.scale, sectionProgress);
+            
+            // Use gsap.set for immediate updates with hardware acceleration
+            gsap.set(circleRef.current, {
+              width: size,
+              height: size,
+              scale: scale,
+              force3D: true,
+              transformOrigin: "center center",
+              willChange: "transform, width, height" // Optimize for animations
+            });
+          }
         });
       };
 
-      // Throttled scroll handler for mobile
-      let ticking = false;
-      const throttledScroll = () => {
-        if (!ticking) {
-          requestAnimationFrame(() => {
-            handleMobileScroll();
-            ticking = false;
-          });
-          ticking = true;
-        }
-      };
-
-      window.addEventListener('scroll', throttledScroll, { passive: true });
+      // Initialize smooth animation
+      createSmoothCircleAnimation();
       
-      // Initialize circle for mobile
+      // Initialize circle for mobile with hardware acceleration
       gsap.set(circleRef.current, {
         width: sectionConfigs[0].size,
         height: sectionConfigs[0].size,
         scale: sectionConfigs[0].scale,
         force3D: true,
-        transformOrigin: "center center"
+        transformOrigin: "center center",
+        willChange: "transform, width, height"
       });
 
       return () => {
-        window.removeEventListener('scroll', throttledScroll);
         ScrollTrigger.getAll().forEach(trigger => trigger.kill());
       };
     }

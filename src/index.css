@@ -597,3 +597,26 @@ nav {
     box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
   }
 }
+
+/* Smooth circle animation optimizations */
+.fixed.bg-\[#FF6700\].rounded-full {
+  /* Hardware acceleration for smooth 60fps animation */
+  transform: translateZ(0);
+  will-change: transform, width, height;
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Additional performance optimizations for mobile animations */
+@media (max-width: 768px) {
+  /* Optimize rendering for mobile animations */
+  body {
+    -webkit-overflow-scrolling: touch;
+    transform: translateZ(0);
+  }
+  
+  /* Smooth scrolling performance */
+  html {
+    scroll-behavior: smooth;
+  }
+}
