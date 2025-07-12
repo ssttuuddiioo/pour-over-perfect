@@ -4,7 +4,7 @@ import { gsap } from 'gsap';
 import DebugOverlay, { AnimationConfig } from '../components/DebugOverlay'; // Corrected import path
 
 // Circle animation states for different pages
-export type CircleMode = 'front' | 'timer' | 'coffee' | 'about' | 'contact' | 'calm' | 'origen';
+export type CircleMode = 'front' | 'timer' | 'coffee' | 'contact' | 'calm' | 'origen';
 
 interface CircleState {
   mode: CircleMode;
@@ -57,7 +57,6 @@ export const CircleTransitionProvider: React.FC<{ children: React.ReactNode }> =
       case '/': return 'front';
       case '/timer': return 'timer';
       case '/coffee': return 'coffee';
-      case '/about': return 'about';
       case '/contact': return 'contact';
       case '/calm': return 'calm';
       case '/origen': return 'origen';
@@ -91,17 +90,11 @@ export const CircleTransitionProvider: React.FC<{ children: React.ReactNode }> =
         "height": 384,
         "scale": 0.8
       },
-      "about": {
+      "coffee": {
         ...baseConfig,
         "width": 576,
         "height": 576,
         "scale": 1.2
-      },
-      "coffee": {
-        ...baseConfig,
-        "width": 720,
-        "height": 720,
-        "scale": 1.5
       },
       "contact": {
         ...baseConfig,

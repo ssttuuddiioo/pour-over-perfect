@@ -29,7 +29,7 @@ const HomePage: React.FC = () => {
   const sectionConfigs = [
     { id: 'home', size: window.innerWidth <= 768 ? 200 : 360, scale: window.innerWidth <= 768 ? 0.5 : 0.8 },
     { id: 'origen', size: window.innerWidth <= 768 ? 300 : 560, scale: window.innerWidth <= 768 ? 0.7 : 1.2 },
-    { id: 'about', size: window.innerWidth <= 768 ? 400 : 650, scale: window.innerWidth <= 768 ? 0.9 : 1.3 },
+    { id: 'coffee', size: window.innerWidth <= 768 ? 400 : 650, scale: window.innerWidth <= 768 ? 0.9 : 1.3 },
     { id: 'buy', size: window.innerWidth <= 768 ? 480 : 750, scale: window.innerWidth <= 768 ? 1.0 : 1.5 }
   ];
 
@@ -198,14 +198,14 @@ const HomePage: React.FC = () => {
             origen
           </button>
           <button
-            onClick={() => scrollToSection('about')}
+            onClick={() => scrollToSection('coffee')}
             className={`text-base sm:text-lg md:text-xl lg:text-2xl font-medium transition-opacity pointer-events-auto text-left ${
-              activeSection === 'about' 
+              activeSection === 'coffee' 
                 ? 'text-black underline' 
                 : 'text-black hover:opacity-70 hover:underline'
             }`}
           >
-            about
+            coffee
           </button>
           <button
             onClick={() => scrollToSection('buy')}
@@ -250,14 +250,14 @@ const HomePage: React.FC = () => {
             origen
           </button>
           <button
-            onClick={() => scrollToSection('about')}
+            onClick={() => scrollToSection('coffee')}
             className={`text-sm font-medium transition-opacity touch-manipulation ${
-              activeSection === 'about' 
+              activeSection === 'coffee' 
                 ? 'text-black underline' 
                 : 'text-black hover:opacity-70 hover:underline'
             }`}
           >
-            about
+            coffee
           </button>
           <button
             onClick={() => scrollToSection('buy')}
@@ -292,29 +292,23 @@ const HomePage: React.FC = () => {
           <div className="max-w-2xl w-full flex items-center justify-end px-4 sm:px-6 md:px-16 lg:px-20 xl:px-24 py-6 sm:py-8 pb-32 md:pb-8 relative z-40">
             <div className="max-w-2xl text-sm sm:text-base md:text-lg text-black leading-relaxed space-y-3 sm:space-y-4 md:space-y-6">
               <p className="section-content">
-                Charalá, Santander is known for its stunning mountains, adventure activities, traditional cuisine, and a quiet rhythm that invites you to stay awhile.
+                Charalá, Santander is a quiet town nestled in Colombia's eastern Andes, known for its rugged mountains, local markets, and a pace that invites you to slow down. I ended up there by chance, exhausted, sunburnt, and one-third of the way through Transcordilleras, a 1,000-kilometer bikepacking race with over 20,000 meters of climbing. I wasn't ready. Not mentally, not physically. By day three, I handed in my tracker and decided to ride back to Bogota on my own terms.
               </p>
               <p className="section-content">
-                I found myself in Charalá after a grueling bikepacking race across the Andes. The race, Transcordilleras, spans about 1,000 kilometers with over 20,000 meters of climbing. It was insane. I only made it through a third of it. I wasn't ready mentally or physically, I was too used to the flatness of New York and wanting to stop at every mountain bend to take in the vista. On the third day of the race I turned in my tracker and decided to take my time, a theme that has carried us to the words on this page. I continued my bike ride moving with intention, noticing where I am, and letting the road unfold on its own terms.
+                I stayed behind as the other riders left. Over lunch, I asked the hostel manager if he knew any coffee producers. He made a call. A few hours later, Oscar Castro pulled up in his pickup and invited me to visit his farm.
               </p>
               <p className="section-content">
-                After the other riders moved on in the morning, I stayed. I went to the local market and saw a bit of coffee commerce, and over lunch I casually asked the hostel manager if he knew any coffee producers. Miguel called a friend, and soon enough Oscar Castro rolled down from his farm in his pickup and we drove right back up together.
+                Oscar's farm, Bellavista, sits at 1,900 MASL above Charalá. He works a few hectares of land alongside his family and neighbors, also family, pooling their harvests to sell in town. The variety is Castillo, a hardy hybrid that thrives at altitude. It's delicate, floral, sweet, with notes of soft orchard fruit and a structured, clean finish.
               </p>
               <p className="section-content">
-                Oscar's farm, Bellavista, sits above Charalá at 1900 MASL. He's got about xxhectares that he works with his family and neighbors, also family, pooling their harvests to sell collectively in town.
-              </p>
-              <p className="section-content">
-                The coffee is Castillo, a hybrid variety known for its resilience at high altitudes. In this lot, it's floral and sweet, with soft orchard fruit character, bright but not citric, and a clean, structured finish. Drying took place under 'poco sol' soft, and indirect sun, allowing for a gradual finish that preserves nuance and clarity in the cup.
-              </p>
-              <p className="section-content">
-                This coffee was grown, sourced, exported, roasted, and packed through a small independent processes. But it hasn't been a solo effort. I've leaned on family for shipping support, and in New York I've found a generous coffee community and a shared roasting space where I've been learning every step of the way. Shout out to MultiModal.
+                This coffee was grown, harvested, sourced, exported, roasted, and packed through small, independent efforts. I'm still learning as I go leaning on a generous coffee community in New York with shared tools like the roasting at MultiModal.
               </p>
             </div>
           </div>
         </section>
 
-        {/* About Section */}
-        <section id="about" className="min-h-screen text-black flex flex-col items-start justify-center px-4 sm:px-6 md:pl-40 lg:pl-26 xl:pl-100 pr-4 sm:pr-6 md:pr-16 lg:pr-24 xl:pr-32 py-6 sm:py-8 pb-32 md:pb-8 relative">
+        {/* Coffee Section */}
+        <section id="coffee" className="min-h-screen text-black flex flex-col items-start justify-center px-4 sm:px-6 md:pl-40 lg:pl-26 xl:pl-100 pr-4 sm:pr-6 md:pr-16 lg:pr-24 xl:pr-32 py-6 sm:py-8 pb-32 md:pb-8 relative">
                       <div className="max-w-2xl w-full relative z-40 text-left">
             <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
                               <p className="section-content text-sm sm:text-base leading-relaxed">
