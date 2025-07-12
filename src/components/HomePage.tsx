@@ -27,10 +27,10 @@ const HomePage: React.FC = () => {
 
   // Section configurations for circle animation
   const sectionConfigs = [
-    { id: 'home', size: 180, scale: 0.4 },
-    { id: 'origen', size: 280, scale: 0.6 },
-    { id: 'about', size: 380, scale: 0.8 },
-    { id: 'buy', size: 460, scale: 1.0 }
+    { id: 'home', size: 360, scale: 0.8 },
+    { id: 'origen', size: 560, scale: 1.2 },
+    { id: 'about', size: 650, scale: 1.3 },
+    { id: 'buy', size: 750, scale: 1.5 }
   ];
 
   useEffect(() => {
@@ -123,8 +123,9 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Fixed Navigation - Always visible and stable */}
-      <nav className="fixed left-0 top-0 h-full z-50 pointer-events-none">
+      {/* Fixed Navigation - Left side on desktop, bottom on mobile */}
+      {/* Desktop Navigation - Left side */}
+      <nav className="hidden md:block fixed left-0 top-0 h-full z-50 pointer-events-none">
         <div className="h-full flex flex-col justify-center px-2 sm:px-4 md:px-6 lg:px-8 space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-8" style={{ marginLeft: 'env(safe-area-inset-left, 0)' }}>
           <button
             onClick={() => scrollToSection('home')}
@@ -175,6 +176,58 @@ const HomePage: React.FC = () => {
         </div>
       </nav>
 
+      {/* Mobile Navigation - Bottom with white background */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200">
+        <div className="flex justify-around items-center py-3 px-4" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+          <button
+            onClick={() => scrollToSection('home')}
+            className={`text-sm font-medium transition-opacity ${
+              activeSection === 'home' 
+                ? 'text-black underline' 
+                : 'text-black hover:opacity-70 hover:underline'
+            }`}
+          >
+            home
+          </button>
+          <button
+            onClick={() => scrollToSection('origen')}
+            className={`text-sm font-medium transition-opacity ${
+              activeSection === 'origen' 
+                ? 'text-black underline' 
+                : 'text-black hover:opacity-70 hover:underline'
+            }`}
+          >
+            origen
+          </button>
+          <button
+            onClick={() => scrollToSection('about')}
+            className={`text-sm font-medium transition-opacity ${
+              activeSection === 'about' 
+                ? 'text-black underline' 
+                : 'text-black hover:opacity-70 hover:underline'
+            }`}
+          >
+            about
+          </button>
+          <button
+            onClick={() => scrollToSection('buy')}
+            className={`text-sm font-medium transition-opacity ${
+              activeSection === 'buy' 
+                ? 'text-black underline' 
+                : 'text-black hover:opacity-70 hover:underline'
+            }`}
+          >
+            buy
+          </button>
+          <button
+            onClick={() => navigate('/timer')}
+            className="text-sm font-medium text-black hover:opacity-70 hover:underline transition-opacity"
+          >
+            timer
+          </button>
+        </div>
+      </nav>
+
       {/* Sections */}
       <div className="scroll-smooth">
         {/* Home Section */}
@@ -185,8 +238,8 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Origen Section */}
-        <section id="origen" className="min-h-screen text-black flex items-center justify-center relative">
-          <div className="max-w-4xl w-full flex items-center justify-center pl-16 sm:pl-20 md:pl-24 lg:pl-20 xl:pl-16 pr-4 sm:pr-6 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 relative z-40">
+        <section id="origen" className="min-h-screen text-black flex items-center justify-end relative">
+          <div className="max-w-2xl w-full flex items-center justify-end px-4 sm:px-6 md:px-16 lg:px-20 xl:px-24 py-6 sm:py-8 pb-20 md:pb-8 relative z-40">
             <div className="max-w-2xl text-sm sm:text-base md:text-lg text-black leading-relaxed space-y-3 sm:space-y-4 md:space-y-6">
               <p className="section-content">
                 Charalá, Santander is known for its stunning mountains, adventure activities, traditional cuisine, and a quiet rhythm that invites you to stay awhile.
@@ -211,10 +264,10 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* About Section */}
-        <section id="about" className="min-h-screen text-black flex flex-col items-center justify-center pl-16 sm:pl-20 md:pl-24 lg:pl-20 xl:pl-16 pr-4 sm:pr-6 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 relative">
-          <div className="max-w-5xl w-full relative z-40 text-left">
+        <section id="about" className="min-h-screen text-black flex flex-col items-start justify-center px-4 sm:px-6 md:pl-40 lg:pl-26 xl:pl-100 pr-4 sm:pr-6 md:pr-16 lg:pr-24 xl:pr-32 py-6 sm:py-8 pb-20 md:pb-8 relative">
+                      <div className="max-w-2xl w-full relative z-40 text-left">
             <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
-              <p className="section-content max-w-4xl text-sm sm:text-base leading-relaxed">
+                              <p className="section-content text-sm sm:text-base leading-relaxed">
                 This lot was grown and milled on-site by Oscar Castro in Charalá, Colombia. Unlike most coffees, which pass through several stages before roasting, this one stayed close to the ground. Oscar handled both production and milling; we purchased directly, managed export and import independently, and roasted in New York. It's a vertically streamlined process built on trust, transparency, and shared effort.
               </p>
               
@@ -303,7 +356,7 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Buy Section */}
-        <section id="buy" className="min-h-screen text-black flex flex-col items-center justify-center pl-16 sm:pl-20 md:pl-24 lg:pl-20 xl:pl-16 pr-4 sm:pr-6 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 relative">
+        <section id="buy" className="min-h-screen text-black flex flex-col items-center justify-center px-4 sm:px-6 md:pl-32 lg:pl-28 xl:pl-24 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 pb-20 md:pb-8 relative">
           <div className="max-w-sm w-full text-left relative z-40">
             <div className="section-content mb-6 sm:mb-8">
               <p className="text-sm sm:text-base lg:text-lg text-black mb-4 sm:mb-6 leading-relaxed">
@@ -313,19 +366,19 @@ const HomePage: React.FC = () => {
               {/* Simple email form */}
               <div className="section-content">
                 {!submitted ? (
-                  <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                  <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                     <input
                       type="email"
                       id="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="flex-1 bg-transparent border-0 border-b border-black px-0 py-2 text-sm sm:text-base focus:outline-none focus:border-b-2 placeholder-gray-500"
+                      className="w-full bg-transparent border-0 border-b border-black px-0 py-2 text-sm sm:text-base focus:outline-none focus:border-b-2 placeholder-gray-500"
                       placeholder="your@email.com"
                     />
                     <button
                       type="submit"
-                      className="text-left sm:text-center text-sm sm:text-base font-medium text-black hover:opacity-70 transition-opacity underline"
+                      className="text-left text-sm sm:text-base font-medium text-black hover:opacity-70 transition-opacity underline self-start"
                     >
                       Sign Up
                     </button>
