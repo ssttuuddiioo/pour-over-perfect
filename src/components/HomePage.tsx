@@ -313,19 +313,19 @@ const HomePage: React.FC = () => {
               {/* Simple email form */}
               <div className="section-content">
                 {!submitted ? (
-                  <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
+                  <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                     <input
                       type="email"
                       id="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="flex-1 px-3 py-3 text-sm sm:text-base border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                      className="flex-1 bg-transparent border-0 border-b border-black px-0 py-2 text-sm sm:text-base focus:outline-none focus:border-b-2 placeholder-gray-500"
                       placeholder="your@email.com"
                     />
                     <button
                       type="submit"
-                      className="w-full sm:w-1/3 bg-white text-black border border-black py-3 px-4 rounded text-sm sm:text-base font-medium hover:bg-gray-50 transition-colors whitespace-nowrap"
+                      className="text-left sm:text-center text-sm sm:text-base font-medium text-black hover:opacity-70 transition-opacity underline"
                     >
                       Sign Up
                     </button>
