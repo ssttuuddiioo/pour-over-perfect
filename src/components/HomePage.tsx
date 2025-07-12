@@ -45,7 +45,7 @@ const HomePage: React.FC = () => {
     { id: 'home', size: window.innerWidth <= 768 ? 200 : 360, scale: window.innerWidth <= 768 ? 0.5 : 0.8 },
     { id: 'origen', size: window.innerWidth <= 768 ? 300 : 560, scale: window.innerWidth <= 768 ? 0.7 : 1.2 },
     { id: 'coffee', size: window.innerWidth <= 768 ? 400 : 650, scale: window.innerWidth <= 768 ? 0.9 : 1.3 },
-    { id: 'buy', size: window.innerWidth <= 768 ? 480 : 750, scale: window.innerWidth <= 768 ? 1.0 : 1.5 }
+    { id: 'buy', size: window.innerWidth <= 768 ? 720 : 750, scale: window.innerWidth <= 768 ? 1.5 : 1.5 }
   ];
 
   useEffect(() => {
