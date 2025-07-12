@@ -18,41 +18,24 @@ const HomePage: React.FC = () => {
     setSubmitted(true);
   };
 
-  // Improved scroll function that accounts for mobile navigation
+  // Smooth scroll function
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      const isMobile = window.innerWidth <= 768;
-      
-      if (isMobile) {
-        // Account for mobile navigation height (approximately 80px)
-        const navHeight = 80;
-        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
-        const offsetPosition = elementPosition - navHeight;
-        
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: 'smooth'
-        });
-      } else {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
+      element.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
-  // Section configurations for circle animation
+  // Section configurations for circle animation - responsive values
   const sectionConfigs = [
-    { id: 'home', size: window.innerWidth <= 768 ? 200 : 360, scale: window.innerWidth <= 768 ? 0.5 : 0.8 },
-    { id: 'origen', size: window.innerWidth <= 768 ? 300 : 560, scale: window.innerWidth <= 768 ? 0.7 : 1.2 },
-    { id: 'coffee', size: window.innerWidth <= 768 ? 400 : 650, scale: window.innerWidth <= 768 ? 0.9 : 1.3 },
-    { id: 'buy', size: window.innerWidth <= 768 ? 720 : 750, scale: window.innerWidth <= 768 ? 1.5 : 1.5 }
+    { id: 'home', size: 360, scale: 0.8 },
+    { id: 'origen', size: 560, scale: 1.2 },
+    { id: 'coffee', size: 650, scale: 1.3 },
+    { id: 'buy', size: 750, scale: 1.5 }
   ];
 
   useEffect(() => {
     if (!circleRef.current) return;
-
-    // Detect mobile device
-    const isMobile = window.innerWidth <= 768;
     
     // Common initialization function - always center and make immediately visible
     const initializeCircle = () => {
@@ -71,7 +54,7 @@ const HomePage: React.FC = () => {
         transform: "translate(-50%, -50%)",
         transformOrigin: "center center",
         // Layer positioning
-        zIndex: isMobile ? -1 : 0, // Pin to back on mobile
+        zIndex: 0,
         // Performance optimizations
         force3D: true,
         willChange: "transform, width, height",
@@ -87,121 +70,6 @@ const HomePage: React.FC = () => {
     // Initialize circle immediately to prevent white screen
     initializeCircle();
     
-    // Smooth mobile experience with 60fps circle animation
-    if (isMobile) {
-      // Set up section detection for navigation
-      sectionConfigs.forEach((config) => {
-        const element = document.getElementById(config.id);
-        if (!element) return;
-
-        ScrollTrigger.create({
-          trigger: element,
-          start: "top center",
-          end: "bottom center",
-          refreshPriority: -1,
-          onEnter: () => setActiveSection(config.id),
-          onEnterBack: () => setActiveSection(config.id),
-        });
-      });
-
-             // Extremely smooth circle animation for mobile with background pinning
-       const createSmoothCircleAnimation = () => {
-         const totalSections = sectionConfigs.length;
-         
-         // Ensure circle stays pinned to background and perfectly centered
-         gsap.set(circleRef.current, {
-           zIndex: -1, // Pin to back layer
-           position: "fixed",
-           left: "50%",
-           top: "50%",
-           xPercent: -50,
-           yPercent: -50,
-           transformOrigin: "center center",
-           // Force center positioning and make immediately visible
-           transform: "translate(-50%, -50%)",
-           opacity: 1,
-           visibility: "visible"
-         });
-         
-         const scrollTrigger = ScrollTrigger.create({
-           trigger: document.body,
-           start: "top top",
-           end: "bottom bottom",
-           scrub: 0.05, // Ultra smooth scrub for mobile (reduced from 0.1)
-           refreshPriority: -1,
-           invalidateOnRefresh: true,
-           onUpdate: self => {
-             const progress = self.progress;
-             const sectionIndex = Math.floor(progress * (totalSections - 1));
-             const sectionProgress = (progress * (totalSections - 1)) - sectionIndex;
-             
-             // Get current and next section configs
-             const currentConfig = sectionConfigs[sectionIndex];
-             const nextConfig = sectionConfigs[Math.min(sectionIndex + 1, totalSections - 1)];
-             
-             // Smooth interpolation between sections
-             const size = gsap.utils.interpolate(currentConfig.size, nextConfig.size, sectionProgress);
-             const scale = gsap.utils.interpolate(currentConfig.scale, nextConfig.scale, sectionProgress);
-             
-             // Ultra smooth scaling with hardware acceleration - ONLY scale, never move
-             gsap.set(circleRef.current, {
-               width: size,
-               height: size,
-               scale: scale,
-               force3D: true,
-               transformOrigin: "center center",
-               willChange: "transform, width, height",
-               backfaceVisibility: "hidden", // Prevent flickering
-               perspective: 1000 // Enhance 3D rendering
-               // DO NOT set position properties here - circle must stay fixed in center
-             });
-           },
-           onRefresh: self => {
-             // Ensure initial state is correct on refresh
-             const progress = self.progress;
-             const sectionIndex = Math.floor(progress * (totalSections - 1));
-             const sectionProgress = (progress * (totalSections - 1)) - sectionIndex;
-             
-             const currentConfig = sectionConfigs[sectionIndex];
-             const nextConfig = sectionConfigs[Math.min(sectionIndex + 1, totalSections - 1)];
-             
-             const size = gsap.utils.interpolate(currentConfig.size, nextConfig.size, sectionProgress);
-             const scale = gsap.utils.interpolate(currentConfig.scale, nextConfig.scale, sectionProgress);
-             
-             gsap.set(circleRef.current, {
-               width: size,
-               height: size,
-               scale: scale,
-               force3D: true,
-               transformOrigin: "center center",
-               willChange: "transform, width, height",
-               backfaceVisibility: "hidden",
-               perspective: 1000
-               // DO NOT set position properties during refresh - circle must stay fixed in center
-             });
-           }
-         });
-         
-         // Immediately set the correct initial size based on current scroll position
-         ScrollTrigger.refresh();
-         
-         return scrollTrigger;
-       };
-
-       // Initialize smooth animation
-       const scrollTrigger = createSmoothCircleAnimation();
-       
-       // Ensure ScrollTrigger corrects the initial size immediately
-       gsap.delayedCall(0.01, () => {
-         scrollTrigger.refresh();
-       });
-
-      return () => {
-        ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-      };
-    }
-
-    // Desktop experience with full animations
     // Set up progressive circle resizing based on scroll position
     const totalSections = sectionConfigs.length;
     
@@ -309,122 +177,71 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Fixed Navigation - Left side on desktop, bottom on mobile */}
-      {/* Desktop Navigation - Left side */}
-      <nav className="hidden md:block fixed left-0 top-0 h-full z-50 pointer-events-none">
-        <div className="h-full flex flex-col justify-center px-2 sm:px-4 md:px-6 lg:px-8 space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-8" style={{ marginLeft: 'env(safe-area-inset-left, 0)' }}>
-          <button
-            onClick={() => scrollToSection('home')}
-            className={`text-base sm:text-lg md:text-xl lg:text-2xl font-medium transition-opacity pointer-events-auto text-left ${
-              activeSection === 'home' 
-                ? 'text-black underline' 
-                : 'text-black hover:opacity-70 hover:underline'
-            }`}
-          >
-            home
-          </button>
-          <button
-            onClick={() => scrollToSection('origen')}
-            className={`text-base sm:text-lg md:text-xl lg:text-2xl font-medium transition-opacity pointer-events-auto text-left ${
-              activeSection === 'origen' 
-                ? 'text-black underline' 
-                : 'text-black hover:opacity-70 hover:underline'
-            }`}
-          >
-            origen
-          </button>
-          <button
-            onClick={() => scrollToSection('coffee')}
-            className={`text-base sm:text-lg md:text-xl lg:text-2xl font-medium transition-opacity pointer-events-auto text-left ${
-              activeSection === 'coffee' 
-                ? 'text-black underline' 
-                : 'text-black hover:opacity-70 hover:underline'
-            }`}
-          >
-            coffee
-          </button>
-          <button
-            onClick={() => scrollToSection('buy')}
-            className={`text-base sm:text-lg md:text-xl lg:text-2xl font-medium transition-opacity pointer-events-auto text-left ${
-              activeSection === 'buy' 
-                ? 'text-black underline' 
-                : 'text-black hover:opacity-70 hover:underline'
-            }`}
-          >
-            buy
-          </button>
-          <button
-            onClick={() => navigate('/timer')}
-            className="text-base sm:text-lg md:text-xl lg:text-2xl font-medium text-black hover:opacity-70 hover:underline transition-opacity pointer-events-auto text-left"
-          >
-            timer
-          </button>
-        </div>
-      </nav>
-
-      {/* Mobile Navigation - Bottom with improved styling */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg">
-        <div className="flex justify-around items-center py-3 px-4 safe-area-bottom">
-          <button
-            onClick={() => scrollToSection('home')}
-            className={`text-sm font-medium transition-all duration-200 py-2 px-1 rounded ${
-              activeSection === 'home' 
-                ? 'text-black underline' 
-                : 'text-gray-600 hover:text-black active:scale-95'
-            }`}
-          >
-            home
-          </button>
-          <button
-            onClick={() => scrollToSection('origen')}
-            className={`text-sm font-medium transition-all duration-200 py-2 px-1 rounded ${
-              activeSection === 'origen' 
-                ? 'text-black underline' 
-                : 'text-gray-600 hover:text-black active:scale-95'
-            }`}
-          >
-            origen
-          </button>
-          <button
-            onClick={() => scrollToSection('coffee')}
-            className={`text-sm font-medium transition-all duration-200 py-2 px-1 rounded ${
-              activeSection === 'coffee' 
-                ? 'text-black underline' 
-                : 'text-gray-600 hover:text-black active:scale-95'
-            }`}
-          >
-            coffee
-          </button>
-          <button
-            onClick={() => scrollToSection('buy')}
-            className={`text-sm font-medium transition-all duration-200 py-2 px-1 rounded ${
-              activeSection === 'buy' 
-                ? 'text-black underline' 
-                : 'text-gray-600 hover:text-black active:scale-95'
-            }`}
-          >
-            buy
-          </button>
-          <button
-            onClick={() => navigate('/timer')}
-            className="text-sm font-medium text-gray-600 hover:text-black transition-all duration-200 py-2 px-1 rounded active:scale-95"
-          >
-            timer
-          </button>
+      {/* Top Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur-sm border-b border-gray-200">
+        <div className="flex justify-center items-center py-4 px-4 sm:px-6">
+          <div className="flex space-x-4 sm:space-x-6 md:space-x-8 lg:space-x-10">
+            <button
+              onClick={() => scrollToSection('home')}
+              className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
+                activeSection === 'home' 
+                  ? 'text-black underline' 
+                  : 'text-black hover:opacity-70 hover:underline'
+              }`}
+            >
+              home
+            </button>
+            <button
+              onClick={() => scrollToSection('origen')}
+              className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
+                activeSection === 'origen' 
+                  ? 'text-black underline' 
+                  : 'text-black hover:opacity-70 hover:underline'
+              }`}
+            >
+              origen
+            </button>
+            <button
+              onClick={() => scrollToSection('coffee')}
+              className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
+                activeSection === 'coffee' 
+                  ? 'text-black underline' 
+                  : 'text-black hover:opacity-70 hover:underline'
+              }`}
+            >
+              coffee
+            </button>
+            <button
+              onClick={() => scrollToSection('buy')}
+              className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
+                activeSection === 'buy' 
+                  ? 'text-black underline' 
+                  : 'text-black hover:opacity-70 hover:underline'
+              }`}
+            >
+              buy
+            </button>
+            <button
+              onClick={() => navigate('/timer')}
+              className="text-sm sm:text-base md:text-lg font-medium text-black hover:opacity-70 hover:underline transition-opacity"
+            >
+              timer
+            </button>
+          </div>
         </div>
       </nav>
 
       {/* Sections */}
       <div className="scroll-smooth">
         {/* Home Section */}
-        <section id="home" className="min-h-screen flex items-center justify-center relative pb-20 md:pb-0">
+        <section id="home" className="min-h-screen flex items-center justify-center relative pt-20">
           <div className="text-center">
             {/* Minimal home section - just the circle and navigation */}
           </div>
         </section>
 
         {/* Origen Section */}
-        <section id="origen" className="min-h-screen text-black flex items-center justify-end relative pb-20 md:pb-8">
+        <section id="origen" className="min-h-screen text-black flex items-center justify-end relative pt-20">
           <div className="max-w-2xl w-full flex items-center justify-end px-4 sm:px-6 md:px-16 lg:px-20 xl:px-24 py-6 sm:py-8 relative z-40">
             <div className="max-w-2xl text-sm sm:text-base md:text-lg text-black leading-relaxed space-y-3 sm:space-y-4 md:space-y-6">
               <p className="section-content">
@@ -444,7 +261,7 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Coffee Section */}
-        <section id="coffee" className="min-h-screen text-black flex flex-col items-start justify-center px-4 sm:px-6 md:pl-40 lg:pl-26 xl:pl-100 pr-4 sm:pr-6 md:pr-16 lg:pr-24 xl:pr-32 py-6 sm:py-8 pb-20 md:pb-8 relative">
+        <section id="coffee" className="min-h-screen text-black flex flex-col items-start justify-center px-4 sm:px-6 md:pl-40 lg:pl-26 xl:pl-100 pr-4 sm:pr-6 md:pr-16 lg:pr-24 xl:pr-32 py-6 sm:py-8 relative pt-20">
           <div className="max-w-2xl w-full relative z-40 text-left">
             <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
               <p className="section-content text-sm sm:text-base leading-relaxed">
@@ -535,8 +352,8 @@ const HomePage: React.FC = () => {
           </div>
         </section>
 
-        {/* Buy Section - Improved mobile experience */}
-        <section id="buy" className="min-h-screen text-black flex flex-col items-center justify-center px-4 sm:px-6 md:pl-32 lg:pl-28 xl:pl-24 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 pb-24 md:pb-8 relative">
+        {/* Buy Section */}
+        <section id="buy" className="min-h-screen text-black flex flex-col items-center justify-center px-4 sm:px-6 md:pl-32 lg:pl-28 xl:pl-24 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 relative pt-20">
           <div className="max-w-sm w-full text-left relative z-40">
             <div className="section-content mb-6 sm:mb-8">
               <p className="text-sm sm:text-base lg:text-lg text-black mb-4 sm:mb-6 leading-relaxed">
@@ -573,6 +390,18 @@ const HomePage: React.FC = () => {
           </div>
         </section>
       </div>
+
+      {/* Footer */}
+      <footer className="relative z-40 py-8 px-4 sm:px-6 text-center">
+        <a 
+          href="https://yopablo.com" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-sm text-gray-600 hover:text-black transition-colors duration-200 hover:underline"
+        >
+          Origen is a new project by Pablo Gnecco
+        </a>
+      </footer>
     </div>
   );
 };
