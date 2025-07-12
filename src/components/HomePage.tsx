@@ -54,7 +54,7 @@ const HomePage: React.FC = () => {
     // Detect mobile device
     const isMobile = window.innerWidth <= 768;
     
-    // Common initialization function
+    // Common initialization function - always center on mobile
     const initializeCircle = () => {
       const initialConfig = sectionConfigs[0];
       gsap.set(circleRef.current, {
@@ -66,13 +66,15 @@ const HomePage: React.FC = () => {
         willChange: "transform, width, height",
         backfaceVisibility: "hidden",
         perspective: 1000,
-        // Mobile-specific positioning
+        // Always center the circle
         zIndex: isMobile ? -1 : 0, // Pin to back on mobile
         position: "fixed",
         left: "50%",
         top: "50%",
         xPercent: -50,
-        yPercent: -50
+        yPercent: -50,
+        // Ensure perfect centering on mobile
+        transform: isMobile ? "translate(-50%, -50%)" : "translate(-50%, -50%)"
       });
     };
     
@@ -97,7 +99,7 @@ const HomePage: React.FC = () => {
        const createSmoothCircleAnimation = () => {
          const totalSections = sectionConfigs.length;
          
-         // Ensure circle stays pinned to background
+         // Ensure circle stays pinned to background and perfectly centered
          gsap.set(circleRef.current, {
            zIndex: -1, // Pin to back layer
            position: "fixed",
@@ -105,7 +107,9 @@ const HomePage: React.FC = () => {
            top: "50%",
            xPercent: -50,
            yPercent: -50,
-           transformOrigin: "center center"
+           transformOrigin: "center center",
+           // Force center positioning
+           transform: "translate(-50%, -50%)"
          });
          
          const scrollTrigger = ScrollTrigger.create({
@@ -128,7 +132,7 @@ const HomePage: React.FC = () => {
              const size = gsap.utils.interpolate(currentConfig.size, nextConfig.size, sectionProgress);
              const scale = gsap.utils.interpolate(currentConfig.scale, nextConfig.scale, sectionProgress);
              
-             // Ultra smooth scaling with hardware acceleration
+             // Ultra smooth scaling with hardware acceleration - keep centered
              gsap.set(circleRef.current, {
                width: size,
                height: size,
@@ -137,7 +141,12 @@ const HomePage: React.FC = () => {
                transformOrigin: "center center",
                willChange: "transform, width, height",
                backfaceVisibility: "hidden", // Prevent flickering
-               perspective: 1000 // Enhance 3D rendering
+               perspective: 1000, // Enhance 3D rendering
+               // Maintain center position during scaling
+               left: "50%",
+               top: "50%",
+               xPercent: -50,
+               yPercent: -50
              });
            },
            onRefresh: self => {
@@ -160,7 +169,12 @@ const HomePage: React.FC = () => {
                transformOrigin: "center center",
                willChange: "transform, width, height",
                backfaceVisibility: "hidden",
-               perspective: 1000
+               perspective: 1000,
+               // Maintain center position during refresh
+               left: "50%",
+               top: "50%",
+               xPercent: -50,
+               yPercent: -50
              });
            }
          });

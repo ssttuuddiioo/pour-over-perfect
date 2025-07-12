@@ -606,18 +606,22 @@
   z-index: -1;
 }
 
-/* Mobile-specific circle optimizations */
+/* Mobile-specific circle optimizations - always centered */
 @media (max-width: 768px) {
   .fixed.bg-\[#FF6700\].rounded-full {
-    /* Ultra smooth scaling on mobile */
-    transform: translateZ(0) translate(-50%, -50%);
+    /* Ultra smooth scaling on mobile - keep centered */
+    transform: translate(-50%, -50%) translateZ(0) !important;
     left: 50% !important;
     top: 50% !important;
     z-index: -1 !important;
     /* Optimize for touch scrolling */
-    -webkit-transform: translateZ(0) translate(-50%, -50%);
+    -webkit-transform: translate(-50%, -50%) translateZ(0) !important;
     -webkit-backface-visibility: hidden;
     -webkit-perspective: 1000px;
+    /* Ensure perfect centering */
+    position: fixed !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 }
 

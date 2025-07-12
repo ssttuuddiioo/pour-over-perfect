@@ -22,7 +22,10 @@ const CircleTransition: React.FC<CircleTransitionProps> = ({ children, className
           left: '50%',
           top: '50%',
           transform: 'translate(-50%, -50%)',
-          transformOrigin: 'center center'
+          transformOrigin: 'center center',
+          // Ensure perfect centering on all devices
+          margin: 0,
+          padding: 0
         }}
       >
         {/* Circle content can vary based on mode */}
