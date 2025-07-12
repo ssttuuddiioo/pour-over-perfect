@@ -27,10 +27,10 @@ const HomePage: React.FC = () => {
 
   // Section configurations for circle animation
   const sectionConfigs = [
-    { id: 'home', size: 240, scale: 0.5 },
-    { id: 'origen', size: 340, scale: 0.7 },
-    { id: 'about', size: 460, scale: 1.0 },
-    { id: 'buy', size: 560, scale: 1.2 }
+    { id: 'home', size: 180, scale: 0.4 },
+    { id: 'origen', size: 280, scale: 0.6 },
+    { id: 'about', size: 380, scale: 0.8 },
+    { id: 'buy', size: 460, scale: 1.0 }
   ];
 
   useEffect(() => {
@@ -125,10 +125,10 @@ const HomePage: React.FC = () => {
     <div className="min-h-screen">
       {/* Fixed Navigation - Always visible and stable */}
       <nav className="fixed left-0 top-0 h-full z-50 pointer-events-none">
-        <div className="h-full flex flex-col justify-center px-3 sm:px-6 md:px-8 space-y-4 sm:space-y-6 md:space-y-8" style={{ marginLeft: 'env(safe-area-inset-left, 0)' }}>
+        <div className="h-full flex flex-col justify-center px-2 sm:px-4 md:px-6 lg:px-8 space-y-3 sm:space-y-4 md:space-y-6 lg:space-y-8" style={{ marginLeft: 'env(safe-area-inset-left, 0)' }}>
           <button
             onClick={() => scrollToSection('home')}
-            className={`text-lg sm:text-xl md:text-2xl font-medium transition-opacity pointer-events-auto text-left ${
+            className={`text-base sm:text-lg md:text-xl lg:text-2xl font-medium transition-opacity pointer-events-auto text-left ${
               activeSection === 'home' 
                 ? 'text-black underline' 
                 : 'text-black hover:opacity-70 hover:underline'
@@ -138,7 +138,7 @@ const HomePage: React.FC = () => {
           </button>
           <button
             onClick={() => scrollToSection('origen')}
-            className={`text-lg sm:text-xl md:text-2xl font-medium transition-opacity pointer-events-auto text-left ${
+            className={`text-base sm:text-lg md:text-xl lg:text-2xl font-medium transition-opacity pointer-events-auto text-left ${
               activeSection === 'origen' 
                 ? 'text-black underline' 
                 : 'text-black hover:opacity-70 hover:underline'
@@ -148,7 +148,7 @@ const HomePage: React.FC = () => {
           </button>
           <button
             onClick={() => scrollToSection('about')}
-            className={`text-lg sm:text-xl md:text-2xl font-medium transition-opacity pointer-events-auto text-left ${
+            className={`text-base sm:text-lg md:text-xl lg:text-2xl font-medium transition-opacity pointer-events-auto text-left ${
               activeSection === 'about' 
                 ? 'text-black underline' 
                 : 'text-black hover:opacity-70 hover:underline'
@@ -158,7 +158,7 @@ const HomePage: React.FC = () => {
           </button>
           <button
             onClick={() => scrollToSection('buy')}
-            className={`text-lg sm:text-xl md:text-2xl font-medium transition-opacity pointer-events-auto text-left ${
+            className={`text-base sm:text-lg md:text-xl lg:text-2xl font-medium transition-opacity pointer-events-auto text-left ${
               activeSection === 'buy' 
                 ? 'text-black underline' 
                 : 'text-black hover:opacity-70 hover:underline'
@@ -168,7 +168,7 @@ const HomePage: React.FC = () => {
           </button>
           <button
             onClick={() => navigate('/timer')}
-            className="text-lg sm:text-xl md:text-2xl font-medium text-black hover:opacity-70 hover:underline transition-opacity pointer-events-auto text-left"
+            className="text-base sm:text-lg md:text-xl lg:text-2xl font-medium text-black hover:opacity-70 hover:underline transition-opacity pointer-events-auto text-left"
           >
             timer
           </button>
@@ -186,8 +186,8 @@ const HomePage: React.FC = () => {
 
         {/* Origen Section */}
         <section id="origen" className="min-h-screen text-black flex items-center justify-center relative">
-          <div className="max-w-4xl w-full flex items-center justify-center pl-20 sm:pl-24 md:pl-32 lg:pl-20 xl:pl-16 pr-4 sm:pr-6 md:pr-8 lg:pr-12 xl:pr-16 py-8 relative z-40">
-            <div className="max-w-2xl text-sm sm:text-base md:text-lg lg:text-xl text-black leading-relaxed space-y-4 sm:space-y-6">
+          <div className="max-w-4xl w-full flex items-center justify-center pl-16 sm:pl-20 md:pl-24 lg:pl-20 xl:pl-16 pr-4 sm:pr-6 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 relative z-40">
+            <div className="max-w-2xl text-sm sm:text-base md:text-lg text-black leading-relaxed space-y-3 sm:space-y-4 md:space-y-6">
               <p className="section-content">
                 Charalá, Santander is known for its stunning mountains, adventure activities, traditional cuisine, and a quiet rhythm that invites you to stay awhile.
               </p>
@@ -211,20 +211,20 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* About Section */}
-        <section id="about" className="min-h-screen text-black flex flex-col items-center justify-center pl-20 sm:pl-24 md:pl-32 lg:pl-20 xl:pl-16 pr-4 sm:pr-6 md:pr-8 lg:pr-12 xl:pr-16 py-8 relative">
+        <section id="about" className="min-h-screen text-black flex flex-col items-center justify-center pl-16 sm:pl-20 md:pl-24 lg:pl-20 xl:pl-16 pr-4 sm:pr-6 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 relative">
           <div className="max-w-5xl w-full relative z-40 text-left">
-            <div className="text-black leading-relaxed space-y-6 sm:space-y-8">
+            <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
               <p className="section-content max-w-4xl text-sm sm:text-base leading-relaxed">
                 This lot was grown and milled on-site by Oscar Castro in Charalá, Colombia. Unlike most coffees, which pass through several stages before roasting, this one stayed close to the ground. Oscar handled both production and milling; we purchased directly, managed export and import independently, and roasted in New York. It's a vertically streamlined process built on trust, transparency, and shared effort.
               </p>
               
               <div className="section-content">
                 {/* Producer and Variety in Two Columns */}
-                <div className="grid grid-cols-2 gap-6 sm:gap-8 lg:gap-10 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
                   {/* Producer */}
-                  <div className="space-y-3 sm:space-y-4">
+                  <div className="space-y-2 sm:space-y-3">
                     <h3 className="font-medium text-base sm:text-lg">Producer</h3>
-                    <div className="text-sm sm:text-base space-y-2">
+                    <div className="text-sm sm:text-base space-y-1 sm:space-y-2">
                       <p>Oscar Castro</p>
                       <p>Finca Bellavista</p>
                       <p>Charalá, Santander, Colombia</p>
@@ -233,10 +233,10 @@ const HomePage: React.FC = () => {
                   </div>
 
                   {/* Variety & Process */}
-                  <div className="space-y-3 sm:space-y-4">
+                  <div className="space-y-2 sm:space-y-3">
                     <h3 className="font-medium text-base sm:text-lg">Variety & Process</h3>
                     <div className="text-sm sm:text-base">
-                      <p className="font-medium mb-3">Castillo (Washed)</p>
+                      <p className="font-medium mb-2 sm:mb-3">Castillo (Washed)</p>
                       <ul className="space-y-1 text-sm sm:text-base">
                         <li>• Hand-picked at peak ripeness</li>
                         <li>• Fermented overnight</li>
@@ -249,24 +249,24 @@ const HomePage: React.FC = () => {
                 </div>
 
                 {/* Harvest & Lot */}
-                <div className="space-y-3 sm:space-y-4 mb-8">
+                <div className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
                   <h3 className="font-medium text-base sm:text-lg">Harvest & Lot</h3>
-                  <div className="grid grid-cols-2 gap-4 sm:gap-6 max-w-md">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-xs sm:max-w-md">
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">Harvest Date</p>
+                      <p className="text-xs sm:text-sm text-gray-600 mb-1">Harvest Date</p>
                       <p className="text-sm sm:text-base">May 2025</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">Lot Size</p>
+                      <p className="text-xs sm:text-sm text-gray-600 mb-1">Lot Size</p>
                       <p className="text-sm sm:text-base">50kg</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Supply Chain - Clean Left-Justified Layout */}
-                <div className="mt-8 sm:mt-10">
-                  <h3 className="font-medium text-base sm:text-lg mb-4 sm:mb-6">Supply Chain</h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 sm:gap-6">
+                <div className="mt-6 sm:mt-8 lg:mt-10">
+                  <h3 className="font-medium text-base sm:text-lg mb-3 sm:mb-4 lg:mb-6">Supply Chain</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-4 lg:gap-6">
                     <div className="text-left space-y-1">
                       <h4 className="font-medium text-sm text-gray-600">Farm Gate</h4>
                       <p className="text-sm sm:text-base">$448.55 USD</p>
@@ -303,10 +303,10 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Buy Section */}
-        <section id="buy" className="min-h-screen text-black flex flex-col items-center justify-center pl-20 sm:pl-24 md:pl-32 lg:pl-20 xl:pl-16 pr-4 sm:pr-6 md:pr-8 lg:pr-12 xl:pr-16 py-8 relative">
+        <section id="buy" className="min-h-screen text-black flex flex-col items-center justify-center pl-16 sm:pl-20 md:pl-24 lg:pl-20 xl:pl-16 pr-4 sm:pr-6 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 relative">
           <div className="max-w-sm w-full text-left relative z-40">
-            <div className="section-content mb-8">
-              <p className="text-sm sm:text-base lg:text-lg text-black mb-6 leading-relaxed">
+            <div className="section-content mb-6 sm:mb-8">
+              <p className="text-sm sm:text-base lg:text-lg text-black mb-4 sm:mb-6 leading-relaxed">
                 The next roast will be a small one, about 50kg. So they'll sell fast. Drop your email to stay in the loop, and we'll let you pre-order once we have everything in order.
               </p>
               
@@ -320,12 +320,12 @@ const HomePage: React.FC = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="flex-1 px-3 py-2 text-sm sm:text-base border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                      className="flex-1 px-3 py-3 text-sm sm:text-base border border-gray-300 rounded focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
                       placeholder="your@email.com"
                     />
                     <button
                       type="submit"
-                      className="w-1/3 bg-white text-black border border-black py-2 px-4 rounded text-sm sm:text-base font-medium hover:bg-gray-50 transition-colors whitespace-nowrap"
+                      className="w-full sm:w-1/3 bg-white text-black border border-black py-3 px-4 rounded text-sm sm:text-base font-medium hover:bg-gray-50 transition-colors whitespace-nowrap"
                     >
                       Sign Up
                     </button>
