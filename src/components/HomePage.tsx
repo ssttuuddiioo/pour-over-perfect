@@ -27,15 +27,18 @@ const HomePage: React.FC = () => {
 
   // Section configurations for circle animation
   const sectionConfigs = [
-    { id: 'home', size: 360, scale: 0.8 },
-    { id: 'origen', size: 560, scale: 1.2 },
-    { id: 'about', size: 650, scale: 1.3 },
-    { id: 'buy', size: 750, scale: 1.5 }
+    { id: 'home', size: window.innerWidth <= 768 ? 200 : 360, scale: window.innerWidth <= 768 ? 0.5 : 0.8 },
+    { id: 'origen', size: window.innerWidth <= 768 ? 300 : 560, scale: window.innerWidth <= 768 ? 0.7 : 1.2 },
+    { id: 'about', size: window.innerWidth <= 768 ? 400 : 650, scale: window.innerWidth <= 768 ? 0.9 : 1.3 },
+    { id: 'buy', size: window.innerWidth <= 768 ? 480 : 750, scale: window.innerWidth <= 768 ? 1.0 : 1.5 }
   ];
 
   useEffect(() => {
     if (!circleRef.current) return;
 
+    // Detect mobile device
+    const isMobile = window.innerWidth <= 768;
+    
     // Set up progressive circle resizing based on scroll position
     const totalSections = sectionConfigs.length;
     const scrollContainer = document.documentElement;
@@ -45,7 +48,8 @@ const HomePage: React.FC = () => {
       trigger: document.body,
       start: "top top",
       end: "bottom bottom",
-      scrub: true, // This makes the animation follow the scroll position
+      scrub: isMobile ? 0.5 : true, // Reduce scrub sensitivity on mobile
+      refreshPriority: isMobile ? -1 : 0, // Lower priority on mobile
       onUpdate: self => {
         const progress = self.progress;
         const sectionIndex = Math.floor(progress * (totalSections - 1));
@@ -59,12 +63,23 @@ const HomePage: React.FC = () => {
         const size = gsap.utils.interpolate(currentConfig.size, nextConfig.size, sectionProgress);
         const scale = gsap.utils.interpolate(currentConfig.scale, nextConfig.scale, sectionProgress);
         
-        // Update circle size and scale
-        gsap.set(circleRef.current, {
-          width: size,
-          height: size,
-          scale: scale
-        });
+        // Update circle size and scale with mobile optimization
+        if (isMobile) {
+          // Use less frequent updates on mobile
+          gsap.set(circleRef.current, {
+            width: size,
+            height: size,
+            scale: scale,
+            force3D: true, // Force hardware acceleration
+            transformOrigin: "center center"
+          });
+        } else {
+          gsap.set(circleRef.current, {
+            width: size,
+            height: size,
+            scale: scale
+          });
+        }
       }
     });
 
@@ -77,6 +92,7 @@ const HomePage: React.FC = () => {
         trigger: element,
         start: "top center",
         end: "bottom center",
+        refreshPriority: isMobile ? -1 : 0, // Lower priority on mobile
         onEnter: () => setActiveSection(config.id),
         onEnterBack: () => setActiveSection(config.id),
       });
@@ -90,31 +106,65 @@ const HomePage: React.FC = () => {
       const content = element.querySelectorAll('.section-content');
       if (content.length > 0) {
         gsap.fromTo(content, 
-          { opacity: 0, y: 30 },
+          { opacity: 0, y: isMobile ? 15 : 30 }, // Reduce animation distance on mobile
           {
             opacity: 1,
             y: 0,
-            duration: 0.8,
-            stagger: 0.1,
+            duration: isMobile ? 0.4 : 0.8, // Faster animations on mobile
+            stagger: isMobile ? 0.05 : 0.1, // Faster stagger on mobile
             ease: "power2.out",
+            force3D: isMobile, // Hardware acceleration on mobile
             scrollTrigger: {
               trigger: element,
               start: "top 60%",
               end: "top 40%",
-              toggleActions: "play none none reverse"
+              toggleActions: "play none none reverse",
+              refreshPriority: isMobile ? -1 : 0, // Lower priority on mobile
+              fastScrollEnd: isMobile // Optimize for fast scrolling on mobile
             }
           }
         );
       }
     });
 
+    // Mobile-specific ScrollTrigger optimizations
+    if (isMobile) {
+      ScrollTrigger.config({
+        limitCallbacks: true, // Limit callback frequency on mobile
+        ignoreMobileResize: true, // Ignore mobile resize events
+        autoRefreshEvents: "visibilitychange,DOMContentLoaded,load" // Reduce refresh events
+      });
+    }
+
     // Initialize with first section
     setActiveSection('home');
     gsap.set(circleRef.current, {
       width: sectionConfigs[0].size,
       height: sectionConfigs[0].size,
-      scale: sectionConfigs[0].scale
+      scale: sectionConfigs[0].scale,
+      force3D: isMobile, // Hardware acceleration on mobile
+      transformOrigin: "center center"
     });
+
+    // Additional mobile optimizations
+    if (isMobile) {
+      // Throttle scroll events on mobile
+      let scrollTimeout: NodeJS.Timeout;
+      const handleScroll = () => {
+        if (scrollTimeout) clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+          ScrollTrigger.refresh();
+        }, 100);
+      };
+      
+      window.addEventListener('scroll', handleScroll, { passive: true });
+      
+      return () => {
+        ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+        window.removeEventListener('scroll', handleScroll);
+        if (scrollTimeout) clearTimeout(scrollTimeout);
+      };
+    }
 
     return () => {
       ScrollTrigger.getAll().forEach(trigger => trigger.kill());
@@ -177,11 +227,11 @@ const HomePage: React.FC = () => {
       </nav>
 
       {/* Mobile Navigation - Bottom with white background */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200">
-        <div className="flex justify-around items-center py-3 px-4" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 mobile-scroll-optimized mobile-footer-enhanced">
+        <div className="flex justify-around items-center py-5 px-4" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
           <button
             onClick={() => scrollToSection('home')}
-            className={`text-sm font-medium transition-opacity ${
+            className={`text-sm font-medium transition-opacity touch-manipulation ${
               activeSection === 'home' 
                 ? 'text-black underline' 
                 : 'text-black hover:opacity-70 hover:underline'
@@ -191,7 +241,7 @@ const HomePage: React.FC = () => {
           </button>
           <button
             onClick={() => scrollToSection('origen')}
-            className={`text-sm font-medium transition-opacity ${
+            className={`text-sm font-medium transition-opacity touch-manipulation ${
               activeSection === 'origen' 
                 ? 'text-black underline' 
                 : 'text-black hover:opacity-70 hover:underline'
@@ -201,7 +251,7 @@ const HomePage: React.FC = () => {
           </button>
           <button
             onClick={() => scrollToSection('about')}
-            className={`text-sm font-medium transition-opacity ${
+            className={`text-sm font-medium transition-opacity touch-manipulation ${
               activeSection === 'about' 
                 ? 'text-black underline' 
                 : 'text-black hover:opacity-70 hover:underline'
@@ -211,7 +261,7 @@ const HomePage: React.FC = () => {
           </button>
           <button
             onClick={() => scrollToSection('buy')}
-            className={`text-sm font-medium transition-opacity ${
+            className={`text-sm font-medium transition-opacity touch-manipulation ${
               activeSection === 'buy' 
                 ? 'text-black underline' 
                 : 'text-black hover:opacity-70 hover:underline'
@@ -221,7 +271,7 @@ const HomePage: React.FC = () => {
           </button>
           <button
             onClick={() => navigate('/timer')}
-            className="text-sm font-medium text-black hover:opacity-70 hover:underline transition-opacity"
+            className="text-sm font-medium text-black hover:opacity-70 hover:underline transition-opacity touch-manipulation"
           >
             timer
           </button>
@@ -229,7 +279,7 @@ const HomePage: React.FC = () => {
       </nav>
 
       {/* Sections */}
-      <div className="scroll-smooth">
+      <div className="scroll-smooth mobile-scroll-optimized">
         {/* Home Section */}
         <section id="home" className="min-h-screen flex items-center justify-center relative">
           <div className="text-center">
@@ -239,7 +289,7 @@ const HomePage: React.FC = () => {
 
         {/* Origen Section */}
         <section id="origen" className="min-h-screen text-black flex items-center justify-end relative">
-          <div className="max-w-2xl w-full flex items-center justify-end px-4 sm:px-6 md:px-16 lg:px-20 xl:px-24 py-6 sm:py-8 pb-20 md:pb-8 relative z-40">
+          <div className="max-w-2xl w-full flex items-center justify-end px-4 sm:px-6 md:px-16 lg:px-20 xl:px-24 py-6 sm:py-8 pb-32 md:pb-8 relative z-40">
             <div className="max-w-2xl text-sm sm:text-base md:text-lg text-black leading-relaxed space-y-3 sm:space-y-4 md:space-y-6">
               <p className="section-content">
                 Charalá, Santander is known for its stunning mountains, adventure activities, traditional cuisine, and a quiet rhythm that invites you to stay awhile.
@@ -264,7 +314,7 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* About Section */}
-        <section id="about" className="min-h-screen text-black flex flex-col items-start justify-center px-4 sm:px-6 md:pl-40 lg:pl-26 xl:pl-100 pr-4 sm:pr-6 md:pr-16 lg:pr-24 xl:pr-32 py-6 sm:py-8 pb-20 md:pb-8 relative">
+        <section id="about" className="min-h-screen text-black flex flex-col items-start justify-center px-4 sm:px-6 md:pl-40 lg:pl-26 xl:pl-100 pr-4 sm:pr-6 md:pr-16 lg:pr-24 xl:pr-32 py-6 sm:py-8 pb-32 md:pb-8 relative">
                       <div className="max-w-2xl w-full relative z-40 text-left">
             <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
                               <p className="section-content text-sm sm:text-base leading-relaxed">
@@ -356,7 +406,7 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Buy Section */}
-        <section id="buy" className="min-h-screen text-black flex flex-col items-center justify-center px-4 sm:px-6 md:pl-32 lg:pl-28 xl:pl-24 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 pb-20 md:pb-8 relative">
+        <section id="buy" className="min-h-screen text-black flex flex-col items-center justify-center px-4 sm:px-6 md:pl-32 lg:pl-28 xl:pl-24 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 pb-32 md:pb-8 relative">
           <div className="max-w-sm w-full text-left relative z-40">
             <div className="section-content mb-6 sm:mb-8">
               <p className="text-sm sm:text-base lg:text-lg text-black mb-4 sm:mb-6 leading-relaxed">

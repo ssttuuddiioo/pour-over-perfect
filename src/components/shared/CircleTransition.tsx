@@ -14,7 +14,7 @@ const CircleTransition: React.FC<CircleTransitionProps> = ({ children, className
       {/* Fixed circle that transitions between states */}
       <div
         ref={circleRef}
-        className={`fixed bg-[#FF6700] rounded-full flex items-center justify-center z-10 ${className}`}
+        className={`fixed bg-[#FF6700] rounded-full flex items-center justify-center z-10 mobile-circle-behind ${className}`}
         style={{
           pointerEvents: circleState.isTransitioning ? 'none' : 'auto'
         }}
