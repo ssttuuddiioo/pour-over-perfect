@@ -54,6 +54,19 @@ const HomePage: React.FC = () => {
     // Detect mobile device
     const isMobile = window.innerWidth <= 768;
     
+    // Common initialization function
+    const initializeCircle = () => {
+      const initialConfig = sectionConfigs[0];
+      gsap.set(circleRef.current, {
+        width: initialConfig.size,
+        height: initialConfig.size,
+        scale: initialConfig.scale,
+        transformOrigin: "center center",
+        force3D: true,
+        willChange: "transform, width, height"
+      });
+    };
+    
     // Smooth mobile experience with 60fps circle animation
     if (isMobile) {
       // Set up section detection for navigation
@@ -71,54 +84,78 @@ const HomePage: React.FC = () => {
         });
       });
 
-      // Smooth circle animation with interpolation for mobile
-      const createSmoothCircleAnimation = () => {
-        const totalSections = sectionConfigs.length;
-        
-        ScrollTrigger.create({
-          trigger: document.body,
-          start: "top top",
-          end: "bottom bottom",
-          scrub: 0.1, // Very smooth scrub for mobile
-          refreshPriority: -1,
-          onUpdate: self => {
-            const progress = self.progress;
-            const sectionIndex = Math.floor(progress * (totalSections - 1));
-            const sectionProgress = (progress * (totalSections - 1)) - sectionIndex;
-            
-            // Get current and next section configs
-            const currentConfig = sectionConfigs[sectionIndex];
-            const nextConfig = sectionConfigs[Math.min(sectionIndex + 1, totalSections - 1)];
-            
-            // Smooth interpolation between sections
-            const size = gsap.utils.interpolate(currentConfig.size, nextConfig.size, sectionProgress);
-            const scale = gsap.utils.interpolate(currentConfig.scale, nextConfig.scale, sectionProgress);
-            
-            // Use gsap.set for immediate updates with hardware acceleration
-            gsap.set(circleRef.current, {
-              width: size,
-              height: size,
-              scale: scale,
-              force3D: true,
-              transformOrigin: "center center",
-              willChange: "transform, width, height" // Optimize for animations
-            });
-          }
-        });
-      };
+             // Smooth circle animation with interpolation for mobile
+       const createSmoothCircleAnimation = () => {
+         const totalSections = sectionConfigs.length;
+         
+         const scrollTrigger = ScrollTrigger.create({
+           trigger: document.body,
+           start: "top top",
+           end: "bottom bottom",
+           scrub: 0.1, // Very smooth scrub for mobile
+           refreshPriority: -1,
+           onUpdate: self => {
+             const progress = self.progress;
+             const sectionIndex = Math.floor(progress * (totalSections - 1));
+             const sectionProgress = (progress * (totalSections - 1)) - sectionIndex;
+             
+             // Get current and next section configs
+             const currentConfig = sectionConfigs[sectionIndex];
+             const nextConfig = sectionConfigs[Math.min(sectionIndex + 1, totalSections - 1)];
+             
+             // Smooth interpolation between sections
+             const size = gsap.utils.interpolate(currentConfig.size, nextConfig.size, sectionProgress);
+             const scale = gsap.utils.interpolate(currentConfig.scale, nextConfig.scale, sectionProgress);
+             
+             // Use gsap.set for immediate updates with hardware acceleration
+             gsap.set(circleRef.current, {
+               width: size,
+               height: size,
+               scale: scale,
+               force3D: true,
+               transformOrigin: "center center",
+               willChange: "transform, width, height" // Optimize for animations
+             });
+           },
+           onRefresh: self => {
+             // Ensure initial state is correct on refresh
+             const progress = self.progress;
+             const sectionIndex = Math.floor(progress * (totalSections - 1));
+             const sectionProgress = (progress * (totalSections - 1)) - sectionIndex;
+             
+             const currentConfig = sectionConfigs[sectionIndex];
+             const nextConfig = sectionConfigs[Math.min(sectionIndex + 1, totalSections - 1)];
+             
+             const size = gsap.utils.interpolate(currentConfig.size, nextConfig.size, sectionProgress);
+             const scale = gsap.utils.interpolate(currentConfig.scale, nextConfig.scale, sectionProgress);
+             
+             gsap.set(circleRef.current, {
+               width: size,
+               height: size,
+               scale: scale,
+               force3D: true,
+               transformOrigin: "center center",
+               willChange: "transform, width, height"
+             });
+           }
+         });
+         
+         // Immediately set the correct initial size based on current scroll position
+         ScrollTrigger.refresh();
+         
+         return scrollTrigger;
+       };
 
-      // Initialize smooth animation
-      createSmoothCircleAnimation();
-      
-      // Initialize circle for mobile with hardware acceleration
-      gsap.set(circleRef.current, {
-        width: sectionConfigs[0].size,
-        height: sectionConfigs[0].size,
-        scale: sectionConfigs[0].scale,
-        force3D: true,
-        transformOrigin: "center center",
-        willChange: "transform, width, height"
-      });
+       // Initialize circle size
+       initializeCircle();
+       
+       // Initialize smooth animation
+       const scrollTrigger = createSmoothCircleAnimation();
+       
+       // Ensure ScrollTrigger corrects the initial size immediately
+       gsap.delayedCall(0.01, () => {
+         scrollTrigger.refresh();
+       });
 
       return () => {
         ScrollTrigger.getAll().forEach(trigger => trigger.kill());
@@ -130,7 +167,7 @@ const HomePage: React.FC = () => {
     const totalSections = sectionConfigs.length;
     
     // Create a master ScrollTrigger that spans the entire page
-    ScrollTrigger.create({
+    const desktopScrollTrigger = ScrollTrigger.create({
       trigger: document.body,
       start: "top top",
       end: "bottom bottom",
@@ -145,6 +182,24 @@ const HomePage: React.FC = () => {
         const nextConfig = sectionConfigs[Math.min(sectionIndex + 1, totalSections - 1)];
         
         // Interpolate between current and next section
+        const size = gsap.utils.interpolate(currentConfig.size, nextConfig.size, sectionProgress);
+        const scale = gsap.utils.interpolate(currentConfig.scale, nextConfig.scale, sectionProgress);
+        
+        gsap.set(circleRef.current, {
+          width: size,
+          height: size,
+          scale: scale
+        });
+      },
+      onRefresh: self => {
+        // Ensure initial state is correct on refresh
+        const progress = self.progress;
+        const sectionIndex = Math.floor(progress * (totalSections - 1));
+        const sectionProgress = (progress * (totalSections - 1)) - sectionIndex;
+        
+        const currentConfig = sectionConfigs[sectionIndex];
+        const nextConfig = sectionConfigs[Math.min(sectionIndex + 1, totalSections - 1)];
+        
         const size = gsap.utils.interpolate(currentConfig.size, nextConfig.size, sectionProgress);
         const scale = gsap.utils.interpolate(currentConfig.scale, nextConfig.scale, sectionProgress);
         
@@ -196,13 +251,15 @@ const HomePage: React.FC = () => {
       }
     });
 
+    // Initialize circle size
+    initializeCircle();
+    
     // Initialize with first section
     setActiveSection('home');
-    gsap.set(circleRef.current, {
-      width: sectionConfigs[0].size,
-      height: sectionConfigs[0].size,
-      scale: sectionConfigs[0].scale,
-      transformOrigin: "center center"
+    
+    // Ensure ScrollTrigger corrects the initial size immediately
+    gsap.delayedCall(0.01, () => {
+      ScrollTrigger.refresh();
     });
 
     return () => {
