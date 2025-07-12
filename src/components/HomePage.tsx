@@ -63,7 +63,16 @@ const HomePage: React.FC = () => {
         scale: initialConfig.scale,
         transformOrigin: "center center",
         force3D: true,
-        willChange: "transform, width, height"
+        willChange: "transform, width, height",
+        backfaceVisibility: "hidden",
+        perspective: 1000,
+        // Mobile-specific positioning
+        zIndex: isMobile ? -1 : 0, // Pin to back on mobile
+        position: "fixed",
+        left: "50%",
+        top: "50%",
+        xPercent: -50,
+        yPercent: -50
       });
     };
     
@@ -84,16 +93,28 @@ const HomePage: React.FC = () => {
         });
       });
 
-             // Smooth circle animation with interpolation for mobile
+             // Extremely smooth circle animation for mobile with background pinning
        const createSmoothCircleAnimation = () => {
          const totalSections = sectionConfigs.length;
+         
+         // Ensure circle stays pinned to background
+         gsap.set(circleRef.current, {
+           zIndex: -1, // Pin to back layer
+           position: "fixed",
+           left: "50%",
+           top: "50%",
+           xPercent: -50,
+           yPercent: -50,
+           transformOrigin: "center center"
+         });
          
          const scrollTrigger = ScrollTrigger.create({
            trigger: document.body,
            start: "top top",
            end: "bottom bottom",
-           scrub: 0.1, // Very smooth scrub for mobile
+           scrub: 0.05, // Ultra smooth scrub for mobile (reduced from 0.1)
            refreshPriority: -1,
+           invalidateOnRefresh: true,
            onUpdate: self => {
              const progress = self.progress;
              const sectionIndex = Math.floor(progress * (totalSections - 1));
@@ -107,14 +128,16 @@ const HomePage: React.FC = () => {
              const size = gsap.utils.interpolate(currentConfig.size, nextConfig.size, sectionProgress);
              const scale = gsap.utils.interpolate(currentConfig.scale, nextConfig.scale, sectionProgress);
              
-             // Use gsap.set for immediate updates with hardware acceleration
+             // Ultra smooth scaling with hardware acceleration
              gsap.set(circleRef.current, {
                width: size,
                height: size,
                scale: scale,
                force3D: true,
                transformOrigin: "center center",
-               willChange: "transform, width, height" // Optimize for animations
+               willChange: "transform, width, height",
+               backfaceVisibility: "hidden", // Prevent flickering
+               perspective: 1000 // Enhance 3D rendering
              });
            },
            onRefresh: self => {
@@ -135,7 +158,9 @@ const HomePage: React.FC = () => {
                scale: scale,
                force3D: true,
                transformOrigin: "center center",
-               willChange: "transform, width, height"
+               willChange: "transform, width, height",
+               backfaceVisibility: "hidden",
+               perspective: 1000
              });
            }
          });

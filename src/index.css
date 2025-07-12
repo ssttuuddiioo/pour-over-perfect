@@ -602,6 +602,23 @@
   will-change: transform, width, height;
   backface-visibility: hidden;
   perspective: 1000px;
+  /* Pin to background layer on mobile */
+  z-index: -1;
+}
+
+/* Mobile-specific circle optimizations */
+@media (max-width: 768px) {
+  .fixed.bg-\[#FF6700\].rounded-full {
+    /* Ultra smooth scaling on mobile */
+    transform: translateZ(0) translate(-50%, -50%);
+    left: 50% !important;
+    top: 50% !important;
+    z-index: -1 !important;
+    /* Optimize for touch scrolling */
+    -webkit-transform: translateZ(0) translate(-50%, -50%);
+    -webkit-backface-visibility: hidden;
+    -webkit-perspective: 1000px;
+  }
 }
 
 /* Additional performance optimizations for mobile animations */
@@ -610,10 +627,23 @@
   body {
     -webkit-overflow-scrolling: touch;
     transform: translateZ(0);
+    /* Optimize for smooth scrolling */
+    overflow-x: hidden;
+    -webkit-transform: translateZ(0);
   }
   
-  /* Smooth scrolling performance */
+  /* Ultra smooth scrolling performance */
   html {
     scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    /* Optimize scroll performance */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+  
+  /* Prevent scroll bouncing on mobile */
+  body {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
   }
 }
