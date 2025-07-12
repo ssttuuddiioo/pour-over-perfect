@@ -276,7 +276,7 @@ const HomePage: React.FC = () => {
                 Oscar's farm, Bellavista, sits at 1,900 MASL above Charalá. He works a few hectares of land alongside his family and neighbors, also family, pooling their harvests to sell in town. The variety is Castillo, a hardy hybrid that thrives at altitude. It's delicate, floral, sweet, with notes of soft orchard fruit and a structured, clean finish.
               </p>
               <p className="section-content">
-                This coffee was grown, harvested, sourced, exported, roasted, and packed through small, independent efforts. I'm still learning as I go leaning on a generous coffee community in New York with shared tools like the roasting at MultiModal.
+                This coffee was grown, harvested, sourced, exported, roasted, and packed through small, independent efforts.
               </p>
             </div>
           </div>
@@ -287,7 +287,7 @@ const HomePage: React.FC = () => {
           <div className="max-w-2xl w-full relative z-40 text-left">
             <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
               <p className="section-content text-sm sm:text-base leading-relaxed">
-                This lot was grown and milled on-site by Oscar Castro in Charalá, Colombia. Unlike most coffees, which pass through several stages before roasting, this one stayed close to the ground. Oscar handled both production and milling; we purchased directly, managed export and import independently, and roasted in New York. It's a vertically streamlined process built on trust, transparency, and shared effort.
+                This coffee was grown and hulled by Oscar Castro in Charalá. Unlike most coffees, which pass through several hands before it reaches a cup, this one skipped a few of those. Oscar handled both production and milling; we purchased directly, managed export and import independently,  roasted, packaged in New York. It's a vertically streamlined process built on trust, transparency, and shared effort.
               </p>
               
               <div className="section-content">
