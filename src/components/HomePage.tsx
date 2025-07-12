@@ -18,10 +18,25 @@ const HomePage: React.FC = () => {
     setSubmitted(true);
   };
 
+  // Improved scroll function that accounts for mobile navigation
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      const isMobile = window.innerWidth <= 768;
+      
+      if (isMobile) {
+        // Account for mobile navigation height (approximately 80px)
+        const navHeight = 80;
+        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = elementPosition - navHeight;
+        
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      } else {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   };
 
@@ -39,17 +54,77 @@ const HomePage: React.FC = () => {
     // Detect mobile device
     const isMobile = window.innerWidth <= 768;
     
+    // Simplified mobile experience - reduce complex animations
+    if (isMobile) {
+      // Set up basic section detection for navigation
+      sectionConfigs.forEach((config) => {
+        const element = document.getElementById(config.id);
+        if (!element) return;
+
+        ScrollTrigger.create({
+          trigger: element,
+          start: "top center",
+          end: "bottom center",
+          refreshPriority: -1,
+          onEnter: () => setActiveSection(config.id),
+          onEnterBack: () => setActiveSection(config.id),
+        });
+      });
+
+      // Simplified circle animation for mobile
+      const handleMobileScroll = () => {
+        const scrollPercent = window.pageYOffset / (document.body.scrollHeight - window.innerHeight);
+        const sectionIndex = Math.floor(scrollPercent * (sectionConfigs.length - 1));
+        const config = sectionConfigs[sectionIndex] || sectionConfigs[0];
+        
+        gsap.set(circleRef.current, {
+          width: config.size,
+          height: config.size,
+          scale: config.scale,
+          force3D: true,
+          transformOrigin: "center center"
+        });
+      };
+
+      // Throttled scroll handler for mobile
+      let ticking = false;
+      const throttledScroll = () => {
+        if (!ticking) {
+          requestAnimationFrame(() => {
+            handleMobileScroll();
+            ticking = false;
+          });
+          ticking = true;
+        }
+      };
+
+      window.addEventListener('scroll', throttledScroll, { passive: true });
+      
+      // Initialize circle for mobile
+      gsap.set(circleRef.current, {
+        width: sectionConfigs[0].size,
+        height: sectionConfigs[0].size,
+        scale: sectionConfigs[0].scale,
+        force3D: true,
+        transformOrigin: "center center"
+      });
+
+      return () => {
+        window.removeEventListener('scroll', throttledScroll);
+        ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+      };
+    }
+
+    // Desktop experience with full animations
     // Set up progressive circle resizing based on scroll position
     const totalSections = sectionConfigs.length;
-    const scrollContainer = document.documentElement;
     
     // Create a master ScrollTrigger that spans the entire page
     ScrollTrigger.create({
       trigger: document.body,
       start: "top top",
       end: "bottom bottom",
-      scrub: isMobile ? 0.5 : true, // Reduce scrub sensitivity on mobile
-      refreshPriority: isMobile ? -1 : 0, // Lower priority on mobile
+      scrub: true,
       onUpdate: self => {
         const progress = self.progress;
         const sectionIndex = Math.floor(progress * (totalSections - 1));
@@ -63,23 +138,11 @@ const HomePage: React.FC = () => {
         const size = gsap.utils.interpolate(currentConfig.size, nextConfig.size, sectionProgress);
         const scale = gsap.utils.interpolate(currentConfig.scale, nextConfig.scale, sectionProgress);
         
-        // Update circle size and scale with mobile optimization
-        if (isMobile) {
-          // Use less frequent updates on mobile
-          gsap.set(circleRef.current, {
-            width: size,
-            height: size,
-            scale: scale,
-            force3D: true, // Force hardware acceleration
-            transformOrigin: "center center"
-          });
-        } else {
-          gsap.set(circleRef.current, {
-            width: size,
-            height: size,
-            scale: scale
-          });
-        }
+        gsap.set(circleRef.current, {
+          width: size,
+          height: size,
+          scale: scale
+        });
       }
     });
 
@@ -92,13 +155,12 @@ const HomePage: React.FC = () => {
         trigger: element,
         start: "top center",
         end: "bottom center",
-        refreshPriority: isMobile ? -1 : 0, // Lower priority on mobile
         onEnter: () => setActiveSection(config.id),
         onEnterBack: () => setActiveSection(config.id),
       });
     });
 
-    // Set up content animations for each section
+    // Set up content animations for desktop
     sectionConfigs.forEach((config) => {
       const element = document.getElementById(config.id);
       if (!element) return;
@@ -106,35 +168,23 @@ const HomePage: React.FC = () => {
       const content = element.querySelectorAll('.section-content');
       if (content.length > 0) {
         gsap.fromTo(content, 
-          { opacity: 0, y: isMobile ? 15 : 30 }, // Reduce animation distance on mobile
+          { opacity: 0, y: 30 },
           {
             opacity: 1,
             y: 0,
-            duration: isMobile ? 0.4 : 0.8, // Faster animations on mobile
-            stagger: isMobile ? 0.05 : 0.1, // Faster stagger on mobile
+            duration: 0.8,
+            stagger: 0.1,
             ease: "power2.out",
-            force3D: isMobile, // Hardware acceleration on mobile
             scrollTrigger: {
               trigger: element,
               start: "top 60%",
               end: "top 40%",
-              toggleActions: "play none none reverse",
-              refreshPriority: isMobile ? -1 : 0, // Lower priority on mobile
-              fastScrollEnd: isMobile // Optimize for fast scrolling on mobile
+              toggleActions: "play none none reverse"
             }
           }
         );
       }
     });
-
-    // Mobile-specific ScrollTrigger optimizations
-    if (isMobile) {
-      ScrollTrigger.config({
-        limitCallbacks: true, // Limit callback frequency on mobile
-        ignoreMobileResize: true, // Ignore mobile resize events
-        autoRefreshEvents: "visibilitychange,DOMContentLoaded,load" // Reduce refresh events
-      });
-    }
 
     // Initialize with first section
     setActiveSection('home');
@@ -142,29 +192,8 @@ const HomePage: React.FC = () => {
       width: sectionConfigs[0].size,
       height: sectionConfigs[0].size,
       scale: sectionConfigs[0].scale,
-      force3D: isMobile, // Hardware acceleration on mobile
       transformOrigin: "center center"
     });
-
-    // Additional mobile optimizations
-    if (isMobile) {
-      // Throttle scroll events on mobile
-      let scrollTimeout: NodeJS.Timeout;
-      const handleScroll = () => {
-        if (scrollTimeout) clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(() => {
-          ScrollTrigger.refresh();
-        }, 100);
-      };
-      
-      window.addEventListener('scroll', handleScroll, { passive: true });
-      
-      return () => {
-        ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-        window.removeEventListener('scroll', handleScroll);
-        if (scrollTimeout) clearTimeout(scrollTimeout);
-      };
-    }
 
     return () => {
       ScrollTrigger.getAll().forEach(trigger => trigger.kill());
@@ -226,52 +255,52 @@ const HomePage: React.FC = () => {
         </div>
       </nav>
 
-      {/* Mobile Navigation - Bottom with white background */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 mobile-scroll-optimized mobile-footer-enhanced">
-        <div className="flex justify-around items-center py-5 px-4" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+      {/* Mobile Navigation - Bottom with improved styling */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-lg">
+        <div className="flex justify-around items-center py-3 px-4 safe-area-bottom">
           <button
             onClick={() => scrollToSection('home')}
-            className={`text-sm font-medium transition-opacity touch-manipulation ${
+            className={`text-sm font-medium transition-all duration-200 py-2 px-1 rounded ${
               activeSection === 'home' 
                 ? 'text-black underline' 
-                : 'text-black hover:opacity-70 hover:underline'
+                : 'text-gray-600 hover:text-black active:scale-95'
             }`}
           >
             home
           </button>
           <button
             onClick={() => scrollToSection('origen')}
-            className={`text-sm font-medium transition-opacity touch-manipulation ${
+            className={`text-sm font-medium transition-all duration-200 py-2 px-1 rounded ${
               activeSection === 'origen' 
                 ? 'text-black underline' 
-                : 'text-black hover:opacity-70 hover:underline'
+                : 'text-gray-600 hover:text-black active:scale-95'
             }`}
           >
             origen
           </button>
           <button
             onClick={() => scrollToSection('coffee')}
-            className={`text-sm font-medium transition-opacity touch-manipulation ${
+            className={`text-sm font-medium transition-all duration-200 py-2 px-1 rounded ${
               activeSection === 'coffee' 
                 ? 'text-black underline' 
-                : 'text-black hover:opacity-70 hover:underline'
+                : 'text-gray-600 hover:text-black active:scale-95'
             }`}
           >
             coffee
           </button>
           <button
             onClick={() => scrollToSection('buy')}
-            className={`text-sm font-medium transition-opacity touch-manipulation ${
+            className={`text-sm font-medium transition-all duration-200 py-2 px-1 rounded ${
               activeSection === 'buy' 
                 ? 'text-black underline' 
-                : 'text-black hover:opacity-70 hover:underline'
+                : 'text-gray-600 hover:text-black active:scale-95'
             }`}
           >
             buy
           </button>
           <button
             onClick={() => navigate('/timer')}
-            className="text-sm font-medium text-black hover:opacity-70 hover:underline transition-opacity touch-manipulation"
+            className="text-sm font-medium text-gray-600 hover:text-black transition-all duration-200 py-2 px-1 rounded active:scale-95"
           >
             timer
           </button>
@@ -279,17 +308,17 @@ const HomePage: React.FC = () => {
       </nav>
 
       {/* Sections */}
-      <div className="scroll-smooth mobile-scroll-optimized">
+      <div className="scroll-smooth">
         {/* Home Section */}
-        <section id="home" className="min-h-screen flex items-center justify-center relative">
+        <section id="home" className="min-h-screen flex items-center justify-center relative pb-20 md:pb-0">
           <div className="text-center">
             {/* Minimal home section - just the circle and navigation */}
           </div>
         </section>
 
         {/* Origen Section */}
-        <section id="origen" className="min-h-screen text-black flex items-center justify-end relative">
-          <div className="max-w-2xl w-full flex items-center justify-end px-4 sm:px-6 md:px-16 lg:px-20 xl:px-24 py-6 sm:py-8 pb-32 md:pb-8 relative z-40">
+        <section id="origen" className="min-h-screen text-black flex items-center justify-end relative pb-20 md:pb-8">
+          <div className="max-w-2xl w-full flex items-center justify-end px-4 sm:px-6 md:px-16 lg:px-20 xl:px-24 py-6 sm:py-8 relative z-40">
             <div className="max-w-2xl text-sm sm:text-base md:text-lg text-black leading-relaxed space-y-3 sm:space-y-4 md:space-y-6">
               <p className="section-content">
                 Charalá, Santander is a quiet town nestled in Colombia's eastern Andes, known for its rugged mountains, local markets, and a pace that invites you to slow down. I ended up there by chance, exhausted, sunburnt, and one-third of the way through Transcordilleras, a 1,000-kilometer bikepacking race with over 20,000 meters of climbing. I wasn't ready. Not mentally, not physically. By day three, I handed in my tracker and decided to ride back to Bogota on my own terms.
@@ -308,10 +337,10 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Coffee Section */}
-        <section id="coffee" className="min-h-screen text-black flex flex-col items-start justify-center px-4 sm:px-6 md:pl-40 lg:pl-26 xl:pl-100 pr-4 sm:pr-6 md:pr-16 lg:pr-24 xl:pr-32 py-6 sm:py-8 pb-32 md:pb-8 relative">
-                      <div className="max-w-2xl w-full relative z-40 text-left">
+        <section id="coffee" className="min-h-screen text-black flex flex-col items-start justify-center px-4 sm:px-6 md:pl-40 lg:pl-26 xl:pl-100 pr-4 sm:pr-6 md:pr-16 lg:pr-24 xl:pr-32 py-6 sm:py-8 pb-20 md:pb-8 relative">
+          <div className="max-w-2xl w-full relative z-40 text-left">
             <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
-                              <p className="section-content text-sm sm:text-base leading-relaxed">
+              <p className="section-content text-sm sm:text-base leading-relaxed">
                 This lot was grown and milled on-site by Oscar Castro in Charalá, Colombia. Unlike most coffees, which pass through several stages before roasting, this one stayed close to the ground. Oscar handled both production and milling; we purchased directly, managed export and import independently, and roasted in New York. It's a vertically streamlined process built on trust, transparency, and shared effort.
               </p>
               
@@ -399,30 +428,30 @@ const HomePage: React.FC = () => {
           </div>
         </section>
 
-        {/* Buy Section */}
-        <section id="buy" className="min-h-screen text-black flex flex-col items-center justify-center px-4 sm:px-6 md:pl-32 lg:pl-28 xl:pl-24 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 pb-32 md:pb-8 relative">
+        {/* Buy Section - Improved mobile experience */}
+        <section id="buy" className="min-h-screen text-black flex flex-col items-center justify-center px-4 sm:px-6 md:pl-32 lg:pl-28 xl:pl-24 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 pb-24 md:pb-8 relative">
           <div className="max-w-sm w-full text-left relative z-40">
             <div className="section-content mb-6 sm:mb-8">
               <p className="text-sm sm:text-base lg:text-lg text-black mb-4 sm:mb-6 leading-relaxed">
                 The next roast will be a small one, about 50kg. So they'll sell fast. Drop your email to stay in the loop, and we'll let you pre-order once we have everything in order.
               </p>
               
-              {/* Simple email form */}
+              {/* Improved email form */}
               <div className="section-content">
                 {!submitted ? (
-                  <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+                  <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                     <input
                       type="email"
                       id="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="w-full bg-transparent border-0 border-b border-black px-0 py-2 text-sm sm:text-base focus:outline-none focus:border-b-2 placeholder-gray-500"
+                      className="w-full bg-transparent border-0 border-b border-black px-0 py-3 text-sm sm:text-base focus:outline-none focus:border-b-2 placeholder-gray-500 transition-all"
                       placeholder="your@email.com"
                     />
                     <button
                       type="submit"
-                      className="text-left text-sm sm:text-base font-medium text-black hover:opacity-70 transition-opacity underline self-start"
+                      className="text-left text-sm sm:text-base font-medium text-black hover:opacity-70 transition-all duration-200 underline self-start py-2 active:scale-95"
                     >
                       Sign Up
                     </button>

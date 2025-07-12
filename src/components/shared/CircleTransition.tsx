@@ -11,12 +11,13 @@ const CircleTransition: React.FC<CircleTransitionProps> = ({ children, className
 
   return (
     <>
-      {/* Fixed circle that transitions between states */}
+      {/* Fixed circle that transitions between states - Always behind content */}
       <div
         ref={circleRef}
-        className={`fixed bg-[#FF6700] rounded-full flex items-center justify-center z-10 mobile-circle-behind ${className}`}
+        className={`fixed bg-[#FF6700] rounded-full flex items-center justify-center z-0 ${className}`}
         style={{
-          pointerEvents: circleState.isTransitioning ? 'none' : 'auto'
+          pointerEvents: circleState.isTransitioning ? 'none' : 'auto',
+          zIndex: 0 // Always keep the circle at the back
         }}
       >
         {/* Circle content can vary based on mode */}

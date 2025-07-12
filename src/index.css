@@ -551,3 +551,49 @@
     -ms-overflow-style: none;
   } 
 */
+
+/* Mobile Navigation and Safe Area Support */
+.safe-area-bottom {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+/* Mobile scroll optimizations */
+@media (max-width: 768px) {
+  /* Prevent horizontal scrolling on mobile */
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* Smooth scrolling for mobile */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Touch target improvements */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Prevent zoom on input focus */
+  input[type="email"] {
+    font-size: 16px;
+  }
+  
+  /* Improve touch responsiveness */
+  .active\:scale-95:active {
+    transform: scale(0.95);
+  }
+}
+
+/* Ensure navigation stays above content */
+nav {
+  backdrop-filter: blur(10px);
+}
+
+/* Improved mobile navigation shadows */
+@media (max-width: 768px) {
+  nav {
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  }
+}
