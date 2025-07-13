@@ -75,16 +75,46 @@ function BrewTimerPage({
   React.useEffect(() => {
     document.body.style.backgroundColor = '#f5f5f5';
     document.body.style.color = '#000000';
+    document.body.style.overflow = 'hidden'; // Prevent scrolling on timer page
     return () => {
       document.body.style.backgroundColor = ''; // Revert to default
       document.body.style.color = '';
+      document.body.style.overflow = ''; // Restore scrolling
     };
   }, []);
 
+  // Scroll to section function for navigation
+  const scrollToSection = (sectionId: string) => {
+    if (sectionId === 'timer') {
+      // Already on timer page, do nothing
+      return;
+    }
+    navigate('/');
+    // Add a small delay to ensure navigation completes before scrolling
+    setTimeout(() => {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-100 text-black">
-       {/* Hide navigation on timer page */}
-      <div className="flex flex-col items-center justify-center w-full h-full">
+      {/* Top Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur-sm border-b border-gray-200">
+        <div className="flex justify-center items-center py-4 px-4 sm:px-6">
+          <div className="flex space-x-4 sm:space-x-6 md:space-x-8 lg:space-x-10">
+            <button onClick={() => scrollToSection('home')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">home</button>
+            <button onClick={() => scrollToSection('origen')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">origen</button>
+            <button onClick={() => scrollToSection('coffee')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">coffee</button>
+            <button onClick={() => scrollToSection('buy')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">buy</button>
+            <button className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black underline">timer</button>
+          </div>
+        </div>
+      </nav>
+      
+      <div className="flex flex-col items-center justify-center w-full h-full pt-20">
         <div className="w-full max-w-[430px] mx-auto px-4 py-6 relative">
           <div className="flex flex-col w-full relative z-40">
             {/* Top Info Bar */}
@@ -337,6 +367,30 @@ const BrewingApp: React.FC = () => {
     localStorage.setItem('coffeeSettings', JSON.stringify(coffeeSettings));
   }, [coffeeSettings]);
 
+  // Prevent scrolling on timer configuration page
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
+
+  // Scroll to section function for navigation  
+  const scrollToSection = (sectionId: string) => {
+    if (sectionId === 'timer') {
+      // Already on timer page, do nothing
+      return;
+    }
+    navigate('/');
+    // Add a small delay to ensure navigation completes before scrolling
+    setTimeout(() => {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  };
+
   if (showBrewTimer) {
     return (
       <BrewTimerPage
@@ -362,9 +416,20 @@ const BrewingApp: React.FC = () => {
   // Main page UI
   return (
     <div className="min-h-screen bg-gray-100 text-black">
-      {/* Hide navigation on timer page */}
+      {/* Top Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur-sm border-b border-gray-200">
+        <div className="flex justify-center items-center py-4 px-4 sm:px-6">
+          <div className="flex space-x-4 sm:space-x-6 md:space-x-8 lg:space-x-10">
+            <button onClick={() => scrollToSection('home')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">home</button>
+            <button onClick={() => scrollToSection('origen')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">origen</button>
+            <button onClick={() => scrollToSection('coffee')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">coffee</button>
+            <button onClick={() => scrollToSection('buy')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">buy</button>
+            <button className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black underline">timer</button>
+          </div>
+        </div>
+      </nav>
       
-      <div className="h-full flex flex-col w-full max-w-[430px] mx-auto pt-36 pb-4 px-4 sm:px-6 md:px-8 relative z-20">
+      <div className="h-full flex flex-col w-full max-w-[430px] mx-auto pt-24 pb-4 px-4 sm:px-6 md:px-8 relative z-20">
         <div className="flex items-center gap-3 mb-6 pt-4">
           <button 
             onClick={() => navigate('/')} 
