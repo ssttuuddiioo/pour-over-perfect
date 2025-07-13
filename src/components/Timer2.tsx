@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import GrindSelector from './GrindSelector';
-import BrewingTimer from './BrewingTimer';
 import { Notes } from './Notes';
 import { BrewingPhase, CoffeeSettings } from '../types/brewing';
 import { calculateBrewTiming, formatTime } from '../utils/brewingCalculations';
@@ -258,7 +257,7 @@ function BrewTimerPage({
 
   return (
     <div className="w-full max-w-sm mx-auto">
-      <div className="card p-4">
+      <div className="card p-4 pt-16">
         {/* Top bar: Back/Stop button */}
         <div className="flex justify-between items-center mb-3">
           <button className="btn btn-secondary" onClick={onBack}>Back</button>
@@ -620,7 +619,7 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
             </div>
           </div>
         </nav>
-        <div className="min-h-screen flex items-center justify-center pt-20 pb-8 px-4">
+        <div className="min-h-screen flex items-center justify-center pt-90 pb-8 px-4">
           <InfoPage onBack={() => setShowInfo(false)} />
         </div>
       </div>
@@ -800,127 +799,115 @@ const BrewingApp: React.FC<{ onShowAbout?: () => void }> = ({ onShowAbout }) => 
       </nav>
 
       {/* Main Content - Centered Vertically */}
-      <div className="min-h-screen flex items-center justify-center pt-20 pb-8 px-4">
+      <div className="min-h-screen flex items-start justify-center pt-32 pb-8 px-4">
         <div className="w-full max-w-sm">
-          <div className="card space-y-6">
-            {!isBrewActive ? (
-              <>
-                <div className="flex justify-between items-center mb-4">
-                  <h1 className="text-xl font-semibold">Pour Perfect</h1>
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => setShowNotes(true)}
-                      className="btn btn-secondary p-2"
-                      aria-label="Notes"
-                    >
-                      <span role="img" aria-label="Notes" className="text-lg">🗒️</span>
-                    </button>
+          <div className="card space-y-6 pt-16">
+            <div className="flex justify-between items-center mb-4">
+              <h1 className="text-xl font-semibold">Pour Perfect</h1>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setShowNotes(true)}
+                  className="btn btn-secondary p-2"
+                  aria-label="Notes"
+                >
+                  <span role="img" aria-label="Notes" className="text-lg">🗒️</span>
+                </button>
+                <button
+                  onClick={() => setShowProPours(true)}
+                  className="btn btn-secondary p-2"
+                  aria-label="Pro Pours"
+                >
+                  <span role="img" aria-label="Pro Pours" className="text-lg">🏆</span>
+                </button>
+                <button
+                  onClick={openSettings}
+                  className="btn btn-secondary p-2"
+                  type="button"
+                  aria-label="Settings"
+                >
+                  <span role="img" aria-label="Settings" className="text-lg">⚙️</span>
+                </button>
+              <button 
+                  onClick={() => setShowInfo(true)}
+                className="btn btn-secondary p-2"
+                  type="button"
+                  aria-label="Info"
+              >
+                  <span role="img" aria-label="Info" className="text-lg">ℹ️</span>
+              </button>
+              </div>
+            </div>
+            {/* Coffee and Ratio Selectors */}
+            <div className="flex gap-2 mb-3">
+              <div className="flex-1 flex flex-col gap-1">
+                <span className="text-xs font-medium text-gray-400 mb-1 ml-1">Coffee</span>
+                <div className="grid grid-cols-2 gap-2">
+                  {coffeeOptions.map(amount => (
                     <button
-                      onClick={() => setShowProPours(true)}
-                      className="btn btn-secondary p-2"
-                      aria-label="Pro Pours"
+                      key={amount}
+                      className={`w-full px-0 py-2 rounded-[4px] text-sm font-semibold transition-colors bg-gray-800 ${coffeeSettings.amount === amount ? 'text-white border-2 border-green-400' : 'text-gray-300 border border-transparent'}`}
+                      onClick={() => handleCoffeeAmountChange(amount)}
                     >
-                      <span role="img" aria-label="Pro Pours" className="text-lg">🏆</span>
+                      {amount}g
                     </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex-1 flex flex-col gap-1">
+                <span className="text-xs font-medium text-gray-400 mb-1 ml-1">Ratio</span>
+                <div className="grid grid-cols-2 gap-2">
+                  {ratioOptions.map(ratio => (
                     <button
-                      onClick={openSettings}
-                      className="btn btn-secondary p-2"
-                      type="button"
-                      aria-label="Settings"
+                      key={ratio}
+                      className={`w-full px-0 py-2 rounded-[4px] text-sm font-semibold transition-colors bg-gray-800 ${coffeeSettings.ratio === ratio ? 'text-white border-2 border-green-400' : 'text-gray-300 border border-transparent'}`}
+                      onClick={() => handleRatioChange(ratio)}
                     >
-                      <span role="img" aria-label="Settings" className="text-lg">⚙️</span>
+                      1:{ratio}
                     </button>
-                  <button 
-                      onClick={() => setShowInfo(true)}
-                    className="btn btn-secondary p-2"
-                      type="button"
-                      aria-label="Info"
-                  >
-                      <span role="img" aria-label="Info" className="text-lg">ℹ️</span>
-                  </button>
-                  </div>
+                  ))}
                 </div>
-                {/* Coffee and Ratio Selectors */}
-                <div className="flex gap-2 mb-3">
-                  <div className="flex-1 flex flex-col gap-1">
-                    <span className="text-xs font-medium text-gray-400 mb-1 ml-1">Coffee</span>
-                    <div className="grid grid-cols-2 gap-2">
-                      {coffeeOptions.map(amount => (
-                        <button
-                          key={amount}
-                          className={`w-full px-0 py-2 rounded-[4px] text-sm font-semibold transition-colors bg-gray-800 ${coffeeSettings.amount === amount ? 'text-white border-2 border-green-400' : 'text-gray-300 border border-transparent'}`}
-                          onClick={() => handleCoffeeAmountChange(amount)}
-                        >
-                          {amount}g
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="flex-1 flex flex-col gap-1">
-                    <span className="text-xs font-medium text-gray-400 mb-1 ml-1">Ratio</span>
-                    <div className="grid grid-cols-2 gap-2">
-                      {ratioOptions.map(ratio => (
-                        <button
-                          key={ratio}
-                          className={`w-full px-0 py-2 rounded-[4px] text-sm font-semibold transition-colors bg-gray-800 ${coffeeSettings.ratio === ratio ? 'text-white border-2 border-green-400' : 'text-gray-300 border border-transparent'}`}
-                          onClick={() => handleRatioChange(ratio)}
-                        >
-                          1:{ratio}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                {/* Grind Selector */}
-                <div className="mb-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm font-medium text-gray-300">Grind</span>
-                  </div>
-                  <div className="flex gap-2">
-                    {['Fine', 'Medium', 'Medium-coarse', 'Coarse'].map((label, idx) => {
-                      const grindMap = [3, 6, 7, 9];
-                      return (
-                        <button
-                          key={label}
-                          className={`flex-1 px-0 py-2 rounded-[4px] text-sm font-semibold transition-colors bg-gray-800 ${grindSize === grindMap[idx] ? 'text-white border-2 border-green-400' : 'text-gray-300 border border-transparent'}`}
-                          onClick={() => setGrindSize(grindMap[idx])}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  </div>
-                {/* Brew Time and Total Water - compact row */}
-                <div className="flex gap-2 mb-3">
-                  <div className="flex-1 flex flex-col items-center">
-                    <span className="text-xs font-medium text-gray-400 mb-1">Brew Time</span>
-                    <div className="w-full bg-gray-800 rounded-[4px] px-0 py-2 text-base font-bold text-center text-white">{formatTime(brewingTimings.totalTime)}</div>
-                  </div>
-                  <div className="flex-1 flex flex-col items-center">
-                    <span className="text-xs font-medium text-gray-400 mb-1">Total Water</span>
-                    <div className="w-full bg-gray-800 rounded-[4px] px-0 py-2 text-base font-bold text-center text-white">{brewingTimings.thirdPourTarget}ml</div>
-                  </div>
-                </div>
-                {/* Timer and instruction in a rectangle, instruction left, timer right */}
-                <div className="flex items-center justify-between mb-3 bg-green-900 rounded-[4px] px-4 py-2" style={{ minHeight: 48 }}>
-                  <span className="text-sm text-green-100 font-semibold min-w-0 truncate">{getStepInstruction()}</span>
-                  <span className="text-2xl font-mono font-bold text-green-200 ml-4">{formatTime(Math.floor(elapsed))}</span>
-                </div>
-                {!showBrewTimer && (
-                  <button className="btn btn-primary w-full mt-4" onClick={handleStart}>
-                    Start
-                  </button>
-                )}
-              </>
-            ) : (
-              <BrewingTimer 
-                brewingTimings={brewingTimings}
-                currentPhase={currentPhase}
-                onPhaseChange={handlePhaseChange}
-                onStop={stopBrewing}
-                coffeeSettings={coffeeSettings}
-              />
+              </div>
+            </div>
+            {/* Grind Selector */}
+            <div className="mb-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm font-medium text-gray-300">Grind</span>
+              </div>
+              <div className="flex gap-2">
+                {['Fine', 'Medium', 'Medium-coarse', 'Coarse'].map((label, idx) => {
+                  const grindMap = [3, 6, 7, 9];
+                  return (
+                    <button
+                      key={label}
+                      className={`flex-1 px-0 py-2 rounded-[4px] text-sm font-semibold transition-colors bg-gray-800 ${grindSize === grindMap[idx] ? 'text-white border-2 border-green-400' : 'text-gray-300 border border-transparent'}`}
+                      onClick={() => setGrindSize(grindMap[idx])}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              </div>
+            {/* Brew Time and Total Water - compact row */}
+            <div className="flex gap-2 mb-3">
+              <div className="flex-1 flex flex-col items-center">
+                <span className="text-xs font-medium text-gray-400 mb-1">Brew Time</span>
+                <div className="w-full bg-gray-800 rounded-[4px] px-0 py-2 text-base font-bold text-center text-white">{formatTime(brewingTimings.totalTime)}</div>
+              </div>
+              <div className="flex-1 flex flex-col items-center">
+                <span className="text-xs font-medium text-gray-400 mb-1">Total Water</span>
+                <div className="w-full bg-gray-800 rounded-[4px] px-0 py-2 text-base font-bold text-center text-white">{brewingTimings.thirdPourTarget}ml</div>
+              </div>
+            </div>
+            {/* Timer and instruction in a rectangle, instruction left, timer right */}
+            <div className="flex items-center justify-between mb-3 bg-green-900 rounded-[4px] px-4 py-2" style={{ minHeight: 48 }}>
+              <span className="text-sm text-green-100 font-semibold min-w-0 truncate">{getStepInstruction()}</span>
+              <span className="text-2xl font-mono font-bold text-green-200 ml-4">{formatTime(Math.floor(elapsed))}</span>
+            </div>
+            {!showBrewTimer && (
+              <button className="btn btn-primary w-full mt-4" onClick={handleStart}>
+                Start
+              </button>
             )}
           </div>
           {/* Add fade-in-scale animation */}

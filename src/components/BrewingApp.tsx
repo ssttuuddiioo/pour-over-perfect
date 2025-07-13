@@ -364,7 +364,7 @@ const BrewingApp: React.FC = () => {
     <div className="min-h-screen bg-gray-100 text-black">
       {/* Hide navigation on timer page */}
       
-      <div className="h-full flex flex-col w-full max-w-[430px] mx-auto py-4 px-4 sm:px-6 md:px-8 relative z-20">
+      <div className="h-full flex flex-col w-full max-w-[430px] mx-auto pt-36 pb-4 px-4 sm:px-6 md:px-8 relative z-20">
         <div className="flex items-center gap-3 mb-6 pt-4">
           <button 
             onClick={() => navigate('/')} 
