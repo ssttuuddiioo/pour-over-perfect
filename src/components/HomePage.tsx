@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -13,33 +13,10 @@ const HomePage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
     const [activeSection, setActiveSection] = useState('home');
-  // Gallery / Lightbox state
-  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  const [activeAlbumIndex, setActiveAlbumIndex] = useState(0);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [isImageFadingIn, setIsImageFadingIn] = useState(true);
-  const [circleHitRect, setCircleHitRect] = useState<DOMRect | null>(null);
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [isStoryFadingIn, setIsStoryFadingIn] = useState(true);
 
-  type Photo = { src: string; alt: string; text?: string };
-  type Album = { title: string; cover: Photo; images: Photo[] };
 
-  const basePhotos: Photo[] = [
-    { src: '/photos/1.JPG', alt: 'Coffee photo 1', text: 'Hand-picked cherries at peak ripeness.' },
-    { src: '/photos/2.JPG', alt: 'Coffee photo 2', text: 'Sorting and selection for quality.' },
-    { src: '/photos/4.JPG', alt: 'Coffee photo 4', text: 'Washing and soaking for clarity.' },
-    { src: '/photos/5.JPG', alt: 'Coffee photo 5', text: 'Drying under indirect sunlight.' },
-    { src: '/photos/6.jpg', alt: 'Coffee photo 6', text: 'Resting parchment coffee before milling.' }
-  ];
-
-  // Simple demo albums using existing assets
-  const albums: Album[] = [
-    { title: 'Harvest', cover: basePhotos[0], images: basePhotos },
-    { title: 'Drying', cover: basePhotos[2], images: basePhotos },
-    { title: 'Milling', cover: basePhotos[3], images: basePhotos.slice().reverse() }
-  ];
 
   // Story slides (left image, right text)
   const storySlides: { src: string; text: string }[] = [
@@ -70,36 +47,7 @@ const HomePage: React.FC = () => {
   const showPrevStory = () => changeStory((currentStoryIndex - 1 + storySlides.length) % storySlides.length);
   const showNextStory = () => changeStory((currentStoryIndex + 1) % storySlides.length);
 
-  const openGallery = () => setIsGalleryOpen(true);
-  const closeGallery = () => {
-    setIsGalleryOpen(false);
-    setIsLightboxOpen(false);
-  };
-  const openLightbox = (albumIndex: number, index: number) => {
-    setActiveAlbumIndex(albumIndex);
-    setLightboxIndex(index);
-    setIsImageFadingIn(false);
-    // allow DOM to apply opacity-0, then fade in
-    requestAnimationFrame(() => setIsImageFadingIn(true));
-    setIsLightboxOpen(true);
-  };
-  const closeLightbox = () => setIsLightboxOpen(false);
-  const showPrev = () => {
-    setIsImageFadingIn(false);
-    setTimeout(() => {
-      const total = albums[activeAlbumIndex].images.length;
-      setLightboxIndex((prev) => (prev - 1 + total) % total);
-      setIsImageFadingIn(true);
-    }, 120);
-  };
-  const showNext = () => {
-    setIsImageFadingIn(false);
-    setTimeout(() => {
-      const total = albums[activeAlbumIndex].images.length;
-      setLightboxIndex((prev) => (prev + 1) % total);
-      setIsImageFadingIn(true);
-    }, 120);
-  };
+
   
   // Pinning refs for origen section
   const origenSectionRef = useRef<HTMLElement>(null);
@@ -143,10 +91,8 @@ const HomePage: React.FC = () => {
     }
   };
 
-  // Reset to landing page: close gallery/lightbox, scroll to top, restore circle
+  // Reset to landing page: scroll to top, restore circle
   const resetToLanding = () => {
-    setIsLightboxOpen(false);
-    setIsGalleryOpen(false);
     setActiveSection('home');
     // Smooth scroll to the top/landing
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -575,13 +521,6 @@ const HomePage: React.FC = () => {
       ScrollTrigger.refresh();
     });
 
-    // Attach click handler to circle to open gallery (only on home page)
-    const circleEl = circleRef.current;
-    const handleCircleClick = () => {
-      openGallery();
-    };
-    circleEl?.addEventListener('click', handleCircleClick);
-
     return () => {
       const allTriggers = ScrollTrigger.getAll();
       console.log('🧹 CLEANUP SCROLLTRIGGERS:', {
@@ -589,65 +528,20 @@ const HomePage: React.FC = () => {
         triggerIds: allTriggers.map(t => t.vars.id || 'unnamed')
       });
       allTriggers.forEach(trigger => trigger.kill());
-      circleEl?.removeEventListener('click', handleCircleClick);
     };
   }, []);
 
-  // Lock background scroll when overlay/lightbox open
-  useEffect(() => {
-    const shouldLock = isGalleryOpen || isLightboxOpen;
-    if (shouldLock) {
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = prev;
-      };
-    }
-  }, [isGalleryOpen, isLightboxOpen]);
-
-  // Keyboard navigation for fullscreen lightbox + global Escape to reset
+  // Global Escape to reset
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (isLightboxOpen && e.key === 'ArrowLeft') {
-        e.preventDefault();
-        showPrev();
-      } else if (isLightboxOpen && e.key === 'ArrowRight') {
-        e.preventDefault();
-        showNext();
-      } else if (e.key === 'Escape') {
+      if (e.key === 'Escape') {
         e.preventDefault();
         resetToLanding();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [isLightboxOpen]);
-
-  // Click proxy over the orange circle so it is always clickable above text
-  useEffect(() => {
-    if (!circleRef.current) return;
-    let rafId: number | null = null;
-    const updateRect = () => {
-      if (!circleRef.current) return;
-      const rect = circleRef.current.getBoundingClientRect();
-      setCircleHitRect(rect);
-    };
-    const onScrollOrResize = () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(updateRect);
-    };
-    updateRect();
-    window.addEventListener('scroll', onScrollOrResize, { passive: true });
-    window.addEventListener('resize', onScrollOrResize);
-    const ro = new ResizeObserver(onScrollOrResize);
-    ro.observe(circleRef.current);
-    return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      window.removeEventListener('scroll', onScrollOrResize);
-      window.removeEventListener('resize', onScrollOrResize);
-      ro.disconnect();
-    };
-  }, [circleRef]);
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -943,133 +837,7 @@ const HomePage: React.FC = () => {
         </section>
       </div>
 
-      {/* Invisible click proxy over the orange circle. Sits above content but below nav. */}
-      {circleHitRect && !isGalleryOpen && (
-        <button
-          aria-label="Open photo gallery"
-          onClick={openGallery}
-          className="fixed"
-          style={{
-            left: `${circleHitRect.left}px`,
-            top: `${circleHitRect.top}px`,
-            width: `${circleHitRect.width}px`,
-            height: `${circleHitRect.height}px`,
-            borderRadius: '9999px',
-            zIndex: 45,
-            background: 'transparent',
-            pointerEvents: 'auto',
-            cursor: 'pointer'
-          }}
-        />
-      )}
 
-      {/* Gallery Overlay */}
-      <div
-        className={`fixed inset-0 z-40 bg-white transition-opacity duration-300 ${
-          isGalleryOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-        aria-hidden={!isGalleryOpen}
-      >
-        <div className="absolute inset-0 overflow-y-auto">
-          <div className="sticky top-0 flex justify-end p-4 md:p-6 bg-white/80 backdrop-blur-sm border-b border-gray-200 z-10">
-            <button
-              aria-label="Close gallery"
-              onClick={closeGallery}
-              className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-300 hover:bg-gray-50 text-gray-700"
-            >
-              <X size={18} />
-            </button>
-          </div>
-          <div className="w-full max-w-none mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-8">
-            <h2 className="text-lg md:text-xl font-medium text-black mb-4">Albums</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-4 sm:gap-6">
-              {albums.map((album, aIdx) => (
-                <button
-                  key={album.title}
-                  onClick={() => openLightbox(aIdx, 0)}
-                  className="group text-left"
-                >
-                  <div className="relative w-full overflow-hidden rounded-md bg-gray-100">
-                    <img
-                      src={album.cover.src}
-                      alt={album.cover.alt}
-                      className="block w-full h-auto transition-transform duration-300 group-hover:scale-[1.01]"
-                      loading="lazy"
-                    />
-                  </div>
-                  <div className="mt-2 text-sm text-gray-700">{album.title}</div>
-                </button>
-              ))}
-            </div>
-            <div className="h-12" />
-          </div>
-        </div>
-      </div>
-
-      {/* Lightbox */}
-      {isGalleryOpen && (
-        <div
-          className={`fixed inset-0 z-40 bg-white transition-opacity duration-300 ${
-            isLightboxOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
-          aria-hidden={!isLightboxOpen}
-        >
-          {/* Fullscreen lightbox */}
-          <div className="absolute inset-0">
-            {/* Close */}
-            <div className="absolute top-4 right-4 z-[46]">
-              <button
-                aria-label="Close image"
-                onClick={closeLightbox}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 shadow"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Two-column layout: large photo left with arrows, text right */}
-            <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-12">
-              {/* Left: Image with arrows */}
-              <div className="relative md:col-span-8 flex items-center justify-center px-4 sm:px-6 md:px-10 py-10 sm:py-12 md:py-16">
-                <img
-                  key={`${activeAlbumIndex}-${lightboxIndex}`}
-                  src={albums[activeAlbumIndex].images[lightboxIndex].src}
-                  alt={albums[activeAlbumIndex].images[lightboxIndex].alt}
-                  className={`block max-w-full max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-10rem)] md:max-h-[calc(100vh-12rem)] w-auto h-auto object-contain transition-opacity duration-300 ${
-                    isImageFadingIn ? 'opacity-100' : 'opacity-0'
-                  }`}
-                />
-                {/* Arrows beside image within the left pane */}
-                <div className="pointer-events-none absolute inset-y-0 left-4 right-4 flex items-center justify-between">
-                  <button
-                    onClick={showPrev}
-                    aria-label="Previous photo"
-                    className="pointer-events-auto inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/85 border border-gray-300 text-gray-700 hover:bg-white"
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                  <button
-                    onClick={showNext}
-                    aria-label="Next photo"
-                    className="pointer-events-auto inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/85 border border-gray-300 text-gray-700 hover:bg-white"
-                  >
-                    <ChevronRight size={18} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Right: Title and description */}
-              <div className="md:col-span-4 border-t md:border-t-0 md:border-l border-gray-200 p-6 md:p-10 overflow-y-auto flex items-center">
-                <div className="w-full">
-                  <div className="text-xs text-gray-500 mb-3">{lightboxIndex + 1} / {albums[activeAlbumIndex].images.length}</div>
-                  <h3 className="text-xl md:text-2xl font-medium text-black mb-2">{albums[activeAlbumIndex].title}</h3>
-                  <p className="text-sm md:text-base text-gray-700 leading-relaxed">{albums[activeAlbumIndex].images[lightboxIndex].text}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Footer */}
       <footer className="relative z-40 py-8 px-4 sm:px-6 text-center">
