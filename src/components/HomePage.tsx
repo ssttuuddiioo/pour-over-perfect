@@ -10,8 +10,6 @@ gsap.registerPlugin(ScrollTrigger);
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { circleRef } = useCircleTransition();
-  const [email, setEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
     const [activeSection, setActiveSection] = useState('home');
   // Gallery / Lightbox state
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
@@ -194,32 +192,7 @@ const HomePage: React.FC = () => {
   // Gallery section has no extra refs; we use a normal section anchor
  
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      const formData = new FormData(e.target as HTMLFormElement);
-      
-      const response = await fetch('/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams(formData as any).toString(),
-      });
-      
-      if (response.ok) {
-        setSubmitted(true);
-        setEmail(''); // Clear the email field
-      } else {
-        console.error('Form submission failed');
-        // Still show success message for UX, but log error
-        setSubmitted(true);
-      }
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      // Still show success message for UX, but log error
-      setSubmitted(true);
-    }
-  };
+  // (buy/signup moved to /buy)
 
   // Reset to landing page: close gallery/lightbox, scroll to top, restore circle
   const resetToLanding = () => {
@@ -419,9 +392,6 @@ const HomePage: React.FC = () => {
         start: "top center",
         end: "bottom center",
         onEnter: (self) => {
-          if (config.id === 'gallery') {
-            openGallery();
-          }
           console.log('🎯 SECTION ENTER:', {
             sectionId: config.id,
             scrollY: window.scrollY,
@@ -431,11 +401,13 @@ const HomePage: React.FC = () => {
             elementRect: element.getBoundingClientRect()
           });
           setActiveSection(config.id);
+          if (config.id === 'gallery') {
+            // Debounced open to avoid jank while scroll settles
+            requestAnimationFrame(() => setTimeout(openGallery, 60));
+          }
         },
         onEnterBack: (self) => {
-          if (config.id === 'gallery') {
-            openGallery();
-          }
+          // Mirror behavior when entering back into gallery
           console.log('🎯 SECTION ENTER BACK:', {
             sectionId: config.id,
             scrollY: window.scrollY,
@@ -445,6 +417,9 @@ const HomePage: React.FC = () => {
             elementRect: element.getBoundingClientRect()
           });
           setActiveSection(config.id);
+          if (config.id === 'gallery') {
+            requestAnimationFrame(() => setTimeout(openGallery, 60));
+          }
         },
         onLeave: (self) => {
           console.log('🎯 SECTION LEAVE:', {
@@ -940,8 +915,9 @@ const HomePage: React.FC = () => {
             </button>
             <button
               onClick={() => {
+                // Smoothly scroll to the gallery anchor, then open after layout settles
                 scrollToSection('gallery');
-                openGallery();
+                requestAnimationFrame(() => setTimeout(openGallery, 120));
               }}
               className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
                 activeSection === 'gallery' 
@@ -1211,7 +1187,7 @@ const HomePage: React.FC = () => {
                 />
                 {/* Arrows beside image within the left pane */}
                 <div className="pointer-events-none absolute inset-y-0 left-4 right-4 flex items-center justify-between">
-                  <div className="pointer-events-auto absolute -bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4">
+                 <div className="pointer-events-auto absolute -bottom-8 md:-bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4">
                     <button
                       onClick={showPrev}
                       aria-label="Previous photo"
@@ -1233,8 +1209,8 @@ const HomePage: React.FC = () => {
               {/* Right: Caption panel (no heading) */}
               <div className="md:col-span-4 border-t md:border-t-0 md:border-l border-gray-200 p-6 md:p-10 overflow-y-auto flex items-center">
                 <div className="w-full">
-                  <div className="text-xs text-gray-500 mb-3">{lightboxIndex + 1} / {albums[activeAlbumIndex].images.length}</div>
-                  <p className="text-[1.3rem] md:text-[1.3rem] text-black leading-relaxed">{albums[activeAlbumIndex].images[lightboxIndex].text}</p>
+                  <div className="text-xs text-gray-500 mb-2 md:mb-3">{lightboxIndex + 1} / {albums[activeAlbumIndex].images.length}</div>
+                  <p className="text-[1.2rem] md:text-[1.3rem] text-black leading-relaxed">{albums[activeAlbumIndex].images[lightboxIndex].text}</p>
                 </div>
               </div>
             </div>
