@@ -23,6 +23,35 @@ const HomePage: React.FC = () => {
 
   type Photo = { src: string; alt: string; text?: string };
   type Album = { title: string; cover: Photo; images: Photo[] };
+  type StorySlide = { src: string; text: string; alt?: string };
+
+  const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
+
+  const storySlides: StorySlide[] = [
+    { src: '/photo-final/01.png', text: 'Me on February 11, 2024, at the start of Transcordilleras, completely unaware of what it takes to traverse the Andes mountains in 7 days.' },
+    { src: '/photo-final/02.png', text: 'This is the sunset I saw before riding into Charala, not knowing what new adventure awaited.' },
+    { src: '/photo-final/03.png', text: "Charalá, Santander is a quiet town nestled in Colombia's eastern Andes mountains. known for its rich coffee and a spirit of resilience that lingers in the land and its people." },
+    { src: '/photo-final/04.png', text: 'So much coffee being traded in the town square, I had never seen a calculator that’s also scale' },
+    { src: '/photo-final/05.png', text: 'Oscar and his family with a recent harvest on his farm Bellavista' },
+    { src: '/photo-final/06.png', text: 'Bellavista, sits at 1,900 meters above sea level, where Oscar works a few hectares of land with his family and neighbors, pooling coffee and banana harvests to sell in town.' },
+    { src: '/photo-final/07.png', text: 'I was lucky enough to see the flowering of the coffee plant, which lasts only a few days, the flowers then wither and fall off after pollination before cherries begin to grow' },
+    { src: '/photo-final/08.png', text: 'After visiting Oscar, I rode back to Bogotá at my own pace, stopping to take in the views. This is in Villa de Leyva!' },
+    { src: '/photo-final/09.png', text: "In March 2025 (a full harvest and half later, and a year after my visit to Bellavista), I shipped a small amount form Oscar’s farm to my apartment in Brooklyn." },
+    { src: '/photo-final/10.jpeg', text: 'The coffee came with it’s parchment on! Which is rare and there is virtually no equipment to hull coffee in the US so we had to do it all by hand, what an experience!' },
+    { src: '/photo-final/11.png', text: 'I found an amazing community based roaster in Queens called Multimodal that supports smaller roasters and enthusiasts with the resources to make a great cup' },
+    { src: '/photo-final/12.png', text: 'After a small roast I was able to sell about 20 bags to friends and family.' },
+    { src: '/photo-final/13.png', text: 'Than branding is as minimalist as possible to focus on the coffee itself and its origin while being as transparent as possible' },
+    { src: '/photo-final/14.png', text: 'The first packages being sent out to friends in all corners of the country. LA, SF, Seattle, Atlanta, and Miami' },
+    { src: '/photo-final/15.png', text: 'For orders in NY I hand delivered on my bike, completing a full circle!' }
+  ];
+
+  const goToStorySlide = (index: number) => {
+    const total = storySlides.length;
+    const next = (index + total) % total;
+    setCurrentStoryIndex(next);
+  };
+  const prevStory = () => goToStorySlide(currentStoryIndex - 1);
+  const nextStory = () => goToStorySlide(currentStoryIndex + 1);
 
   const basePhotos: Photo[] = [
     { src: '/photos/1.JPG', alt: 'Coffee photo 1', text: 'Hand-picked cherries at peak ripeness.' },
@@ -182,6 +211,7 @@ const HomePage: React.FC = () => {
     { id: 'home', size: 360, scale: 0.8 },
     { id: 'origen', size: 560, scale: 1.2 },
     { id: 'coffee', size: 650, scale: 1.3 },
+    { id: 'story', size: 700, scale: 1.4 },
     { id: 'buy', size: 750, scale: 1.5 }
   ];
 
@@ -634,6 +664,16 @@ const HomePage: React.FC = () => {
             >
               coffee
             </button>
+            <button
+              onClick={() => scrollToSection('story')}
+              className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
+                activeSection === 'story' 
+                  ? 'text-black underline' 
+                  : 'text-black hover:opacity-70 hover:underline'
+              }`}
+            >
+              story
+            </button>
             
             <button
               onClick={() => scrollToSection('buy')}
@@ -777,7 +817,53 @@ const HomePage: React.FC = () => {
           </div>
         </section>
 
-        
+        {/* Story Section */}
+        <section id="story" className="min-h-screen text-black flex flex-col items-center justify-center px-4 sm:px-6 md:pl-32 lg:pl-28 xl:pl-24 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 relative pt-20">
+          <div className="max-w-6xl w-full relative z-40">
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-10">
+              {/* Image left */}
+              <div className="w-full md:w-1/2">
+                <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
+                  <img
+                    src={storySlides[currentStoryIndex].src}
+                    alt={storySlides[currentStoryIndex].alt || `Story slide ${currentStoryIndex + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+
+              {/* Text right */}
+              <div className="w-full md:w-1/2 relative">
+                <h3 className="font-medium text-base sm:text-lg mb-3">Story</h3>
+                <p className="text-sm sm:text-base leading-relaxed">
+                  {storySlides[currentStoryIndex].text}
+                </p>
+
+                {/* Controls */}
+                <div className="flex items-center gap-4 mt-6">
+                  <button onClick={prevStory} className="text-black hover:opacity-70 text-lg" aria-label="Previous">
+                    ‹
+                  </button>
+                  <button onClick={nextStory} className="text-black hover:opacity-70 text-lg" aria-label="Next">
+                    ›
+                  </button>
+                </div>
+
+                {/* Vertical dots (clickable) */}
+                <div className="hidden md:flex flex-col gap-2 absolute -left-8 top-1/2 -translate-y-1/2">
+                  {storySlides.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentStoryIndex(idx)}
+                      className={`w-2 h-2 rounded-full transition-opacity ${idx === currentStoryIndex ? 'bg-black opacity-100' : 'bg-gray-400 opacity-60 hover:opacity-100'}`}
+                      aria-label={`Go to story ${idx + 1}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Buy Section */}
         <section id="buy" className="min-h-screen text-black flex flex-col items-center justify-center px-4 sm:px-6 md:pl-32 lg:pl-28 xl:pl-24 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 relative pt-20">
