@@ -891,7 +891,7 @@ const HomePage: React.FC = () => {
             <div className="max-w-4xl w-full relative z-40 text-left">
               <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
                 <p className="section-content text-sm sm:text-base leading-relaxed">
-                  This coffee was grown and hulled by Oscar Castro in Charalá. Unlike most coffees, which pass through several hands before it reaches a cup, this one skipped a few of those. Oscar handled both production and milling; we purchased directly, managed export and import independently,  roasted, packaged in New York. It's a vertically streamlined process built on trust, transparency, and shared effort.
+                  This coffee was grown and hulled by Oscar Castro in Charalá. Unlike most coffees, which pass through several hands before it reaches a cup, this one skipped a few of those. Oscar handled both production and milling; we purchased directly, managed export and import independently, roasted, and packaged in New York. It's a vertically streamlined approach built on trust, transparency, and shared effort.
                 </p>
                 
                 <div className="section-content">
