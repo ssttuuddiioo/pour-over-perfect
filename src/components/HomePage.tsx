@@ -10,6 +10,8 @@ gsap.registerPlugin(ScrollTrigger);
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { circleRef } = useCircleTransition();
+  const [email, setEmail] = useState('');
+  const [submitted, setSubmitted] = useState(false);
     const [activeSection, setActiveSection] = useState('home');
   // Gallery / Lightbox state
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
@@ -20,104 +22,25 @@ const HomePage: React.FC = () => {
   const [circleHitRect, setCircleHitRect] = useState<DOMRect | null>(null);
 
   type Photo = { src: string; alt: string; text?: string };
-  type Album = { title: string; cover: Photo; images: Photo[]; description?: string };
+  type Album = { title: string; cover: Photo; images: Photo[] };
 
-  // Use images from public/photo-final in filename order
-  const photoFinalFilenames: string[] = [
-    '01.png','02.png','03.png','04.png','05.png','06.png','07.png','08.png','09.png','10.jpeg','11.png','12.png','13.png','14.png','15.png'
-  ];
-  const storyPhotos: Photo[] = photoFinalFilenames.map((name, idx) => ({
-    src: `/photo-final/${name}`,
-    alt: `Photo ${idx + 1}`
-  }));
-
-  // Manual captions provided by user, one per photo in order
-  const manualCaptions: string[] = [
-    'Me on February 11, 2024, at the start of Transcordilleras, completely unaware of what it takes to traverse the Andes mountains in 7 days.',
-    'This is the sunset I saw before riding into Charala and withdrawing from the race. A new adventure awaited.',
-    "Charalá, Santander is a quiet town nestled in Colombia's eastern Andes mountains.\nknown for its rich coffee and a spirit of resilience that lingers in the land and its people.",
-    'So much coffee being traded in the town square, I had never seen a calculator that’s also a scale.',
-    'Oscar and his family with a recent harvest on his farm Bellavista.',
-    'Bellavista, sits at 1,900 meters above sea level, where Oscar works a few hectares of land with his family and neighbors, pooling coffee and banana harvests to sell in town.',
-    'I was lucky enough to see the flowering of the coffee plant, which lasts only a few days, the flowers then wither and fall off after pollination before cherries begin to grow.',
-    'After visiting Oscar, I rode back to Bogotá at my own pace, stopping to take in the views. This is in Villa de Leyva!',
-    'In March 2025 (a full harvest and half later, and a year after my visit to Bellavista), I shipped a small amount form Oscar’s farm to my apartment in Brooklyn.',
-    'The coffee came with it’s parchment on! Which is rare and there is virtually no equipment to hull coffee in the US so we had to do it all by hand, what an experience!',
-    'I found an amazing community based roaster in Queens called Multimodal that supports smaller roasters and enthusiasts with the resources to make a great cup.',
-    'After a small roast I was able to sell about 20 bags to friends and family.',
-    'The branding is as minimalist as possible to focus on the coffee and its origin.',
-    'The first packages being sent out to friends in all corners of the country. LA, SF, Seattle, Atlanta, and Miami.',
-    'For orders in NY I hand delivered on my bike, completing a full circle!'
+  const basePhotos: Photo[] = [
+    { src: '/photos/1.JPG', alt: 'Coffee processing step 1', text: 'Hand-picked cherries at peak ripeness.' },
+    { src: '/photos/2.JPG', alt: 'Coffee processing step 2', text: 'Sorting and selection for quality.' },
+    { src: '/photos/4.JPG', alt: 'Coffee processing step 4', text: 'Washing and soaking for clarity.' },
+    { src: '/photos/5.JPG', alt: 'Coffee processing step 5', text: 'Drying under indirect sunlight.' },
+    { src: '/photos/6.jpg', alt: 'Coffee processing step 6', text: 'Resting parchment coffee before milling.' }
   ];
 
-  // Load RTF story from public and map paragraphs to photos
-  const [albums, setAlbums] = useState<Album[]>([]);
+  // Simple demo albums using existing assets
+  const albums: Album[] = [
+    { title: 'Harvest', cover: basePhotos[0], images: basePhotos },
+    { title: 'Processing', cover: basePhotos[1], images: basePhotos.slice().reverse() },
+    { title: 'Drying', cover: basePhotos[2], images: basePhotos },
+    { title: 'Milling', cover: basePhotos[3], images: basePhotos.slice().reverse() }
+  ];
 
-  const parseRtfToParagraphs = (rtf: string): string[] => {
-    let text = rtf
-      .replace(/\\'([0-9a-fA-F]{2})/g, (_, hex: string) => String.fromCharCode(parseInt(hex, 16)))
-      .replace(/\\par[d]?/g, '\n')
-      .replace(/\\[a-zA-Z]+-?\d* ?/g, ' ')
-      .replace(/[{}]/g, '')
-      .replace(/\\\s*/g, '\n');
-    text = text.replace(/\r/g, '').replace(/\t/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
-    return text
-      .split(/\n\s*\n+/)
-      .map(p => p.trim())
-      .filter(Boolean)
-      // Drop numeric-only markers like "01" at the start
-      .filter(p => !/^\d{1,4}$/.test(p));
-  };
-
-  useEffect(() => {
-    const loadStory = async () => {
-      try {
-        if (manualCaptions.length > 0) {
-          const minLen = Math.min(manualCaptions.length, storyPhotos.length);
-          const pairedImages: Photo[] = storyPhotos.slice(0, minLen).map((photo, idx) => ({
-            ...photo,
-            text: manualCaptions[idx]
-          }));
-          const album: Album = {
-            title: 'Story',
-            cover: pairedImages[0] ?? storyPhotos[0],
-            images: pairedImages.length ? pairedImages : storyPhotos
-          };
-          setAlbums([album]);
-          return;
-        }
-
-        const res = await fetch('/main%20story.rtf');
-        const raw = await res.text();
-        const paragraphs = parseRtfToParagraphs(raw);
-        const minLen = Math.min(paragraphs.length, storyPhotos.length);
-        const pairedImages: Photo[] = storyPhotos.slice(0, minLen).map((photo, idx) => ({
-          ...photo,
-          text: paragraphs[idx]
-        }));
-        const album: Album = {
-          title: 'Story',
-          cover: pairedImages[0] ?? storyPhotos[0],
-          images: pairedImages.length ? pairedImages : storyPhotos
-        };
-        setAlbums([album]);
-      } catch (err) {
-        console.error('Failed to load main story RTF', err);
-        setAlbums([{ title: 'Story', cover: storyPhotos[0], images: storyPhotos }]);
-      }
-    };
-    loadStory();
-  }, []);
-
-  const openGallery = () => {
-    // Open directly into lightbox, skipping the album grid
-    setActiveAlbumIndex(0);
-    setLightboxIndex(0);
-    setIsImageFadingIn(false);
-    requestAnimationFrame(() => setIsImageFadingIn(true));
-    setIsGalleryOpen(true);
-    setIsLightboxOpen(true);
-  };
+  const openGallery = () => setIsGalleryOpen(true);
   const closeGallery = () => {
     setIsGalleryOpen(false);
     setIsLightboxOpen(false);
@@ -130,32 +53,12 @@ const HomePage: React.FC = () => {
     requestAnimationFrame(() => setIsImageFadingIn(true));
     setIsLightboxOpen(true);
   };
-  const closeLightbox = () => {
-    // Close everything so we don't fall back to the album grid
-    setIsLightboxOpen(false);
-    setIsGalleryOpen(false);
-  };
+  const closeLightbox = () => setIsLightboxOpen(false);
   const showPrev = () => {
     setIsImageFadingIn(false);
     setTimeout(() => {
       const total = albums[activeAlbumIndex].images.length;
-      if (lightboxIndex === 0) {
-        // Move to previous album if available
-        if (activeAlbumIndex > 0) {
-          const newAlbumIndex = activeAlbumIndex - 1;
-          setActiveAlbumIndex(newAlbumIndex);
-          const lastIndex = albums[newAlbumIndex].images.length - 1;
-          setLightboxIndex(lastIndex);
-        } else {
-          // Wrap to last album
-          const newAlbumIndex = albums.length - 1;
-          setActiveAlbumIndex(newAlbumIndex);
-          const lastIndex = albums[newAlbumIndex].images.length - 1;
-          setLightboxIndex(lastIndex);
-        }
-      } else {
-        setLightboxIndex((prev) => (prev - 1 + total) % total);
-      }
+      setLightboxIndex((prev) => (prev - 1 + total) % total);
       setIsImageFadingIn(true);
     }, 120);
   };
@@ -163,20 +66,7 @@ const HomePage: React.FC = () => {
     setIsImageFadingIn(false);
     setTimeout(() => {
       const total = albums[activeAlbumIndex].images.length;
-      if (lightboxIndex === total - 1) {
-        // Move to next album if available
-        if (activeAlbumIndex < albums.length - 1) {
-          const newAlbumIndex = activeAlbumIndex + 1;
-          setActiveAlbumIndex(newAlbumIndex);
-          setLightboxIndex(0);
-        } else {
-          // Wrap to first album
-          setActiveAlbumIndex(0);
-          setLightboxIndex(0);
-        }
-      } else {
-        setLightboxIndex((prev) => (prev + 1) % total);
-      }
+      setLightboxIndex((prev) => (prev + 1) % total);
       setIsImageFadingIn(true);
     }, 120);
   };
@@ -189,10 +79,37 @@ const HomePage: React.FC = () => {
   const coffeeSectionRef = useRef<HTMLElement>(null);
   const coffeeTextRef = useRef<HTMLDivElement>(null);
   
-  // Gallery section has no extra refs; we use a normal section anchor
+  // Pinning refs for scrolly section
+  const scrollySectionRef = useRef<HTMLElement>(null);
+  const scrollyContentRef = useRef<HTMLDivElement>(null);
  
 
-  // (buy/signup moved to /buy)
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const formData = new FormData(e.target as HTMLFormElement);
+      
+      const response = await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(formData as any).toString(),
+      });
+      
+      if (response.ok) {
+        setSubmitted(true);
+        setEmail(''); // Clear the email field
+      } else {
+        console.error('Form submission failed');
+        // Still show success message for UX, but log error
+        setSubmitted(true);
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      // Still show success message for UX, but log error
+      setSubmitted(true);
+    }
+  };
 
   // Reset to landing page: close gallery/lightbox, scroll to top, restore circle
   const resetToLanding = () => {
@@ -268,7 +185,8 @@ const HomePage: React.FC = () => {
     { id: 'home', size: 360, scale: 0.8 },
     { id: 'origen', size: 560, scale: 1.2 },
     { id: 'coffee', size: 650, scale: 1.3 },
-    { id: 'gallery', size: 700, scale: 1.4 }
+    { id: 'scrolly', size: 700, scale: 1.4 },
+    { id: 'buy', size: 750, scale: 1.5 }
   ];
 
   useEffect(() => {
@@ -401,13 +319,8 @@ const HomePage: React.FC = () => {
             elementRect: element.getBoundingClientRect()
           });
           setActiveSection(config.id);
-          if (config.id === 'gallery') {
-            // Debounced open to avoid jank while scroll settles
-            requestAnimationFrame(() => setTimeout(openGallery, 60));
-          }
         },
         onEnterBack: (self) => {
-          // Mirror behavior when entering back into gallery
           console.log('🎯 SECTION ENTER BACK:', {
             sectionId: config.id,
             scrollY: window.scrollY,
@@ -417,9 +330,6 @@ const HomePage: React.FC = () => {
             elementRect: element.getBoundingClientRect()
           });
           setActiveSection(config.id);
-          if (config.id === 'gallery') {
-            requestAnimationFrame(() => setTimeout(openGallery, 60));
-          }
         },
         onLeave: (self) => {
           console.log('🎯 SECTION LEAVE:', {
@@ -603,11 +513,9 @@ const HomePage: React.FC = () => {
       });
     }
 
-    /* Removed scrolly section */
-    if (false) {
-      const scrollyContentRef = null as unknown as HTMLDivElement;
-      const scrollySectionRef = null as unknown as HTMLElement;
-      const scrollyImages: any[] = [];
+    // Set up pinning and animations for scrolly section
+    if (scrollySectionRef.current && scrollyContentRef.current) {
+      const scrollyImages = scrollyContentRef.current.querySelectorAll('.scrolly-image');
       let scrollyAnimations: gsap.core.Timeline[] = [];
       
       const scrollyTrigger = ScrollTrigger.create({
@@ -914,25 +822,25 @@ const HomePage: React.FC = () => {
               coffee
             </button>
             <button
-              onClick={() => {
-                // Smoothly scroll to the gallery anchor, then open after layout settles
-                scrollToSection('gallery');
-                requestAnimationFrame(() => setTimeout(openGallery, 120));
-              }}
+              onClick={() => scrollToSection('scrolly')}
               className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
-                activeSection === 'gallery' 
+                activeSection === 'scrolly' 
                   ? 'text-black underline' 
                   : 'text-black hover:opacity-70 hover:underline'
               }`}
             >
-              gallery
+              process
             </button>
-            <a
-              href="/buy"
-              className="text-sm sm:text-base md:text-lg font-medium text-black hover:opacity-70 hover:underline transition-opacity"
+            <button
+              onClick={() => scrollToSection('buy')}
+              className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
+                activeSection === 'buy' 
+                  ? 'text-black underline' 
+                  : 'text-black hover:opacity-70 hover:underline'
+              }`}
             >
               buy
-            </a>
+            </button>
             <button
               onClick={() => navigate('/timer')}
               className="text-sm sm:text-base md:text-lg font-medium text-black hover:opacity-70 hover:underline transition-opacity"
@@ -1072,10 +980,110 @@ const HomePage: React.FC = () => {
           </div>
         </section>
 
-        {/* Gallery Section anchor */}
-        <section id="gallery" className="min-h-screen pt-20" />
+        {/* Scrolly Section - Pinned with Image Animations */}
+        <section ref={scrollySectionRef} id="scrolly" className="text-black relative pt-20" style={{ height: '400vh' }}>
+          <div ref={scrollyContentRef} className="scrolly-section w-full h-screen flex items-center justify-center px-4 sm:px-6 py-6 sm:py-8 z-40">
+            <div className="max-w-6xl w-full relative z-40">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                {/* Image 1 */}
+                <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
+                  <img 
+                    src="/photos/1.JPG" 
+                    alt="Coffee processing step 1"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                {/* Image 2 */}
+                <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
+                  <img 
+                    src="/photos/2.JPG" 
+                    alt="Coffee processing step 2"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                {/* Image 3 */}
+                <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
+                  <img 
+                    src="/photos/3.JPG" 
+                    alt="Coffee processing step 3"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                {/* Image 4 */}
+                <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
+                  <img 
+                    src="/photos/4.JPG" 
+                    alt="Coffee processing step 4"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                {/* Image 5 */}
+                <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
+                  <img 
+                    src="/photos/5.JPG" 
+                    alt="Coffee processing step 5"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                
+                {/* Image 6 */}
+                <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
+                  <img 
+                    src="/photos/6.jpg" 
+                    alt="Coffee processing step 6"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
-        {/* Buy section removed from scroll; now lives at /buy */}
+        {/* Buy Section */}
+        <section id="buy" className="min-h-screen text-black flex flex-col items-center justify-center px-4 sm:px-6 md:pl-32 lg:pl-28 xl:pl-24 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 relative pt-20">
+          <div className="max-w-4xl w-full relative z-40 text-left">
+            <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
+              <p className="section-content text-sm sm:text-base leading-relaxed">
+                The next roast will be a small one, about 50kg. Drop your email to stay in the loop, and we'll let you know when pre-order is open a few days before the next roast.
+              </p>
+
+              <div className="section-content">
+                <div className="mt-6 sm:mt-8 lg:mt-10">
+                  <h3 className="font-medium text-base sm:text-lg mb-3 sm:mb-4 lg:mb-6">Get notified when available</h3>
+                  {!submitted ? (
+                    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                      <div>
+                        <input
+                          type="email"
+                          name="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="Enter your email"
+                          required
+                          className="w-full px-0 py-2 text-sm sm:text-base placeholder-gray-500 text-black bg-transparent border-0 border-b border-gray-300 focus:border-black focus:outline-none focus:ring-0"
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        className="text-left text-sm sm:text-base font-medium text-black hover:opacity-70 transition-all duration-200 underline self-start py-2 active:scale-95"
+                      >
+                        Sign Up
+                      </button>
+                    </form>
+                  ) : (
+                    <div className="text-left py-4">
+                      <p className="text-sm sm:text-base text-gray-600">Thanks for signing up! We'll let you know as soon as the next roast is ready.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
 
       {/* Invisible click proxy over the orange circle. Sits above content but below nav. */}
@@ -1098,12 +1106,12 @@ const HomePage: React.FC = () => {
         />
       )}
 
-      {/* Gallery Overlay - show category grid when explicitly navigating albums (hidden by default) */}
+      {/* Gallery Overlay */}
       <div
-        className={`fixed inset-0 z-40 transition-opacity duration-300 ${
-          isGalleryOpen && !isLightboxOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        className={`fixed inset-0 z-40 bg-white transition-opacity duration-300 ${
+          isGalleryOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
-        aria-hidden={!(isGalleryOpen && !isLightboxOpen)}
+        aria-hidden={!isGalleryOpen}
       >
         <div className="absolute inset-0 overflow-y-auto">
           <div className="sticky top-0 flex justify-end p-4 md:p-6 bg-white/80 backdrop-blur-sm border-b border-gray-200 z-10">
@@ -1144,7 +1152,7 @@ const HomePage: React.FC = () => {
       {/* Lightbox */}
       {isGalleryOpen && (
         <div
-          className={`fixed inset-0 z-40 transition-opacity duration-300 ${
+          className={`fixed inset-0 z-40 bg-white transition-opacity duration-300 ${
             isLightboxOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
           aria-hidden={!isLightboxOpen}
@@ -1166,17 +1174,6 @@ const HomePage: React.FC = () => {
             <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-12">
               {/* Left: Image with arrows */}
               <div className="relative md:col-span-8 flex items-center justify-center px-4 sm:px-6 md:px-10 py-10 sm:py-12 md:py-16">
-                {/* Dot navigation */}
-                <div className="absolute left-3 sm:left-4 md:left-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-[46]">
-                  {albums[activeAlbumIndex].images.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setLightboxIndex(idx)}
-                      aria-label={`Go to slide ${idx + 1}`}
-                      className={`w-2 h-2 rounded-full border ${idx === lightboxIndex ? 'bg-orange-500 border-orange-500' : 'bg-transparent border-gray-300 hover:border-gray-400'}`}
-                    />
-                  ))}
-                </div>
                 <img
                   key={`${activeAlbumIndex}-${lightboxIndex}`}
                   src={albums[activeAlbumIndex].images[lightboxIndex].src}
@@ -1187,30 +1184,29 @@ const HomePage: React.FC = () => {
                 />
                 {/* Arrows beside image within the left pane */}
                 <div className="pointer-events-none absolute inset-y-0 left-4 right-4 flex items-center justify-between">
-                 <div className="pointer-events-auto absolute -bottom-8 md:-bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4">
-                    <button
-                      onClick={showPrev}
-                      aria-label="Previous photo"
-                      className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/85 border border-gray-300 text-gray-700 hover:bg-white shadow"
-                    >
-                      <ChevronLeft size={18} />
-                    </button>
-                    <button
-                      onClick={showNext}
-                      aria-label="Next photo"
-                      className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/85 border border-gray-300 text-gray-700 hover:bg-white shadow"
-                    >
-                      <ChevronRight size={18} />
-                    </button>
-                  </div>
+                  <button
+                    onClick={showPrev}
+                    aria-label="Previous photo"
+                    className="pointer-events-auto inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/85 border border-gray-300 text-gray-700 hover:bg-white"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button
+                    onClick={showNext}
+                    aria-label="Next photo"
+                    className="pointer-events-auto inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/85 border border-gray-300 text-gray-700 hover:bg-white"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
                 </div>
               </div>
 
-              {/* Right: Caption panel (no heading) */}
+              {/* Right: Title and description */}
               <div className="md:col-span-4 border-t md:border-t-0 md:border-l border-gray-200 p-6 md:p-10 overflow-y-auto flex items-center">
                 <div className="w-full">
-                  <div className="text-xs text-gray-500 mb-2 md:mb-3">{lightboxIndex + 1} / {albums[activeAlbumIndex].images.length}</div>
-                  <p className="text-[1.2rem] md:text-[1.3rem] text-black leading-relaxed">{albums[activeAlbumIndex].images[lightboxIndex].text}</p>
+                  <div className="text-xs text-gray-500 mb-3">{lightboxIndex + 1} / {albums[activeAlbumIndex].images.length}</div>
+                  <h3 className="text-xl md:text-2xl font-medium text-black mb-2">{albums[activeAlbumIndex].title}</h3>
+                  <p className="text-sm md:text-base text-gray-700 leading-relaxed">{albums[activeAlbumIndex].images[lightboxIndex].text}</p>
                 </div>
               </div>
             </div>
