@@ -21,6 +21,7 @@ const HomePage: React.FC = () => {
   const [isImageFadingIn, setIsImageFadingIn] = useState(true);
   const [circleHitRect, setCircleHitRect] = useState<DOMRect | null>(null);
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
+  const [isStoryFadingIn, setIsStoryFadingIn] = useState(true);
 
   type Photo = { src: string; alt: string; text?: string };
   type Album = { title: string; cover: Photo; images: Photo[] };
@@ -59,8 +60,15 @@ const HomePage: React.FC = () => {
     { src: '/photo-final/15.png', text: 'Quisque gravida, arcu ac aliquet scelerisque, erat risus vestibulum nisl, ac consequat elit turpis id libero.' }
   ];
 
-  const showPrevStory = () => setCurrentStoryIndex((i) => (i - 1 + storySlides.length) % storySlides.length);
-  const showNextStory = () => setCurrentStoryIndex((i) => (i + 1) % storySlides.length);
+  const changeStory = (nextIndex: number) => {
+    setIsStoryFadingIn(false);
+    setTimeout(() => {
+      setCurrentStoryIndex(nextIndex);
+      setIsStoryFadingIn(true);
+    }, 150);
+  };
+  const showPrevStory = () => changeStory((currentStoryIndex - 1 + storySlides.length) % storySlides.length);
+  const showNextStory = () => changeStory((currentStoryIndex + 1) % storySlides.length);
 
   const openGallery = () => setIsGalleryOpen(true);
   const closeGallery = () => {
@@ -834,18 +842,35 @@ const HomePage: React.FC = () => {
 
         {/* Story Section (left image, right text) */}
         <section ref={storySectionRef} id="story" className="text-black relative pt-20" style={{ height: '300vh' }}>
-          <div ref={storyContentRef} className="w-full h-screen grid grid-cols-1 md:grid-cols-12 items-center px-4 sm:px-6 py-6 sm:py-8 z-40">
+          <div ref={storyContentRef} className="w-full h-screen grid grid-cols-1 md:grid-cols-12 items-center px-4 sm:px-6 py-6 sm:py-8 z-40 relative">
+            {/* Dots (left of image) */}
+            <div className="hidden md:flex md:col-span-1 md:justify-center">
+              <div className="flex flex-col space-y-3 absolute left-2 top-1/2 -translate-y-1/2">
+                {storySlides.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => changeStory(idx)}
+                    aria-label={`Go to slide ${idx + 1}`}
+                    className={`w-2.5 h-2.5 rounded-full border transition-all ${
+                      idx === currentStoryIndex ? 'bg-black border-black' : 'bg-transparent border-gray-400 hover:border-black'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
             {/* Left: Image */}
-            <div className="md:col-span-7 flex items-center justify-center pr-0 md:pr-6 lg:pr-10">
+            <div className="md:col-span-7 md:col-start-2 flex items-center justify-center pr-0 md:pr-6 lg:pr-10">
               <img
                 key={currentStoryIndex}
                 src={storySlides[currentStoryIndex].src}
                 alt={`story image ${currentStoryIndex + 1}`}
-                className="w-full h-auto max-h-[70vh] object-contain rounded-md shadow-sm"
+                className={`w-full h-auto max-h-[70vh] object-contain rounded-md shadow-sm transition-opacity duration-300 ${
+                  isStoryFadingIn ? 'opacity-100' : 'opacity-0'
+                }`}
               />
             </div>
             {/* Right: Text with arrows */}
-            <div className="md:col-span-5 pl-0 md:pl-6 lg:pl-10">
+            <div className="md:col-span-4 pl-0 md:pl-6 lg:pl-10">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl sm:text-2xl font-medium">story</h3>
                 <div className="flex items-center space-x-2">
@@ -865,7 +890,7 @@ const HomePage: React.FC = () => {
                   </button>
                 </div>
               </div>
-              <p className="text-sm sm:text-base leading-relaxed section-content">
+              <p className="text-base sm:text-xl leading-relaxed section-content">
                 {storySlides[currentStoryIndex].text}
               </p>
               <div className="text-xs text-gray-500 mt-3">{currentStoryIndex + 1} / {storySlides.length}</div>
