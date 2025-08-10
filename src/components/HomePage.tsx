@@ -191,9 +191,7 @@ const HomePage: React.FC = () => {
   const coffeeSectionRef = useRef<HTMLElement>(null);
   const coffeeTextRef = useRef<HTMLDivElement>(null);
   
-  // Pinning refs for scrolly section
-  const scrollySectionRef = useRef<HTMLElement>(null);
-  const scrollyContentRef = useRef<HTMLDivElement>(null);
+  // Gallery section has no extra refs; we use a normal section anchor
  
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -297,7 +295,7 @@ const HomePage: React.FC = () => {
     { id: 'home', size: 360, scale: 0.8 },
     { id: 'origen', size: 560, scale: 1.2 },
     { id: 'coffee', size: 650, scale: 1.3 },
-    { id: 'scrolly', size: 700, scale: 1.4 }
+    { id: 'gallery', size: 700, scale: 1.4 }
   ];
 
   useEffect(() => {
@@ -421,6 +419,9 @@ const HomePage: React.FC = () => {
         start: "top center",
         end: "bottom center",
         onEnter: (self) => {
+          if (config.id === 'gallery') {
+            openGallery();
+          }
           console.log('🎯 SECTION ENTER:', {
             sectionId: config.id,
             scrollY: window.scrollY,
@@ -432,6 +433,9 @@ const HomePage: React.FC = () => {
           setActiveSection(config.id);
         },
         onEnterBack: (self) => {
+          if (config.id === 'gallery') {
+            openGallery();
+          }
           console.log('🎯 SECTION ENTER BACK:', {
             sectionId: config.id,
             scrollY: window.scrollY,
@@ -624,9 +628,11 @@ const HomePage: React.FC = () => {
       });
     }
 
-    // Set up pinning and animations for scrolly section
-    if (scrollySectionRef.current && scrollyContentRef.current) {
-      const scrollyImages = scrollyContentRef.current.querySelectorAll('.scrolly-image');
+    /* Removed scrolly section */
+    if (false) {
+      const scrollyContentRef = null as unknown as HTMLDivElement;
+      const scrollySectionRef = null as unknown as HTMLElement;
+      const scrollyImages: any[] = [];
       let scrollyAnimations: gsap.core.Timeline[] = [];
       
       const scrollyTrigger = ScrollTrigger.create({
@@ -934,15 +940,16 @@ const HomePage: React.FC = () => {
             </button>
             <button
               onClick={() => {
+                scrollToSection('gallery');
                 openGallery();
               }}
               className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
-                activeSection === 'scrolly' 
+                activeSection === 'gallery' 
                   ? 'text-black underline' 
                   : 'text-black hover:opacity-70 hover:underline'
               }`}
             >
-              process
+              gallery
             </button>
             <a
               href="/buy"
@@ -1089,68 +1096,8 @@ const HomePage: React.FC = () => {
           </div>
         </section>
 
-        {/* Scrolly Section - Pinned with Image Animations */}
-        <section ref={scrollySectionRef} id="scrolly" className="text-black relative pt-20" style={{ height: '400vh' }}>
-          <div ref={scrollyContentRef} className="scrolly-section w-full h-screen flex items-center justify-center px-4 sm:px-6 py-6 sm:py-8 z-40">
-            <div className="max-w-6xl w-full relative z-40">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-                {/* Image 1 */}
-                <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
-                  <img 
-                    src="/photos/1.JPG" 
-                    alt="Coffee processing step 1"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                
-                {/* Image 2 */}
-                <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
-                  <img 
-                    src="/photos/2.JPG" 
-                    alt="Coffee processing step 2"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                
-                {/* Image 3 */}
-                <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
-                  <img 
-                    src="/photos/03.JPG" 
-                    alt="Coffee processing step 3"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                
-                {/* Image 4 */}
-                <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
-                  <img 
-                    src="/photos/4.JPG" 
-                    alt="Coffee processing step 4"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                
-                {/* Image 5 */}
-                <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
-                  <img 
-                    src="/photos/5.JPG" 
-                    alt="Coffee processing step 5"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                
-                {/* Image 6 */}
-                <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
-                  <img 
-                    src="/photos/6.jpg" 
-                    alt="Coffee processing step 6"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* Gallery Section anchor */}
+        <section id="gallery" className="min-h-screen pt-20" />
 
         {/* Buy section removed from scroll; now lives at /buy */}
       </div>
