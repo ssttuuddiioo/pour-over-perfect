@@ -26,7 +26,7 @@ const HomePage: React.FC = () => {
 
   // Use images from public/photo-final in filename order
   const photoFinalFilenames: string[] = [
-    '01.png','02.png','03.png','04.png','05.png','06.png','07.png','08.png','09.png','10.png','11.png','12.png','13.png','14.png','15.png'
+    '01.png','02.png','03.png','04.png','05.png','06.png','07.png','08.png','09.png','10.jpeg','11.png','12.png','13.png','14.png','15.png'
   ];
   const storyPhotos: Photo[] = photoFinalFilenames.map((name, idx) => ({
     src: `/photo-final/${name}`,
@@ -35,20 +35,21 @@ const HomePage: React.FC = () => {
 
   // Manual captions provided by user, one per photo in order
   const manualCaptions: string[] = [
-    'Me at the start on Transcordilleras, completely unaware of what it takes to traverse the Andes mountains in 7 days.',
-    'This is the sunset I saw before riding into Charalá, where I handed in my tracker and withdrew from the race—without knowing what new adventure awaited.',
-    "Charalá, Santander is a quiet town nestled in Colombia's eastern Andes mountains, known for its quiet strength, rich coffee, and a spirit of resilience that lingers in the land and its people.",
-    'This was in the town square—locals trading coffee.',
-    'Oscar and his family with a recent harvest on his farm, Bellavista.',
-    'Bellavista sits at 1,900 meters above sea level. He works a few hectares with his family and neighbors, pooling coffee and banana harvests to sell in town.',
-    'I was lucky enough to see the flowering of the coffee plant. The flowers wither and fall after pollination in a few days, and then the cherries begin to grow.',
-    'After the tour I spent the day at the pool, and then rode back to Bogotá at my own pace, stopping to take in the views—Ráquira (Colombia’s ceramics capital) and Villa de Leyva, then a stop at my cousin’s in Chía. 500 km later I was back in Bogotá.',
-    'A full harvest and a half later—in March 2025—I figured out a way to import a small amount from Oscar’s farm.',
-    'I found an amazing community‑based roaster in Queens called Multimodal that supports smaller roasters and enthusiasts with the resources to make a great cup.',
+    'Me on February 11, 2024, at the start of Transcordilleras, completely unaware of what it takes to traverse the Andes mountains in 7 days.',
+    'This is the sunset I saw before riding into Charala, not knowing what new adventure awaited.',
+    "Charalá, Santander is a quiet town nestled in Colombia's eastern Andes mountains.\nknown for its rich coffee and a spirit of resilience that lingers in the land and its people.",
+    'So much coffee being traded in the town square, I had never seen a calculator that’s also scale',
+    'Oscar and his family with a recent harvest on his farm Bellavista',
+    'Bellavista, sits at 1,900 meters above sea level, where Oscar works a few hectares of land with his family and neighbors, pooling coffee and banana harvests to sell in town.',
+    'I was lucky enough to see the flowering of the coffee plant, which lasts only a few days, the flowers then wither and fall off after pollination before cherries begin to grow',
+    'After visiting Oscar, I rode back to Bogotá at my own pace, stopping to take in the views. This is in Villa de Leyva!',
+    'In March 2025 (a full harvest and half later, and a year after my visit to Bellavista), I shipped a small amount form Oscar’s farm to my apartment in Brooklyn.',
+    'The coffee came with it’s parchment on! Which is rare and there is virtually no equipment to hull coffee in the US so we had to do it all by hand, what an experience!',
+    'I found an amazing community based roaster in Queens called Multimodal that supports smaller roasters and enthusiasts with the resources to make a great cup',
     'After a small roast I was able to sell about 20 bags to friends and family.',
-    'The branding is as minimalist as possible—to focus on the coffee itself and its origin—while being as transparent as possible.',
-    'The first packages being sent out to friends in all corners of the country: LA, SF, Seattle, Atlanta, and Miami.',
-    'For orders in New York, I hand‑delivered by bike.'
+    'Than branding is as minimalist as possible to focus on the coffee itself and its origin while being as transparent as possible',
+    'The first packages being sent out to friends in all corners of the country. LA, SF, Seattle, Atlanta, and Miami',
+    'For orders in NY I hand delivered on my bike, completing a full circle!'
   ];
 
   // Load RTF story from public and map paragraphs to photos
