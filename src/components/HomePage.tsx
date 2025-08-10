@@ -843,23 +843,23 @@ const HomePage: React.FC = () => {
         {/* Story Section (left image, right text) */}
         <section ref={storySectionRef} id="story" className="text-black relative pt-20" style={{ height: '300vh' }}>
           <div ref={storyContentRef} className="w-full h-screen grid grid-cols-1 md:grid-cols-12 items-center px-4 sm:px-6 py-6 sm:py-8 z-40 relative">
-            {/* Dots (left of image) */}
-            <div className="hidden md:flex md:col-span-1 md:justify-center">
-              <div className="flex flex-col space-y-3 absolute left-2 top-1/2 -translate-y-1/2">
-                {storySlides.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => changeStory(idx)}
-                    aria-label={`Go to slide ${idx + 1}`}
-                    className={`w-2.5 h-2.5 rounded-full border transition-all ${
-                      idx === currentStoryIndex ? 'bg-black border-black' : 'bg-transparent border-gray-400 hover:border-black'
-                    }`}
-                  />
-                ))}
+            {/* Left: Image with dots */}
+            <div className="md:col-span-7 flex items-center justify-center pr-0 md:pr-6 lg:pr-10 relative">
+              {/* Dots (left of image) */}
+              <div className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6">
+                <div className="flex flex-col space-y-3">
+                  {storySlides.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => changeStory(idx)}
+                      aria-label={`Go to slide ${idx + 1}`}
+                      className={`w-2.5 h-2.5 rounded-full border transition-all ${
+                        idx === currentStoryIndex ? 'bg-orange-500 border-orange-500' : 'bg-transparent border-gray-400 hover:border-orange-500'
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-            {/* Left: Image */}
-            <div className="md:col-span-7 md:col-start-2 flex items-center justify-center pr-0 md:pr-6 lg:pr-10">
               <img
                 key={currentStoryIndex}
                 src={storySlides[currentStoryIndex].src}
@@ -870,9 +870,14 @@ const HomePage: React.FC = () => {
               />
             </div>
             {/* Right: Text with arrows */}
-            <div className="md:col-span-4 pl-0 md:pl-6 lg:pl-10">
-              <div className="flex items-center justify-between mb-4">
+            <div className="md:col-span-5 pl-0 md:pl-6 lg:pl-10">
+              <div className="mb-4">
                 <h3 className="text-xl sm:text-2xl font-medium">story</h3>
+              </div>
+              <p className="text-base sm:text-xl leading-relaxed section-content mb-6">
+                {storySlides[currentStoryIndex].text}
+              </p>
+              <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={showPrevStory}
@@ -889,11 +894,8 @@ const HomePage: React.FC = () => {
                     <ChevronRight size={18} />
                   </button>
                 </div>
+                <div className="text-xs text-gray-500">{currentStoryIndex + 1} / {storySlides.length}</div>
               </div>
-              <p className="text-base sm:text-xl leading-relaxed section-content">
-                {storySlides[currentStoryIndex].text}
-              </p>
-              <div className="text-xs text-gray-500 mt-3">{currentStoryIndex + 1} / {storySlides.length}</div>
             </div>
           </div>
         </section>
