@@ -132,7 +132,11 @@ const ScrollNavigator: React.FC = () => {
           if (!isScrolling) {
             setCurrentSection(index);
             navigate(section.path, { replace: true });
-            animateCircle(section);
+            
+            // Special handling for OrigenPage - let it manage its own circle animation
+            if (section.id !== 'origen') {
+              animateCircle(section);
+            }
             
             // Fade in current section content
             gsap.fromTo(element.querySelectorAll('.content-fade'), 
@@ -151,7 +155,11 @@ const ScrollNavigator: React.FC = () => {
           if (!isScrolling) {
             setCurrentSection(index);
             navigate(section.path, { replace: true });
-            animateCircle(section);
+            
+            // Special handling for OrigenPage - let it manage its own circle animation
+            if (section.id !== 'origen') {
+              animateCircle(section);
+            }
             
             // Fade in current section content
             gsap.fromTo(element.querySelectorAll('.content-fade'), 

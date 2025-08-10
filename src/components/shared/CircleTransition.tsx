@@ -17,7 +17,7 @@ const CircleTransition: React.FC<CircleTransitionProps> = ({ children, className
         className={`fixed bg-[#FF6700] rounded-full flex items-center justify-center ${className}`}
         style={{
           pointerEvents: circleState.isTransitioning ? 'none' : 'auto',
-          zIndex: -1, // Always keep the circle at the back
+          zIndex: 1, // Circle in middle layer: photos(0) < circle(1) < text(2)
           position: 'fixed',
           left: '50%',
           top: '50%',
