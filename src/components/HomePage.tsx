@@ -33,6 +33,24 @@ const HomePage: React.FC = () => {
     alt: `Photo ${idx + 1}`
   }));
 
+  // Manual captions provided by user, one per photo in order
+  const manualCaptions: string[] = [
+    '1. Me at the start on Transcordilleras, completely unaware of what it takes to traverse the Andes mountains in 7 days.',
+    '2. This is the sunset I saw before riding into Charala, not knowing what new adventure awaited.',
+    "3. Charalá, Santander is a quiet town nestled in Colombia's eastern Andes mountains. known for its quiet strength, rich coffee, and a spirit of resilience that lingers in the land and its people.",
+    '4. This was in the town square, locals trading coffee',
+    '5. Oscar and his family with a recent harvest on his farm Bellavista',
+    '6. Bellavista, sits at 1,900 meters above sea level. He works a few hectares with his family and neighbors, pooling coffee and banana harvests to sell in town.',
+    '7. I was lucky enough to see the flowering of the coffee plant, the flowers wither and fall after pollination in a few days and then the cherries begin to grow',
+    '8. After the tour I spent the day at the pool and on I rode back to Bogotá at my own pace, stopping to take in the views. Stopped in Ráquira, Colombia’s ceramics capital, and Villa de Leyva. A stop at my cousin’s in Chía and 500km later I was back to Bogotá.',
+    '9. A full harvest and half later, in March 2025 I figured out a way to import a small amount form Oscar’s farm.',
+    '10. I found an amazing community based roaster in Queens called Multimodal that supports smaller roasters and enthusiasts with the resources to make a great cup',
+    '11. After a small roast I was able to sell about 20 bags to friends and family.',
+    '12. Than branding is as minimalist as possible to focus on the coffee itself and its origin while being as transparent as possible',
+    '13. The first packages being sent out to friends in all corners of the country. LA, SF, Seattle, Atlanta, and Miami',
+    '14. For orders in NY I hand delivered on my bike!'
+  ];
+
   // Load RTF story from public and map paragraphs to photos
   const [albums, setAlbums] = useState<Album[]>([]);
 
@@ -55,6 +73,21 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     const loadStory = async () => {
       try {
+        if (manualCaptions.length > 0) {
+          const minLen = Math.min(manualCaptions.length, storyPhotos.length);
+          const pairedImages: Photo[] = storyPhotos.slice(0, minLen).map((photo, idx) => ({
+            ...photo,
+            text: manualCaptions[idx]
+          }));
+          const album: Album = {
+            title: 'Story',
+            cover: pairedImages[0] ?? storyPhotos[0],
+            images: pairedImages.length ? pairedImages : storyPhotos
+          };
+          setAlbums([album]);
+          return;
+        }
+
         const res = await fetch('/main%20story.rtf');
         const raw = await res.text();
         const paragraphs = parseRtfToParagraphs(raw);
