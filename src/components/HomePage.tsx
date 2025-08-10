@@ -33,49 +33,39 @@ const HomePage: React.FC = () => {
     alt: `Photo ${idx + 1}`
   }));
 
-  // Categories (titles provided) with text chunks derived from the story
-  const categories: { title: string; description: string }[] = [
-    {
-      title: 'Charala, Santander',
-      description:
-        "Charalá, Santander is a quiet town tucked into Colombia’s eastern Andes. It’s known for quiet strength, coffee, and a spirit of resilience. I ended up there by chance—exhausted, sunburnt, and one‑third of the way through Transcordilleras, a 1,000‑kilometer bikepacking race with over 20,000 meters of climbing. I wasn’t ready—mentally or physically. By day three, I handed in my tracker and withdrew."
-    },
-    {
-      title: 'Stopping to slow down',
-      description:
-        'With no plan, I stayed at a hostel, aiming for slower, simpler roads back to Bogotá. Over lunch, I asked the hostel manager if he knew any coffee producers. He made a call. A few hours later, Oscar Castro pulled up in his pickup and invited me to visit his farm.'
-    },
-    {
-      title: 'Oscar Casto, Bellavista',
-      description:
-        'Oscar’s farm, Bellavista, sits at 1,900 meters above sea level. He works a few hectares with his family and neighbors, pooling coffee and banana harvests to sell in town. His coffee is Castillo—a hardy, high‑altitude hybrid—delicate and floral with soft orchard fruit and a clean, structured finish. We walked the farm, and he sent me off with stove‑top roasted coffee.'
-    },
-    {
-      title: 'Long way home',
-      description:
-        'After a day in the pool, I rode back to Bogotá at my own pace, stopping often to take in the views. I passed through Ráquira, Colombia’s ceramics capital, and Villa de Leyva. A stop at my cousin’s in Chía, and 500 km later, I was back in Bogotá.'
-    },
-    {
-      title: 'Roasting',
-      description:
-        'That was March 2024. By January, after thinking about that trip almost daily, I called Oscar to see if we could get his coffee to the U.S. A friend shared tips for shipping from remote Colombia. Using FedEx’s last‑minute rates, I imported 40 kg of green coffee with parchment—rare in the U.S. In New York, with no equipment, I hulled it by hand. Two hours later, I had enough for a sample roast. The first sip floored me—the perfect cup.'
-    },
-    {
-      title: 'Leaning in',
-      description:
-        'Since then, I’ve doubled down: a roasting class at Multimodal, coffee pop‑ups, conversations with importers and exporters, more hulling by hand—building toward a larger roast. In July, I roasted ~30 kilograms, packaged 150‑gram bags, and sold them on Instagram—they sold out instantly. Now I’m leaning in: small‑batch importing, exporting, and micro‑roasting. Sign up for the next lot. Side quests include a pour‑over timer and recycling parchment into objects.'
-    }
-  ];
+  // Full story text (shown entirely on the right panel)
+  const fullStory = `Charalá, Santander is a quiet town tucked into Colombia’s eastern Andes. It’s known for its quiet strength, rich coffee, and a spirit of resilience that lingers in the land and its people.
 
-  // Build albums by splitting story photos into groups of up to 6 per category
-  const rawAlbums: Album[] = categories.map((cat, idx) => {
-    const startIndex = idx * 6;
-    const images = storyPhotos.slice(startIndex, startIndex + 6);
-    const cover = images[0] ?? storyPhotos[0];
-    return { title: cat.title, cover, images, description: cat.description };
-  });
-  // Only keep categories that have images to avoid empty lightbox states
-  const albums: Album[] = rawAlbums.filter(a => a.images.length > 0);
+I ended up there by chanc. Exhausted, sunburnt, and one-third of the way through Transcordilleras, a 1,000-kilometer bikepacking race with over 20,000 meters of climbing. I wasn’t ready. Not mentally, not physically. By day three, I handed in my tracker and withdrew. With no plan, I stayed at the hostel, figuring I’d make my way back to Bogotá on slower, simpler roads.
+
+Over lunch, I asked the hostel manager if he knew any coffee producers. He made a call. A few hours later, Oscar Castro pulled up in his pickup truck and invited me to visit his farm.
+
+Oscar’s farm, Bellavista, sits at 1,900 meters above sea level. He works a few hectares with his family and neighbors, pooling coffee and banana harvests to sell in town.
+
+His coffee is Castillo, a hardy, high-altitude hybrid—delicate and floral with soft orchard fruit and a clean, structured finish. He walked me through the farm and sent me off with stove-top roasted coffee.
+
+After spending the day in the pool, I rode back to Bogotá at my own pace, stopping to take in the views. Stopped in Ráquira, Colombia’s ceramics capital, and Villa de Leyva. A stop at my cousin’s in Chía and 500km later I was back to Bogotá.
+
+That was March 2024. By January, after thinking about that trip almost daily, I called Oscar to see if there was any way to get his coffee to the U.S.
+
+A friend who is on a similar side quest of bringing delicious dark chocolate from a remote area in Colombia gave me some tips for shipping. Using Fedex’s last minute rates I was able to import 40kg of green coffee with parchment.
+
+It turns out, green coffee in parchment is almost unheard of in the US. So, In New York, with no equipment, I had to hull it by hand.  After two hours I had enough for a sample roast. The first sip floored me. I didn’t have the words to describe it, but it was the perfect cup.
+
+Since then, I’ve doubled down. I took a roasting class at Multimodal, visited coffee pop-ups, talked with importers and exporters, kept hulling by hand, building toward a larger roast.
+
+In July, I roasted about 30 kilograms, packaged it in 150-gram bags, and sold them through Instagram. They sold out instantly. I sent bags to friends and family, and delivered some by bike around New York, which felt like a full-circle moment.
+
+Now I’m leaning into this. Small-batch (for now) importing, exporting, and micro-roasting. Soon I’ll have my exporter license and be able to bring more from Bellavista.
+
+I’m excited to keep learning the craft.
+
+If you’ve read this far and want to know when the next lot arrives, sign up for the newsletter. I’m also working on side quests like a pour over coffee timer and recycling the parchment into various objects. Potentially coasters`;
+
+  // Single album containing all photos; full story shown on the right panel
+  const albums: Album[] = [
+    { title: 'Story', cover: storyPhotos[0], images: storyPhotos, description: fullStory }
+  ];
 
   const openGallery = () => {
     // Open directly into lightbox, skipping the album grid
