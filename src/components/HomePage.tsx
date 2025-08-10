@@ -20,38 +20,10 @@ const HomePage: React.FC = () => {
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [isImageFadingIn, setIsImageFadingIn] = useState(true);
   const [circleHitRect, setCircleHitRect] = useState<DOMRect | null>(null);
+  const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
 
   type Photo = { src: string; alt: string; text?: string };
   type Album = { title: string; cover: Photo; images: Photo[] };
-  type StorySlide = { src: string; text: string; alt?: string };
-
-  const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
-
-  const storySlides: StorySlide[] = [
-    { src: '/photo-final/01.png', text: 'Me on February 11, 2024, at the start of Transcordilleras, completely unaware of what it takes to traverse the Andes mountains in 7 days.' },
-    { src: '/photo-final/02.png', text: 'This is the sunset I saw before riding into Charala, not knowing what new adventure awaited.' },
-    { src: '/photo-final/03.png', text: "Charalá, Santander is a quiet town nestled in Colombia's eastern Andes mountains. known for its rich coffee and a spirit of resilience that lingers in the land and its people." },
-    { src: '/photo-final/04.png', text: 'So much coffee being traded in the town square, I had never seen a calculator that’s also scale' },
-    { src: '/photo-final/05.png', text: 'Oscar and his family with a recent harvest on his farm Bellavista' },
-    { src: '/photo-final/06.png', text: 'Bellavista, sits at 1,900 meters above sea level, where Oscar works a few hectares of land with his family and neighbors, pooling coffee and banana harvests to sell in town.' },
-    { src: '/photo-final/07.png', text: 'I was lucky enough to see the flowering of the coffee plant, which lasts only a few days, the flowers then wither and fall off after pollination before cherries begin to grow' },
-    { src: '/photo-final/08.png', text: 'After visiting Oscar, I rode back to Bogotá at my own pace, stopping to take in the views. This is in Villa de Leyva!' },
-    { src: '/photo-final/09.png', text: "In March 2025 (a full harvest and half later, and a year after my visit to Bellavista), I shipped a small amount form Oscar’s farm to my apartment in Brooklyn." },
-    { src: '/photo-final/10.jpeg', text: 'The coffee came with it’s parchment on! Which is rare and there is virtually no equipment to hull coffee in the US so we had to do it all by hand, what an experience!' },
-    { src: '/photo-final/11.png', text: 'I found an amazing community based roaster in Queens called Multimodal that supports smaller roasters and enthusiasts with the resources to make a great cup' },
-    { src: '/photo-final/12.png', text: 'After a small roast I was able to sell about 20 bags to friends and family.' },
-    { src: '/photo-final/13.png', text: 'Than branding is as minimalist as possible to focus on the coffee itself and its origin while being as transparent as possible' },
-    { src: '/photo-final/14.png', text: 'The first packages being sent out to friends in all corners of the country. LA, SF, Seattle, Atlanta, and Miami' },
-    { src: '/photo-final/15.png', text: 'For orders in NY I hand delivered on my bike, completing a full circle!' }
-  ];
-
-  const goToStorySlide = (index: number) => {
-    const total = storySlides.length;
-    const next = (index + total) % total;
-    setCurrentStoryIndex(next);
-  };
-  const prevStory = () => goToStorySlide(currentStoryIndex - 1);
-  const nextStory = () => goToStorySlide(currentStoryIndex + 1);
 
   const basePhotos: Photo[] = [
     { src: '/photos/1.JPG', alt: 'Coffee photo 1', text: 'Hand-picked cherries at peak ripeness.' },
@@ -67,6 +39,28 @@ const HomePage: React.FC = () => {
     { title: 'Drying', cover: basePhotos[2], images: basePhotos },
     { title: 'Milling', cover: basePhotos[3], images: basePhotos.slice().reverse() }
   ];
+
+  // Story slides (left image, right text)
+  const storySlides: { src: string; text: string }[] = [
+    { src: '/photo-final/01.png', text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer vitae lectus id lorem tristique hendrerit.' },
+    { src: '/photo-final/02.png', text: 'Suspendisse potenti. Sed aliquet, nibh in ultrices lacinia, lorem metus placerat arcu, vitae suscipit lectus lacus in dolor.' },
+    { src: '/photo-final/03.png', text: 'Curabitur auctor, arcu nec convallis convallis, sapien dolor efficitur est, vel vulputate nunc est ac est.' },
+    { src: '/photo-final/04.png', text: 'Mauris dignissim, augue ac pretium rutrum, odio massa tempus arcu, nec tempus risus tortor id arcu.' },
+    { src: '/photo-final/05.png', text: 'Vivamus sed varius elit. Fusce faucibus ultrices ex nec porttitor. Nulla facilisi.' },
+    { src: '/photo-final/06.png', text: 'Pellentesque non felis quis nibh fermentum tristique. Nam vulputate lectus id quam convallis, a vulputate arcu consequat.' },
+    { src: '/photo-final/07.png', text: 'Aenean ut lectus enim. Donec finibus, augue eu tincidunt tincidunt, purus lacus gravida nulla, a dictum metus augue sed nisi.' },
+    { src: '/photo-final/08.png', text: 'Etiam vitae fermentum arcu, nec hendrerit arcu. Vestibulum id purus nec odio venenatis iaculis.' },
+    { src: '/photo-final/09.png', text: 'Ut consectetur nisl sed dolor imperdiet, vitae laoreet velit ultricies. Integer vitae felis nec ex sagittis porttitor.' },
+    { src: '/photo-final/10.jpeg', text: 'Praesent et tortor nec risus sodales sollicitudin. Sed tristique commodo sem ut vehicula.' },
+    { src: '/photo-final/11.png', text: 'Donec euismod, justo quis venenatis tempus, mauris urna laoreet nunc, et finibus elit odio in arcu.' },
+    { src: '/photo-final/12.png', text: 'Sed nec velit diam. Proin quis faucibus urna. Integer lorem ante, egestas et orci sit amet, euismod tempus mi.' },
+    { src: '/photo-final/13.png', text: 'Cras sit amet mauris id risus bibendum pretium. Pellentesque non hendrerit elit.' },
+    { src: '/photo-final/14.png', text: 'Morbi bibendum ipsum vel lacus dapibus, a finibus neque ultrices. Nulla vitae erat quis sapien malesuada laoreet.' },
+    { src: '/photo-final/15.png', text: 'Quisque gravida, arcu ac aliquet scelerisque, erat risus vestibulum nisl, ac consequat elit turpis id libero.' }
+  ];
+
+  const showPrevStory = () => setCurrentStoryIndex((i) => (i - 1 + storySlides.length) % storySlides.length);
+  const showNextStory = () => setCurrentStoryIndex((i) => (i + 1) % storySlides.length);
 
   const openGallery = () => setIsGalleryOpen(true);
   const closeGallery = () => {
@@ -106,6 +100,10 @@ const HomePage: React.FC = () => {
   // Pinning refs for coffee section
   const coffeeSectionRef = useRef<HTMLElement>(null);
   const coffeeTextRef = useRef<HTMLDivElement>(null);
+  
+  // Pinning refs for story section
+  const storySectionRef = useRef<HTMLElement>(null);
+  const storyContentRef = useRef<HTMLDivElement>(null);
   
   
  
@@ -541,6 +539,23 @@ const HomePage: React.FC = () => {
 
     // (scrolly section removed)
 
+    // Pin Story section (like others)
+    if (storySectionRef.current && storyContentRef.current) {
+      const storyTrigger = ScrollTrigger.create({
+        trigger: storySectionRef.current,
+        start: "top -100px",
+        end: "bottom 80%",
+        pin: storyContentRef.current,
+        pinSpacing: false
+      });
+      console.log('🎯 STORY SCROLLTRIGGER CREATED:', {
+        trigger: storySectionRef.current,
+        start: storyTrigger.start,
+        end: storyTrigger.end,
+        pin: storyContentRef.current
+      });
+    }
+
     // Ensure ScrollTrigger corrects the initial size immediately
     gsap.delayedCall(0.01, () => {
       console.log('🔄 SCROLLTRIGGER REFRESH:', {
@@ -817,50 +832,43 @@ const HomePage: React.FC = () => {
           </div>
         </section>
 
-        {/* Story Section */}
-        <section id="story" className="min-h-screen text-black flex flex-col items-center justify-center px-4 sm:px-6 md:pl-32 lg:pl-28 xl:pl-24 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 relative pt-20">
-          <div className="max-w-6xl w-full relative z-40">
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-10">
-              {/* Image left */}
-              <div className="w-full md:w-1/2">
-                <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
-                  <img
-                    src={storySlides[currentStoryIndex].src}
-                    alt={storySlides[currentStoryIndex].alt || `Story slide ${currentStoryIndex + 1}`}
-                    className="w-full h-full object-cover"
-                  />
+        {/* Story Section (left image, right text) */}
+        <section ref={storySectionRef} id="story" className="text-black relative pt-20" style={{ height: '300vh' }}>
+          <div ref={storyContentRef} className="w-full h-screen grid grid-cols-1 md:grid-cols-12 items-center px-4 sm:px-6 py-6 sm:py-8 z-40">
+            {/* Left: Image */}
+            <div className="md:col-span-7 flex items-center justify-center pr-0 md:pr-6 lg:pr-10">
+              <img
+                key={currentStoryIndex}
+                src={storySlides[currentStoryIndex].src}
+                alt={`story image ${currentStoryIndex + 1}`}
+                className="w-full h-auto max-h-[70vh] object-contain rounded-md shadow-sm"
+              />
+            </div>
+            {/* Right: Text with arrows */}
+            <div className="md:col-span-5 pl-0 md:pl-6 lg:pl-10">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl sm:text-2xl font-medium">story</h3>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={showPrevStory}
+                    aria-label="Previous slide"
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                  <button
+                    onClick={showNextStory}
+                    aria-label="Next slide"
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
                 </div>
               </div>
-
-              {/* Text right */}
-              <div className="w-full md:w-1/2 relative">
-                <h3 className="font-medium text-base sm:text-lg mb-3">Story</h3>
-                <p className="text-sm sm:text-base leading-relaxed">
-                  {storySlides[currentStoryIndex].text}
-                </p>
-
-                {/* Controls */}
-                <div className="flex items-center gap-4 mt-6">
-                  <button onClick={prevStory} className="text-black hover:opacity-70 text-lg" aria-label="Previous">
-                    ‹
-                  </button>
-                  <button onClick={nextStory} className="text-black hover:opacity-70 text-lg" aria-label="Next">
-                    ›
-                  </button>
-                </div>
-
-                {/* Vertical dots (clickable) */}
-                <div className="hidden md:flex flex-col gap-2 absolute -left-8 top-1/2 -translate-y-1/2">
-                  {storySlides.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setCurrentStoryIndex(idx)}
-                      className={`w-2 h-2 rounded-full transition-opacity ${idx === currentStoryIndex ? 'bg-black opacity-100' : 'bg-gray-400 opacity-60 hover:opacity-100'}`}
-                      aria-label={`Go to story ${idx + 1}`}
-                    />
-                  ))}
-                </div>
-              </div>
+              <p className="text-sm sm:text-base leading-relaxed section-content">
+                {storySlides[currentStoryIndex].text}
+              </p>
+              <div className="text-xs text-gray-500 mt-3">{currentStoryIndex + 1} / {storySlides.length}</div>
             </div>
           </div>
         </section>
