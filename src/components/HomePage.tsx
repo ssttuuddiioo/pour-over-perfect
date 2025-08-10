@@ -637,8 +637,6 @@ const HomePage: React.FC = () => {
         pin: scrollyContentRef.current,
         pinSpacing: false,
         onEnter: (self) => {
-          // Auto-open gallery when reaching the process section
-          openGallery();
           console.log('📸 SCROLLY PIN ENTER:', {
             scrollY: window.scrollY,
             progress: self.progress.toFixed(4),
@@ -936,10 +934,7 @@ const HomePage: React.FC = () => {
               coffee
             </button>
             <button
-              onClick={() => {
-                // Open the gallery/lightbox directly when clicking Process
-                openGallery();
-              }}
+              onClick={() => scrollToSection('scrolly')}
               className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
                 activeSection === 'scrolly' 
                   ? 'text-black underline' 
