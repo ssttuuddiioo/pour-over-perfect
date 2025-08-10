@@ -36,19 +36,19 @@ const HomePage: React.FC = () => {
   // Manual captions provided by user, one per photo in order
   const manualCaptions: string[] = [
     'Me on February 11, 2024, at the start of Transcordilleras, completely unaware of what it takes to traverse the Andes mountains in 7 days.',
-    'This is the sunset I saw before riding into Charala, not knowing what new adventure awaited.',
+    'This is the sunset I saw before riding into Charala and withdrawing from the race. A new adventure awaited.',
     "Charalá, Santander is a quiet town nestled in Colombia's eastern Andes mountains.\nknown for its rich coffee and a spirit of resilience that lingers in the land and its people.",
-    'So much coffee being traded in the town square, I had never seen a calculator that’s also scale',
-    'Oscar and his family with a recent harvest on his farm Bellavista',
+    'So much coffee being traded in the town square, I had never seen a calculator that’s also a scale.',
+    'Oscar and his family with a recent harvest on his farm Bellavista.',
     'Bellavista, sits at 1,900 meters above sea level, where Oscar works a few hectares of land with his family and neighbors, pooling coffee and banana harvests to sell in town.',
-    'I was lucky enough to see the flowering of the coffee plant, which lasts only a few days, the flowers then wither and fall off after pollination before cherries begin to grow',
+    'I was lucky enough to see the flowering of the coffee plant, which lasts only a few days, the flowers then wither and fall off after pollination before cherries begin to grow.',
     'After visiting Oscar, I rode back to Bogotá at my own pace, stopping to take in the views. This is in Villa de Leyva!',
     'In March 2025 (a full harvest and half later, and a year after my visit to Bellavista), I shipped a small amount form Oscar’s farm to my apartment in Brooklyn.',
     'The coffee came with it’s parchment on! Which is rare and there is virtually no equipment to hull coffee in the US so we had to do it all by hand, what an experience!',
-    'I found an amazing community based roaster in Queens called Multimodal that supports smaller roasters and enthusiasts with the resources to make a great cup',
+    'I found an amazing community based roaster in Queens called Multimodal that supports smaller roasters and enthusiasts with the resources to make a great cup.',
     'After a small roast I was able to sell about 20 bags to friends and family.',
-    'Than branding is as minimalist as possible to focus on the coffee itself and its origin while being as transparent as possible',
-    'The first packages being sent out to friends in all corners of the country. LA, SF, Seattle, Atlanta, and Miami',
+    'The branding is as minimalist as possible to focus on the coffee and its origin.',
+    'The first packages being sent out to friends in all corners of the country. LA, SF, Seattle, Atlanta, and Miami.',
     'For orders in NY I hand delivered on my bike, completing a full circle!'
   ];
 
@@ -637,6 +637,8 @@ const HomePage: React.FC = () => {
         pin: scrollyContentRef.current,
         pinSpacing: false,
         onEnter: (self) => {
+          // Auto-open gallery when reaching the process section
+          openGallery();
           console.log('📸 SCROLLY PIN ENTER:', {
             scrollY: window.scrollY,
             progress: self.progress.toFixed(4),
@@ -934,7 +936,10 @@ const HomePage: React.FC = () => {
               coffee
             </button>
             <button
-              onClick={() => scrollToSection('scrolly')}
+              onClick={() => {
+                // Open the gallery/lightbox directly when clicking Process
+                openGallery();
+              }}
               className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
                 activeSection === 'scrolly' 
                   ? 'text-black underline' 
@@ -1220,7 +1225,7 @@ const HomePage: React.FC = () => {
 
       {/* Gallery Overlay - show category grid when explicitly navigating albums (hidden by default) */}
       <div
-        className={`fixed inset-0 z-40 bg-white transition-opacity duration-300 ${
+        className={`fixed inset-0 z-40 transition-opacity duration-300 ${
           isGalleryOpen && !isLightboxOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         aria-hidden={!(isGalleryOpen && !isLightboxOpen)}
@@ -1264,7 +1269,7 @@ const HomePage: React.FC = () => {
       {/* Lightbox */}
       {isGalleryOpen && (
         <div
-          className={`fixed inset-0 z-40 bg-white transition-opacity duration-300 ${
+          className={`fixed inset-0 z-40 transition-opacity duration-300 ${
             isLightboxOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
           aria-hidden={!isLightboxOpen}
@@ -1287,7 +1292,7 @@ const HomePage: React.FC = () => {
               {/* Left: Image with arrows */}
               <div className="relative md:col-span-8 flex items-center justify-center px-4 sm:px-6 md:px-10 py-10 sm:py-12 md:py-16">
                 {/* Dot navigation */}
-                <div className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-[46]">
+                <div className="absolute left-3 sm:left-4 md:left-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-[46]">
                   {albums[activeAlbumIndex].images.map((_, idx) => (
                     <button
                       key={idx}
@@ -1307,20 +1312,22 @@ const HomePage: React.FC = () => {
                 />
                 {/* Arrows beside image within the left pane */}
                 <div className="pointer-events-none absolute inset-y-0 left-4 right-4 flex items-center justify-between">
-                  <button
-                    onClick={showPrev}
-                    aria-label="Previous photo"
-                    className="pointer-events-auto inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/85 border border-gray-300 text-gray-700 hover:bg-white"
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                  <button
-                    onClick={showNext}
-                    aria-label="Next photo"
-                    className="pointer-events-auto inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/85 border border-gray-300 text-gray-700 hover:bg-white"
-                  >
-                    <ChevronRight size={18} />
-                  </button>
+                  <div className="pointer-events-auto absolute -bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-4">
+                    <button
+                      onClick={showPrev}
+                      aria-label="Previous photo"
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/85 border border-gray-300 text-gray-700 hover:bg-white shadow"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                    <button
+                      onClick={showNext}
+                      aria-label="Next photo"
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-white/85 border border-gray-300 text-gray-700 hover:bg-white shadow"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </div>
                 </div>
               </div>
 
