@@ -40,7 +40,15 @@ const HomePage: React.FC = () => {
     { title: 'Milling', cover: basePhotos[3], images: basePhotos.slice().reverse() }
   ];
 
-  const openGallery = () => setIsGalleryOpen(true);
+  const openGallery = () => {
+    // Open directly into lightbox, skipping the album grid
+    setActiveAlbumIndex(0);
+    setLightboxIndex(0);
+    setIsImageFadingIn(false);
+    requestAnimationFrame(() => setIsImageFadingIn(true));
+    setIsGalleryOpen(true);
+    setIsLightboxOpen(true);
+  };
   const closeGallery = () => {
     setIsGalleryOpen(false);
     setIsLightboxOpen(false);
@@ -53,7 +61,11 @@ const HomePage: React.FC = () => {
     requestAnimationFrame(() => setIsImageFadingIn(true));
     setIsLightboxOpen(true);
   };
-  const closeLightbox = () => setIsLightboxOpen(false);
+  const closeLightbox = () => {
+    // Close everything so we don't fall back to the album grid
+    setIsLightboxOpen(false);
+    setIsGalleryOpen(false);
+  };
   const showPrev = () => {
     setIsImageFadingIn(false);
     setTimeout(() => {
@@ -1106,12 +1118,12 @@ const HomePage: React.FC = () => {
         />
       )}
 
-      {/* Gallery Overlay */}
+      {/* Gallery Overlay - hidden while lightbox is open (skip album) */}
       <div
         className={`fixed inset-0 z-40 bg-white transition-opacity duration-300 ${
-          isGalleryOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          isGalleryOpen && !isLightboxOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
-        aria-hidden={!isGalleryOpen}
+        aria-hidden={!(isGalleryOpen && !isLightboxOpen)}
       >
         <div className="absolute inset-0 overflow-y-auto">
           <div className="sticky top-0 flex justify-end p-4 md:p-6 bg-white/80 backdrop-blur-sm border-b border-gray-200 z-10">
