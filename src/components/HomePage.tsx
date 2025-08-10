@@ -297,8 +297,7 @@ const HomePage: React.FC = () => {
     { id: 'home', size: 360, scale: 0.8 },
     { id: 'origen', size: 560, scale: 1.2 },
     { id: 'coffee', size: 650, scale: 1.3 },
-    { id: 'scrolly', size: 700, scale: 1.4 },
-    { id: 'buy', size: 750, scale: 1.5 }
+    { id: 'scrolly', size: 700, scale: 1.4 }
   ];
 
   useEffect(() => {
@@ -934,7 +933,9 @@ const HomePage: React.FC = () => {
               coffee
             </button>
             <button
-              onClick={() => scrollToSection('scrolly')}
+              onClick={() => {
+                openGallery();
+              }}
               className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
                 activeSection === 'scrolly' 
                   ? 'text-black underline' 
@@ -943,16 +944,12 @@ const HomePage: React.FC = () => {
             >
               process
             </button>
-            <button
-              onClick={() => scrollToSection('buy')}
-              className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
-                activeSection === 'buy' 
-                  ? 'text-black underline' 
-                  : 'text-black hover:opacity-70 hover:underline'
-              }`}
+            <a
+              href="/buy"
+              className="text-sm sm:text-base md:text-lg font-medium text-black hover:opacity-70 hover:underline transition-opacity"
             >
               buy
-            </button>
+            </a>
             <button
               onClick={() => navigate('/timer')}
               className="text-sm sm:text-base md:text-lg font-medium text-black hover:opacity-70 hover:underline transition-opacity"
@@ -1155,47 +1152,7 @@ const HomePage: React.FC = () => {
           </div>
         </section>
 
-        {/* Buy Section */}
-        <section id="buy" className="min-h-screen text-black flex flex-col items-center justify-center px-4 sm:px-6 md:pl-32 lg:pl-28 xl:pl-24 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 relative pt-20">
-          <div className="max-w-4xl w-full relative z-40 text-left">
-            <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
-              <p className="section-content text-sm sm:text-base leading-relaxed">
-                The next roast will be a small one, about 50kg. Drop your email to stay in the loop, and we'll let you know when pre-order is open a few days before the next roast.
-              </p>
-
-              <div className="section-content">
-                <div className="mt-6 sm:mt-8 lg:mt-10">
-                  <h3 className="font-medium text-base sm:text-lg mb-3 sm:mb-4 lg:mb-6">Get notified when available</h3>
-                  {!submitted ? (
-                    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-                      <div>
-                        <input
-                          type="email"
-                          name="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="Enter your email"
-                          required
-                          className="w-full px-0 py-2 text-sm sm:text-base placeholder-gray-500 text-black bg-transparent border-0 border-b border-gray-300 focus:border-black focus:outline-none focus:ring-0"
-                        />
-                      </div>
-                      <button
-                        type="submit"
-                        className="text-left text-sm sm:text-base font-medium text-black hover:opacity-70 transition-all duration-200 underline self-start py-2 active:scale-95"
-                      >
-                        Sign Up
-                      </button>
-                    </form>
-                  ) : (
-                    <div className="text-left py-4">
-                      <p className="text-sm sm:text-base text-gray-600">Thanks for signing up! We'll let you know as soon as the next roast is ready.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* Buy section removed from scroll; now lives at /buy */}
       </div>
 
       {/* Invisible click proxy over the orange circle. Sits above content but below nav. */}
