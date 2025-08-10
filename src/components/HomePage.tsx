@@ -44,7 +44,12 @@ const HomePage: React.FC = () => {
       .replace(/[{}]/g, '')
       .replace(/\\\s*/g, '\n');
     text = text.replace(/\r/g, '').replace(/\t/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
-    return text.split(/\n\s*\n+/).map(p => p.trim()).filter(Boolean);
+    return text
+      .split(/\n\s*\n+/)
+      .map(p => p.trim())
+      .filter(Boolean)
+      // Drop numeric-only markers like "01" at the start
+      .filter(p => !/^\d{1,4}$/.test(p));
   };
 
   useEffect(() => {
