@@ -33,39 +33,44 @@ const HomePage: React.FC = () => {
     alt: `Photo ${idx + 1}`
   }));
 
-  // Full story text (shown entirely on the right panel)
-  const fullStory = `Charalá, Santander is a quiet town tucked into Colombia’s eastern Andes. It’s known for its quiet strength, rich coffee, and a spirit of resilience that lingers in the land and its people.
+  // Load RTF story from public and map paragraphs to photos
+  const [albums, setAlbums] = useState<Album[]>([]);
 
-I ended up there by chanc. Exhausted, sunburnt, and one-third of the way through Transcordilleras, a 1,000-kilometer bikepacking race with over 20,000 meters of climbing. I wasn’t ready. Not mentally, not physically. By day three, I handed in my tracker and withdrew. With no plan, I stayed at the hostel, figuring I’d make my way back to Bogotá on slower, simpler roads.
+  const parseRtfToParagraphs = (rtf: string): string[] => {
+    let text = rtf
+      .replace(/\\'([0-9a-fA-F]{2})/g, (_, hex: string) => String.fromCharCode(parseInt(hex, 16)))
+      .replace(/\\par[d]?/g, '\n')
+      .replace(/\\[a-zA-Z]+-?\d* ?/g, ' ')
+      .replace(/[{}]/g, '')
+      .replace(/\\\s*/g, '\n');
+    text = text.replace(/\r/g, '').replace(/\t/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    return text.split(/\n\s*\n+/).map(p => p.trim()).filter(Boolean);
+  };
 
-Over lunch, I asked the hostel manager if he knew any coffee producers. He made a call. A few hours later, Oscar Castro pulled up in his pickup truck and invited me to visit his farm.
-
-Oscar’s farm, Bellavista, sits at 1,900 meters above sea level. He works a few hectares with his family and neighbors, pooling coffee and banana harvests to sell in town.
-
-His coffee is Castillo, a hardy, high-altitude hybrid—delicate and floral with soft orchard fruit and a clean, structured finish. He walked me through the farm and sent me off with stove-top roasted coffee.
-
-After spending the day in the pool, I rode back to Bogotá at my own pace, stopping to take in the views. Stopped in Ráquira, Colombia’s ceramics capital, and Villa de Leyva. A stop at my cousin’s in Chía and 500km later I was back to Bogotá.
-
-That was March 2024. By January, after thinking about that trip almost daily, I called Oscar to see if there was any way to get his coffee to the U.S.
-
-A friend who is on a similar side quest of bringing delicious dark chocolate from a remote area in Colombia gave me some tips for shipping. Using Fedex’s last minute rates I was able to import 40kg of green coffee with parchment.
-
-It turns out, green coffee in parchment is almost unheard of in the US. So, In New York, with no equipment, I had to hull it by hand.  After two hours I had enough for a sample roast. The first sip floored me. I didn’t have the words to describe it, but it was the perfect cup.
-
-Since then, I’ve doubled down. I took a roasting class at Multimodal, visited coffee pop-ups, talked with importers and exporters, kept hulling by hand, building toward a larger roast.
-
-In July, I roasted about 30 kilograms, packaged it in 150-gram bags, and sold them through Instagram. They sold out instantly. I sent bags to friends and family, and delivered some by bike around New York, which felt like a full-circle moment.
-
-Now I’m leaning into this. Small-batch (for now) importing, exporting, and micro-roasting. Soon I’ll have my exporter license and be able to bring more from Bellavista.
-
-I’m excited to keep learning the craft.
-
-If you’ve read this far and want to know when the next lot arrives, sign up for the newsletter. I’m also working on side quests like a pour over coffee timer and recycling the parchment into various objects. Potentially coasters`;
-
-  // Single album containing all photos; full story shown on the right panel
-  const albums: Album[] = [
-    { title: 'Story', cover: storyPhotos[0], images: storyPhotos, description: fullStory }
-  ];
+  useEffect(() => {
+    const loadStory = async () => {
+      try {
+        const res = await fetch('/main%20story.rtf');
+        const raw = await res.text();
+        const paragraphs = parseRtfToParagraphs(raw);
+        const minLen = Math.min(paragraphs.length, storyPhotos.length);
+        const pairedImages: Photo[] = storyPhotos.slice(0, minLen).map((photo, idx) => ({
+          ...photo,
+          text: paragraphs[idx]
+        }));
+        const album: Album = {
+          title: 'Story',
+          cover: pairedImages[0] ?? storyPhotos[0],
+          images: pairedImages.length ? pairedImages : storyPhotos
+        };
+        setAlbums([album]);
+      } catch (err) {
+        console.error('Failed to load main story RTF', err);
+        setAlbums([{ title: 'Story', cover: storyPhotos[0], images: storyPhotos }]);
+      }
+    };
+    loadStory();
+  }, []);
 
   const openGallery = () => {
     // Open directly into lightbox, skipping the album grid
@@ -1242,6 +1247,17 @@ If you’ve read this far and want to know when the next lot arrives, sign up fo
             <div className="absolute inset-0 grid grid-cols-1 md:grid-cols-12">
               {/* Left: Image with arrows */}
               <div className="relative md:col-span-8 flex items-center justify-center px-4 sm:px-6 md:px-10 py-10 sm:py-12 md:py-16">
+                {/* Dot navigation */}
+                <div className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-[46]">
+                  {albums[activeAlbumIndex].images.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setLightboxIndex(idx)}
+                      aria-label={`Go to slide ${idx + 1}`}
+                      className={`w-2 h-2 rounded-full border ${idx === lightboxIndex ? 'bg-orange-500 border-orange-500' : 'bg-transparent border-gray-300 hover:border-gray-400'}`}
+                    />
+                  ))}
+                </div>
                 <img
                   key={`${activeAlbumIndex}-${lightboxIndex}`}
                   src={albums[activeAlbumIndex].images[lightboxIndex].src}
