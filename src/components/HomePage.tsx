@@ -78,9 +78,7 @@ const HomePage: React.FC = () => {
   const coffeeSectionRef = useRef<HTMLElement>(null);
   const coffeeTextRef = useRef<HTMLDivElement>(null);
   
-  // Pinning refs for scrolly section
-  const scrollySectionRef = useRef<HTMLElement>(null);
-  const scrollyContentRef = useRef<HTMLDivElement>(null);
+  
  
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -184,7 +182,6 @@ const HomePage: React.FC = () => {
     { id: 'home', size: 360, scale: 0.8 },
     { id: 'origen', size: 560, scale: 1.2 },
     { id: 'coffee', size: 650, scale: 1.3 },
-    { id: 'scrolly', size: 700, scale: 1.4 },
     { id: 'buy', size: 750, scale: 1.5 }
   ];
 
@@ -512,190 +509,7 @@ const HomePage: React.FC = () => {
       });
     }
 
-    // Set up pinning and animations for scrolly section
-    if (scrollySectionRef.current && scrollyContentRef.current) {
-      const scrollyImages = scrollyContentRef.current.querySelectorAll('.scrolly-image');
-      let scrollyAnimations: gsap.core.Timeline[] = [];
-      
-      const scrollyTrigger = ScrollTrigger.create({
-        trigger: scrollySectionRef.current,
-        start: "top -100px",
-        end: "bottom 80%",
-        pin: scrollyContentRef.current,
-        pinSpacing: false,
-        onEnter: (self) => {
-          console.log('📸 SCROLLY PIN ENTER:', {
-            scrollY: window.scrollY,
-            progress: self.progress.toFixed(4),
-            start: self.start,
-            end: self.end,
-            direction: self.direction,
-            isActive: self.isActive
-          });
-          
-          // Create staggered scroll-triggered animations for each image
-          scrollyImages.forEach((image, index) => {
-            const startProgress = index * 0.15; // Stagger start points
-            const endProgress = startProgress + 0.25; // Animation duration
-            
-            const imageAnimation = gsap.timeline({
-              scrollTrigger: {
-                trigger: scrollySectionRef.current,
-                start: "top -100px",
-                end: "bottom 80%",
-                scrub: true,
-                onUpdate: (imageSelf) => {
-                  const progress = imageSelf.progress;
-                  
-                  if (progress >= startProgress && progress <= endProgress) {
-                    // Calculate animation progress within this image's range
-                    const imageProgress = (progress - startProgress) / (endProgress - startProgress);
-                    const clampedProgress = Math.max(0, Math.min(1, imageProgress));
-                    
-                    // Animate opacity and translate
-                    gsap.set(image, {
-                      opacity: clampedProgress,
-                      y: (1 - clampedProgress) * 48, // Slide up from 48px
-                      force3D: true
-                    });
-                  } else if (progress < startProgress) {
-                    // Before animation starts
-                    gsap.set(image, {
-                      opacity: 0,
-                      y: 48,
-                      force3D: true
-                    });
-                  } else if (progress > endProgress) {
-                    // After animation completes
-                    gsap.set(image, {
-                      opacity: 1,
-                      y: 0,
-                      force3D: true
-                    });
-                  }
-                }
-              }
-            });
-            
-            scrollyAnimations.push(imageAnimation);
-          });
-        },
-        onLeave: (self) => {
-          console.log('📸 SCROLLY PIN LEAVE:', {
-            scrollY: window.scrollY,
-            progress: self.progress.toFixed(4),
-            start: self.start,
-            end: self.end,
-            direction: self.direction,
-            isActive: self.isActive
-          });
-          
-          // Kill all image animations and reset
-          scrollyAnimations.forEach(animation => animation.kill());
-          scrollyAnimations = [];
-          
-          // Reset all images to hidden state
-          scrollyImages.forEach(image => {
-            gsap.set(image, {
-              opacity: 0,
-              y: 48,
-              force3D: true
-            });
-          });
-        },
-        onEnterBack: (self) => {
-          console.log('📸 SCROLLY PIN ENTER BACK:', {
-            scrollY: window.scrollY,
-            progress: self.progress.toFixed(4),
-            start: self.start,
-            end: self.end,
-            direction: self.direction,
-            isActive: self.isActive
-          });
-          
-          // Re-create staggered scroll-triggered animations
-          scrollyImages.forEach((image, index) => {
-            const startProgress = index * 0.15;
-            const endProgress = startProgress + 0.25;
-            
-            const imageAnimation = gsap.timeline({
-              scrollTrigger: {
-                trigger: scrollySectionRef.current,
-                start: "top -100px",
-                end: "bottom 80%",
-                scrub: true,
-                onUpdate: (imageSelf) => {
-                  const progress = imageSelf.progress;
-                  
-                  if (progress >= startProgress && progress <= endProgress) {
-                    const imageProgress = (progress - startProgress) / (endProgress - startProgress);
-                    const clampedProgress = Math.max(0, Math.min(1, imageProgress));
-                    
-                    gsap.set(image, {
-                      opacity: clampedProgress,
-                      y: (1 - clampedProgress) * 48,
-                      force3D: true
-                    });
-                  } else if (progress < startProgress) {
-                    gsap.set(image, {
-                      opacity: 0,
-                      y: 48,
-                      force3D: true
-                    });
-                  } else if (progress > endProgress) {
-                    gsap.set(image, {
-                      opacity: 1,
-                      y: 0,
-                      force3D: true
-                    });
-                  }
-                }
-              }
-            });
-            
-            scrollyAnimations.push(imageAnimation);
-          });
-        },
-        onLeaveBack: (self) => {
-          console.log('📸 SCROLLY PIN LEAVE BACK:', {
-            scrollY: window.scrollY,
-            progress: self.progress.toFixed(4),
-            start: self.start,
-            end: self.end,
-            direction: self.direction,
-            isActive: self.isActive
-          });
-          
-          // Kill all image animations and reset
-          scrollyAnimations.forEach(animation => animation.kill());
-          scrollyAnimations = [];
-          
-          // Reset all images to hidden state
-          scrollyImages.forEach(image => {
-            gsap.set(image, {
-              opacity: 0,
-              y: 48,
-              force3D: true
-            });
-          });
-        },
-        onUpdate: (self) => {
-          console.log('📸 SCROLLY PIN UPDATE:', {
-            scrollY: window.scrollY,
-            progress: self.progress.toFixed(4),
-            velocity: self.getVelocity(),
-            direction: self.direction
-          });
-        }
-      });
-      
-      console.log('🎯 SCROLLY SCROLLTRIGGER CREATED:', {
-        trigger: scrollySectionRef.current,
-        start: scrollyTrigger.start,
-        end: scrollyTrigger.end,
-        pin: scrollyContentRef.current
-      });
-    }
+    // (scrolly section removed)
 
     // Ensure ScrollTrigger corrects the initial size immediately
     gsap.delayedCall(0.01, () => {
@@ -820,16 +634,7 @@ const HomePage: React.FC = () => {
             >
               coffee
             </button>
-            <button
-              onClick={() => scrollToSection('scrolly')}
-              className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
-                activeSection === 'scrolly' 
-                  ? 'text-black underline' 
-                  : 'text-black hover:opacity-70 hover:underline'
-              }`}
-            >
-              process
-            </button>
+            
             <button
               onClick={() => scrollToSection('buy')}
               className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
@@ -972,68 +777,7 @@ const HomePage: React.FC = () => {
           </div>
         </section>
 
-        {/* Scrolly Section - Pinned with Image Animations */}
-        <section ref={scrollySectionRef} id="scrolly" className="text-black relative pt-20" style={{ height: '400vh' }}>
-          <div ref={scrollyContentRef} className="scrolly-section w-full h-screen flex items-center justify-center px-4 sm:px-6 py-6 sm:py-8 z-40">
-            <div className="max-w-6xl w-full relative z-40">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-                {/* Image 1 */}
-                <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
-                  <img 
-                    src="/photos/1.JPG" 
-                    alt="Coffee photo 1"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                
-                {/* Image 2 */}
-                <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
-                  <img 
-                    src="/photos/2.JPG" 
-                    alt="Coffee photo 2"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                
-                {/* Image 3 */}
-                <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
-                  <img 
-                    src="/photos/3.JPG" 
-                    alt="Coffee photo 3"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                
-                {/* Image 4 */}
-                <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
-                  <img 
-                    src="/photos/4.JPG" 
-                    alt="Coffee photo 4"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                
-                {/* Image 5 */}
-                <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
-                  <img 
-                    src="/photos/5.JPG" 
-                    alt="Coffee photo 5"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                
-                {/* Image 6 */}
-                <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
-                  <img 
-                    src="/photos/6.jpg" 
-                    alt="Coffee photo 6"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        
 
         {/* Buy Section */}
         <section id="buy" className="min-h-screen text-black flex flex-col items-center justify-center px-4 sm:px-6 md:pl-32 lg:pl-28 xl:pl-24 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 relative pt-20">
