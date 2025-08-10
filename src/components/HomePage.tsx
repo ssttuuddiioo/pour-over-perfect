@@ -25,17 +25,16 @@ const HomePage: React.FC = () => {
   type Album = { title: string; cover: Photo; images: Photo[] };
 
   const basePhotos: Photo[] = [
-    { src: '/photos/1.JPG', alt: 'Coffee processing step 1', text: 'Hand-picked cherries at peak ripeness.' },
-    { src: '/photos/2.JPG', alt: 'Coffee processing step 2', text: 'Sorting and selection for quality.' },
-    { src: '/photos/4.JPG', alt: 'Coffee processing step 4', text: 'Washing and soaking for clarity.' },
-    { src: '/photos/5.JPG', alt: 'Coffee processing step 5', text: 'Drying under indirect sunlight.' },
-    { src: '/photos/6.jpg', alt: 'Coffee processing step 6', text: 'Resting parchment coffee before milling.' }
+    { src: '/photos/1.JPG', alt: 'Coffee photo 1', text: 'Hand-picked cherries at peak ripeness.' },
+    { src: '/photos/2.JPG', alt: 'Coffee photo 2', text: 'Sorting and selection for quality.' },
+    { src: '/photos/4.JPG', alt: 'Coffee photo 4', text: 'Washing and soaking for clarity.' },
+    { src: '/photos/5.JPG', alt: 'Coffee photo 5', text: 'Drying under indirect sunlight.' },
+    { src: '/photos/6.jpg', alt: 'Coffee photo 6', text: 'Resting parchment coffee before milling.' }
   ];
 
   // Simple demo albums using existing assets
   const albums: Album[] = [
     { title: 'Harvest', cover: basePhotos[0], images: basePhotos },
-    { title: 'Processing', cover: basePhotos[1], images: basePhotos.slice().reverse() },
     { title: 'Drying', cover: basePhotos[2], images: basePhotos },
     { title: 'Milling', cover: basePhotos[3], images: basePhotos.slice().reverse() }
   ];
@@ -909,18 +908,11 @@ const HomePage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Variety & Process */}
+                    {/* Variety */}
                     <div className="space-y-2 sm:space-y-3">
-                      <h3 className="font-medium text-base sm:text-lg">Variety & Process</h3>
+                      <h3 className="font-medium text-base sm:text-lg">Variety</h3>
                       <div className="text-sm sm:text-base">
-                        <p className="font-medium mb-2 sm:mb-3">Castillo (Washed)</p>
-                        <ul className="space-y-1 text-sm sm:text-base">
-                          <li>• Hand-picked at peak ripeness</li>
-                          <li>• Fermented overnight</li>
-                          <li>• Washed the following morning</li>
-                          <li>• Dried under indirect sun</li>
-                          <li>• Milled on-farm by producer</li>
-                        </ul>
+                        <p className="font-medium mb-2 sm:mb-3">Castillo</p>
                       </div>
                     </div>
                   </div>
@@ -989,7 +981,7 @@ const HomePage: React.FC = () => {
                 <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
                   <img 
                     src="/photos/1.JPG" 
-                    alt="Coffee processing step 1"
+                    alt="Coffee photo 1"
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -998,7 +990,7 @@ const HomePage: React.FC = () => {
                 <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
                   <img 
                     src="/photos/2.JPG" 
-                    alt="Coffee processing step 2"
+                    alt="Coffee photo 2"
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -1007,7 +999,7 @@ const HomePage: React.FC = () => {
                 <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
                   <img 
                     src="/photos/3.JPG" 
-                    alt="Coffee processing step 3"
+                    alt="Coffee photo 3"
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -1016,7 +1008,7 @@ const HomePage: React.FC = () => {
                 <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
                   <img 
                     src="/photos/4.JPG" 
-                    alt="Coffee processing step 4"
+                    alt="Coffee photo 4"
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -1025,7 +1017,7 @@ const HomePage: React.FC = () => {
                 <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
                   <img 
                     src="/photos/5.JPG" 
-                    alt="Coffee processing step 5"
+                    alt="Coffee photo 5"
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -1034,7 +1026,7 @@ const HomePage: React.FC = () => {
                 <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
                   <img 
                     src="/photos/6.jpg" 
-                    alt="Coffee processing step 6"
+                    alt="Coffee photo 6"
                     className="w-full h-full object-cover"
                   />
                 </div>

@@ -66,14 +66,10 @@ const OrigenPage: React.FC = () => {
                 hands of farmers who understand that great coffee is both art and science.
               </p>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
                 <div className="text-center">
                   <h3 className="text-xl font-semibold text-black mb-3">Altitude</h3>
                   <p className="text-gray-600">1,200 - 2,000 meters above sea level</p>
-                </div>
-                <div className="text-center">
-                  <h3 className="text-xl font-semibold text-black mb-3">Processing</h3>
-                  <p className="text-gray-600">Washed, natural, and honey methods</p>
                 </div>
                 <div className="text-center">
                   <h3 className="text-xl font-semibold text-black mb-3">Harvest</h3>
