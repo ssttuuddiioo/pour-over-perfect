@@ -22,7 +22,7 @@ const HomePage: React.FC = () => {
   const [circleHitRect, setCircleHitRect] = useState<DOMRect | null>(null);
 
   type Photo = { src: string; alt: string; text?: string };
-  type Album = { title: string; cover: Photo; images: Photo[] };
+  type Album = { title: string; cover: Photo; images: Photo[]; description?: string };
 
   // Story captions mapped to photos 1–33
   const storySegments: string[] = [
@@ -98,10 +98,47 @@ const HomePage: React.FC = () => {
     { src: '/photos/33.png', alt: 'Photo 33', text: storySegments[32] }
   ];
 
-  // Single album with full story sequence
-  const albums: Album[] = [
-    { title: 'Story', cover: storyPhotos[0], images: storyPhotos }
+  // Categories (titles provided) with text chunks derived from the story
+  const categories: { title: string; description: string }[] = [
+    {
+      title: 'Charala, Santander',
+      description:
+        "Charalá, Santander is a quiet town tucked into Colombia’s eastern Andes. It’s known for quiet strength, coffee, and a spirit of resilience. I ended up there by chance—exhausted, sunburnt, and one‑third of the way through Transcordilleras, a 1,000‑kilometer bikepacking race with over 20,000 meters of climbing. I wasn’t ready—mentally or physically. By day three, I handed in my tracker and withdrew."
+    },
+    {
+      title: 'Stopping to slow down',
+      description:
+        'With no plan, I stayed at a hostel, aiming for slower, simpler roads back to Bogotá. Over lunch, I asked the hostel manager if he knew any coffee producers. He made a call. A few hours later, Oscar Castro pulled up in his pickup and invited me to visit his farm.'
+    },
+    {
+      title: 'Oscar Casto, Bellavista',
+      description:
+        'Oscar’s farm, Bellavista, sits at 1,900 meters above sea level. He works a few hectares with his family and neighbors, pooling coffee and banana harvests to sell in town. His coffee is Castillo—a hardy, high‑altitude hybrid—delicate and floral with soft orchard fruit and a clean, structured finish. We walked the farm, and he sent me off with stove‑top roasted coffee.'
+    },
+    {
+      title: 'Long way home',
+      description:
+        'After a day in the pool, I rode back to Bogotá at my own pace, stopping often to take in the views. I passed through Ráquira, Colombia’s ceramics capital, and Villa de Leyva. A stop at my cousin’s in Chía, and 500 km later, I was back in Bogotá.'
+    },
+    {
+      title: 'Roasting',
+      description:
+        'That was March 2024. By January, after thinking about that trip almost daily, I called Oscar to see if we could get his coffee to the U.S. A friend shared tips for shipping from remote Colombia. Using FedEx’s last‑minute rates, I imported 40 kg of green coffee with parchment—rare in the U.S. In New York, with no equipment, I hulled it by hand. Two hours later, I had enough for a sample roast. The first sip floored me—the perfect cup.'
+    },
+    {
+      title: 'Leaning in',
+      description:
+        'Since then, I’ve doubled down: a roasting class at Multimodal, coffee pop‑ups, conversations with importers and exporters, more hulling by hand—building toward a larger roast. In July, I roasted ~30 kilograms, packaged 150‑gram bags, and sold them on Instagram—they sold out instantly. Now I’m leaning in: small‑batch importing, exporting, and micro‑roasting. Sign up for the next lot. Side quests include a pour‑over timer and recycling parchment into objects.'
+    }
   ];
+
+  // Build albums by splitting story photos into groups of up to 6 per category
+  const albums: Album[] = categories.map((cat, idx) => {
+    const startIndex = idx * 6;
+    const images = storyPhotos.slice(startIndex, startIndex + 6);
+    const cover = images[0] ?? storyPhotos[0];
+    return { title: cat.title, cover, images, description: cat.description };
+  });
 
   const openGallery = () => {
     // Open directly into lightbox, skipping the album grid
@@ -133,7 +170,23 @@ const HomePage: React.FC = () => {
     setIsImageFadingIn(false);
     setTimeout(() => {
       const total = albums[activeAlbumIndex].images.length;
-      setLightboxIndex((prev) => (prev - 1 + total) % total);
+      if (lightboxIndex === 0) {
+        // Move to previous album if available
+        if (activeAlbumIndex > 0) {
+          const newAlbumIndex = activeAlbumIndex - 1;
+          setActiveAlbumIndex(newAlbumIndex);
+          const lastIndex = albums[newAlbumIndex].images.length - 1;
+          setLightboxIndex(lastIndex);
+        } else {
+          // Wrap to last album
+          const newAlbumIndex = albums.length - 1;
+          setActiveAlbumIndex(newAlbumIndex);
+          const lastIndex = albums[newAlbumIndex].images.length - 1;
+          setLightboxIndex(lastIndex);
+        }
+      } else {
+        setLightboxIndex((prev) => (prev - 1 + total) % total);
+      }
       setIsImageFadingIn(true);
     }, 120);
   };
@@ -141,7 +194,20 @@ const HomePage: React.FC = () => {
     setIsImageFadingIn(false);
     setTimeout(() => {
       const total = albums[activeAlbumIndex].images.length;
-      setLightboxIndex((prev) => (prev + 1) % total);
+      if (lightboxIndex === total - 1) {
+        // Move to next album if available
+        if (activeAlbumIndex < albums.length - 1) {
+          const newAlbumIndex = activeAlbumIndex + 1;
+          setActiveAlbumIndex(newAlbumIndex);
+          setLightboxIndex(0);
+        } else {
+          // Wrap to first album
+          setActiveAlbumIndex(0);
+          setLightboxIndex(0);
+        }
+      } else {
+        setLightboxIndex((prev) => (prev + 1) % total);
+      }
       setIsImageFadingIn(true);
     }, 120);
   };
@@ -1181,7 +1247,7 @@ const HomePage: React.FC = () => {
         />
       )}
 
-      {/* Gallery Overlay - hidden while lightbox is open (skip album) */}
+      {/* Gallery Overlay - show category grid when explicitly navigating albums (hidden by default) */}
       <div
         className={`fixed inset-0 z-40 bg-white transition-opacity duration-300 ${
           isGalleryOpen && !isLightboxOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
@@ -1281,6 +1347,7 @@ const HomePage: React.FC = () => {
                 <div className="w-full">
                   <div className="text-xs text-gray-500 mb-3">{lightboxIndex + 1} / {albums[activeAlbumIndex].images.length}</div>
                   <h3 className="text-xl md:text-2xl font-medium text-black mb-2">{albums[activeAlbumIndex].title}</h3>
+                  <p className="text-sm md:text-base text-gray-700 leading-relaxed mb-4">{albums[activeAlbumIndex].description}</p>
                   <p className="text-sm md:text-base text-gray-700 leading-relaxed">{albums[activeAlbumIndex].images[lightboxIndex].text}</p>
                 </div>
               </div>
