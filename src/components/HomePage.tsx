@@ -24,20 +24,83 @@ const HomePage: React.FC = () => {
   type Photo = { src: string; alt: string; text?: string };
   type Album = { title: string; cover: Photo; images: Photo[] };
 
-  const basePhotos: Photo[] = [
-    { src: '/photos/1.JPG', alt: 'Coffee processing step 1', text: 'Hand-picked cherries at peak ripeness.' },
-    { src: '/photos/2.JPG', alt: 'Coffee processing step 2', text: 'Sorting and selection for quality.' },
-    { src: '/photos/4.JPG', alt: 'Coffee processing step 4', text: 'Washing and soaking for clarity.' },
-    { src: '/photos/5.JPG', alt: 'Coffee processing step 5', text: 'Drying under indirect sunlight.' },
-    { src: '/photos/6.jpg', alt: 'Coffee processing step 6', text: 'Resting parchment coffee before milling.' }
+  // Story captions mapped to photos 1–33
+  const storySegments: string[] = [
+    'Charalá, Santander is a quiet town tucked into Colombia’s eastern Andes.',
+    'It’s known for quiet strength, coffee, and a spirit of resilience.',
+    'I ended up there by chance, exhausted and sunburnt.',
+    'One-third into Transcordilleras, a 1,000 km race with 20,000 m of climbing.',
+    'I wasn’t ready—mentally or physically.',
+    'By day three, I handed in my tracker and withdrew.',
+    'With no plan, I stayed at a hostel, aiming for slower roads back to Bogotá.',
+    'Over lunch, I asked the manager if he knew any coffee producers.',
+    'He made a call; a few hours later, Oscar Castro arrived.',
+    'He invited me to visit his farm, Bellavista.',
+    'Bellavista sits at 1,900 meters above sea level.',
+    'Oscar works a few hectares with family and neighbors.',
+    'They pool coffee and banana harvests to sell in town.',
+    'His coffee is Castillo, a hardy high‑altitude hybrid.',
+    'Delicate, floral, soft orchard fruit; clean, structured finish.',
+    'We walked the farm; he sent me off with stove‑top roasted coffee.',
+    'After a day in the pool, I rode back to Bogotá at my pace.',
+    'I stopped often to take in the views.',
+    'Ráquira, Colombia’s ceramics capital.',
+    'Villa de Leyva’s open plaza and stone streets.',
+    'A stop at my cousin’s in Chía.',
+    '500 km later, I was back in Bogotá.',
+    'That was March 2024. By January, I called Oscar again.',
+    'Could we get his coffee to the U.S.?',
+    'A friend shared tips for shipping from remote Colombia.',
+    'Using FedEx last‑minute rates, I imported 40 kg of green coffee in parchment.',
+    'Green coffee in parchment is rare in the U.S.',
+    'In New York, with no equipment, I hulled it by hand.',
+    'Two hours later, enough for a sample roast.',
+    'The first sip floored me—the perfect cup.',
+    'Since then: roasting class at Multimodal, pop‑ups, exporters, more hulling.',
+    'In July, I roasted ~30 kg, packaged 150 g bags, sold via Instagram—sold out.',
+    'Now: leaning in—small‑batch importing, exporting, micro‑roasting; sign up for the next lot.'
   ];
 
-  // Simple demo albums using existing assets
+  // Ordered photo filenames for 1–33 as found in public/photos
+  const storyPhotos: Photo[] = [
+    { src: '/photos/1.JPG', alt: 'Photo 1', text: storySegments[0] },
+    { src: '/photos/2.JPG', alt: 'Photo 2', text: storySegments[1] },
+    { src: '/photos/03.JPG', alt: 'Photo 3', text: storySegments[2] },
+    { src: '/photos/4.JPG', alt: 'Photo 4', text: storySegments[3] },
+    { src: '/photos/5.JPG', alt: 'Photo 5', text: storySegments[4] },
+    { src: '/photos/6.jpg', alt: 'Photo 6', text: storySegments[5] },
+    { src: '/photos/007.JPG', alt: 'Photo 7', text: storySegments[6] },
+    { src: '/photos/08.JPG', alt: 'Photo 8', text: storySegments[7] },
+    { src: '/photos/09.jpg', alt: 'Photo 9', text: storySegments[8] },
+    { src: '/photos/10.jpg', alt: 'Photo 10', text: storySegments[9] },
+    { src: '/photos/11.JPG', alt: 'Photo 11', text: storySegments[10] },
+    { src: '/photos/12.JPG', alt: 'Photo 12', text: storySegments[11] },
+    { src: '/photos/13.JPG', alt: 'Photo 13', text: storySegments[12] },
+    { src: '/photos/14.jpg', alt: 'Photo 14', text: storySegments[13] },
+    { src: '/photos/15.jpeg', alt: 'Photo 15', text: storySegments[14] },
+    { src: '/photos/16.jpeg', alt: 'Photo 16', text: storySegments[15] },
+    { src: '/photos/17.jpeg', alt: 'Photo 17', text: storySegments[16] },
+    { src: '/photos/18.jpeg', alt: 'Photo 18', text: storySegments[17] },
+    { src: '/photos/19.png', alt: 'Photo 19', text: storySegments[18] },
+    { src: '/photos/20.png', alt: 'Photo 20', text: storySegments[19] },
+    { src: '/photos/21.jpg', alt: 'Photo 21', text: storySegments[20] },
+    { src: '/photos/22.jpg', alt: 'Photo 22', text: storySegments[21] },
+    { src: '/photos/23.jpg', alt: 'Photo 23', text: storySegments[22] },
+    { src: '/photos/24.jpeg', alt: 'Photo 24', text: storySegments[23] },
+    { src: '/photos/25.jpeg', alt: 'Photo 25', text: storySegments[24] },
+    { src: '/photos/26.jpeg', alt: 'Photo 26', text: storySegments[25] },
+    { src: '/photos/27.jpeg', alt: 'Photo 27', text: storySegments[26] },
+    { src: '/photos/28.jpeg', alt: 'Photo 28', text: storySegments[27] },
+    { src: '/photos/29.jpeg', alt: 'Photo 29', text: storySegments[28] },
+    { src: '/photos/30.jpeg', alt: 'Photo 30', text: storySegments[29] },
+    { src: '/photos/31.jpeg', alt: 'Photo 31', text: storySegments[30] },
+    { src: '/photos/32.png', alt: 'Photo 32', text: storySegments[31] },
+    { src: '/photos/33.png', alt: 'Photo 33', text: storySegments[32] }
+  ];
+
+  // Single album with full story sequence
   const albums: Album[] = [
-    { title: 'Harvest', cover: basePhotos[0], images: basePhotos },
-    { title: 'Processing', cover: basePhotos[1], images: basePhotos.slice().reverse() },
-    { title: 'Drying', cover: basePhotos[2], images: basePhotos },
-    { title: 'Milling', cover: basePhotos[3], images: basePhotos.slice().reverse() }
+    { title: 'Story', cover: storyPhotos[0], images: storyPhotos }
   ];
 
   const openGallery = () => {
@@ -1018,7 +1081,7 @@ const HomePage: React.FC = () => {
                 {/* Image 3 */}
                 <div className="scrolly-image opacity-0 transform translate-y-12 aspect-square rounded-lg overflow-hidden">
                   <img 
-                    src="/photos/3.JPG" 
+                    src="/photos/03.JPG" 
                     alt="Coffee processing step 3"
                     className="w-full h-full object-cover"
                   />
