@@ -768,7 +768,7 @@ const HomePage: React.FC = () => {
               <div className="mb-4">
                 <h3 className="text-xl sm:text-2xl font-medium">{currentStoryIndex + 1} / {storySlides.length}</h3>
               </div>
-              <p className="text-base sm:text-xl leading-relaxed section-content mb-6">
+              <p className="text-lg sm:text-2xl leading-relaxed section-content mb-6">
                 {storySlides[currentStoryIndex].text}
               </p>
               <div className="flex items-center justify-start">
