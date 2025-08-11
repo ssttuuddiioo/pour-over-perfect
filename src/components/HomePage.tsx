@@ -158,13 +158,13 @@ const HomePage: React.FC = () => {
     }
   };
 
-  // Section configurations for circle animation - responsive values
+  // Section configurations for circle animation - responsive values (30% smaller)
   const sectionConfigs = [
-    { id: 'home', size: 360, scale: 0.8 },
-    { id: 'origen', size: 560, scale: 1.2 },
-    { id: 'coffee', size: 650, scale: 1.3 },
-    { id: 'story', size: 700, scale: 1.4 },
-    { id: 'buy', size: 750, scale: 1.5 }
+    { id: 'home', size: 252, scale: 0.56 },
+    { id: 'origen', size: 392, scale: 0.84 },
+    { id: 'coffee', size: 455, scale: 0.91 },
+    { id: 'story', size: 490, scale: 0.98 },
+    { id: 'buy', size: 525, scale: 1.05 }
   ];
 
   useEffect(() => {
