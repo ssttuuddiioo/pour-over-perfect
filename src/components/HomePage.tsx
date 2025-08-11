@@ -21,11 +21,11 @@ const HomePage: React.FC = () => {
   // Story slides (left image, right text)
   const storySlides: { src: string; text: string }[] = [
     { src: '/photo-final/01.png', text: 'February 11, 2024, at the start of Transcordilleras, completely unaware of what it takes to traverse the Andes mountains in 7 days.' },
-    { src: '/photo-final/02.png', text: 'This is the sunset I saw before riding into Charala, not knowing what new adventure awaited.' },
-    { src: '/photo-final/03.png', text: 'Charalá, Santander is a quiet town nestled in Colombia\'s eastern Andes mountains. known for its rich coffee and a spirit of resilience that lingers in the land and its people.' },
-    { src: '/photo-final/04.png', text: 'So much coffee being traded in the town square, I had never seen a calculator that\'s also scale' },
-    { src: '/photo-final/05.png', text: 'Oscar and his family with a recent harvest on his farm Bellavista' },
-    { src: '/photo-final/06.png', text: 'Bellavista, sits at 1,900 meters above sea level, where Oscar works a few hectares of land with his family and neighbors, pooling coffee and banana harvests to sell in town.' },
+    { src: '/photo-final/02.png', text: 'The sunset I saw before riding into Charala, not knowing what new adventure awaited.' },
+    { src: '/photo-final/03.png', text: 'I turned in my tracker and withdrew from the race. Without a plan I decided to stay in town for a bit. Charalá, Santander is a quiet town nestled in Colombia\'s eastern Andes mountains. known for its rich coffee and a spirit of resilience that lingers in the land and its people.' },
+    { src: '/photo-final/04.png', text: 'So much coffee being traded in the town square' },
+    { src: '/photo-final/06.png', text: 'Oscar and his family with a recent harvest on his farm Bellavista' },
+    { src: '/photo-final/05.png', text: 'Bellavista, sits at 1,900 meters above sea level, where Oscar works a few hectares of land with his family and neighbors, pooling coffee and banana harvests to sell in town.' },
     { src: '/photo-final/07.png', text: 'I was lucky enough to see the flowering of the coffee plant, which lasts only a few days, the flowers then wither and fall off after pollination before cherries begin to grow' },
     { src: '/photo-final/08.png', text: 'After visiting Oscar, I rode back to Bogotá at my own pace, stopping to take in the views. This is in Villa de Leyva!' },
     { src: '/photo-final/09.png', text: 'In March 2025 (a full harvest and half later, and a year after my visit to Bellavista), I shipped a small amount form Oscar\'s farm to my apartment in Brooklyn.' },
