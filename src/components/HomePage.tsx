@@ -20,21 +20,21 @@ const HomePage: React.FC = () => {
 
   // Story slides (left image, right text)
   const storySlides: { src: string; text: string }[] = [
-    { src: '/photo-final/01.png', text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer vitae lectus id lorem tristique hendrerit.' },
-    { src: '/photo-final/02.png', text: 'Suspendisse potenti. Sed aliquet, nibh in ultrices lacinia, lorem metus placerat arcu, vitae suscipit lectus lacus in dolor.' },
-    { src: '/photo-final/03.png', text: 'Curabitur auctor, arcu nec convallis convallis, sapien dolor efficitur est, vel vulputate nunc est ac est.' },
-    { src: '/photo-final/04.png', text: 'Mauris dignissim, augue ac pretium rutrum, odio massa tempus arcu, nec tempus risus tortor id arcu.' },
-    { src: '/photo-final/05.png', text: 'Vivamus sed varius elit. Fusce faucibus ultrices ex nec porttitor. Nulla facilisi.' },
-    { src: '/photo-final/06.png', text: 'Pellentesque non felis quis nibh fermentum tristique. Nam vulputate lectus id quam convallis, a vulputate arcu consequat.' },
-    { src: '/photo-final/07.png', text: 'Aenean ut lectus enim. Donec finibus, augue eu tincidunt tincidunt, purus lacus gravida nulla, a dictum metus augue sed nisi.' },
-    { src: '/photo-final/08.png', text: 'Etiam vitae fermentum arcu, nec hendrerit arcu. Vestibulum id purus nec odio venenatis iaculis.' },
-    { src: '/photo-final/09.png', text: 'Ut consectetur nisl sed dolor imperdiet, vitae laoreet velit ultricies. Integer vitae felis nec ex sagittis porttitor.' },
-    { src: '/photo-final/10.jpeg', text: 'Praesent et tortor nec risus sodales sollicitudin. Sed tristique commodo sem ut vehicula.' },
-    { src: '/photo-final/11.png', text: 'Donec euismod, justo quis venenatis tempus, mauris urna laoreet nunc, et finibus elit odio in arcu.' },
-    { src: '/photo-final/12.png', text: 'Sed nec velit diam. Proin quis faucibus urna. Integer lorem ante, egestas et orci sit amet, euismod tempus mi.' },
-    { src: '/photo-final/13.png', text: 'Cras sit amet mauris id risus bibendum pretium. Pellentesque non hendrerit elit.' },
-    { src: '/photo-final/14.png', text: 'Morbi bibendum ipsum vel lacus dapibus, a finibus neque ultrices. Nulla vitae erat quis sapien malesuada laoreet.' },
-    { src: '/photo-final/15.png', text: 'Quisque gravida, arcu ac aliquet scelerisque, erat risus vestibulum nisl, ac consequat elit turpis id libero.' }
+    { src: '/photo-final/01.png', text: 'February 11, 2024, at the start of Transcordilleras, completely unaware of what it takes to traverse the Andes mountains in 7 days.' },
+    { src: '/photo-final/02.png', text: 'This is the sunset I saw before riding into Charala, not knowing what new adventure awaited.' },
+    { src: '/photo-final/03.png', text: 'Charalá, Santander is a quiet town nestled in Colombia\'s eastern Andes mountains. known for its rich coffee and a spirit of resilience that lingers in the land and its people.' },
+    { src: '/photo-final/04.png', text: 'So much coffee being traded in the town square, I had never seen a calculator that\'s also scale' },
+    { src: '/photo-final/05.png', text: 'Oscar and his family with a recent harvest on his farm Bellavista' },
+    { src: '/photo-final/06.png', text: 'Bellavista, sits at 1,900 meters above sea level, where Oscar works a few hectares of land with his family and neighbors, pooling coffee and banana harvests to sell in town.' },
+    { src: '/photo-final/07.png', text: 'I was lucky enough to see the flowering of the coffee plant, which lasts only a few days, the flowers then wither and fall off after pollination before cherries begin to grow' },
+    { src: '/photo-final/08.png', text: 'After visiting Oscar, I rode back to Bogotá at my own pace, stopping to take in the views. This is in Villa de Leyva!' },
+    { src: '/photo-final/09.png', text: 'In March 2025 (a full harvest and half later, and a year after my visit to Bellavista), I shipped a small amount form Oscar\'s farm to my apartment in Brooklyn.' },
+    { src: '/photo-final/10.jpeg', text: 'The coffee came with it\'s parchment on! Which is rare and there is virtually no equipment to hull coffee in the US so we had to do it all by hand, what an experience!' },
+    { src: '/photo-final/11.png', text: 'I found an amazing community based roaster in Queens called Multimodal that supports smaller roasters and enthusiasts with the resources to make a great cup' },
+    { src: '/photo-final/12.png', text: 'After a small roast I was able to sell about 20 bags to friends and family.' },
+    { src: '/photo-final/13.png', text: 'Than branding is as minimalist as possible to focus on the coffee itself and its origin while being as transparent as possible' },
+    { src: '/photo-final/14.png', text: 'The first packages being sent out to friends in all corners of the country. LA, SF, Seattle, Atlanta, and Miami' },
+    { src: '/photo-final/15.png', text: 'For orders in NY I hand delivered on my bike, completing a full circle!' }
   ];
 
   const changeStory = (nextIndex: number) => {
