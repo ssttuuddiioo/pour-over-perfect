@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import BrewingApp from './components/BrewingApp';
 import HomePage from './components/HomePage';
+import StoryPage from './components/StoryPage';
 import { ThemeProvider } from './context/ThemeContext';
 import { CircleTransitionProvider, useCircleTransition } from './context/CircleTransitionContext';
 import CircleTransition from './components/shared/CircleTransition';
@@ -29,6 +30,7 @@ const AppContent: React.FC = () => {
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<HomePage />} />
           <Route path="/timer" element={<BrewingApp />} />
+          <Route path="/story" element={<StoryPage />} />
         </Routes>
       </div>
       {isDebugMode && !isTimerPage && (

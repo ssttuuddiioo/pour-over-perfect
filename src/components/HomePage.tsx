@@ -12,40 +12,234 @@ const HomePage: React.FC = () => {
   const { circleRef } = useCircleTransition();
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
-    const [activeSection, setActiveSection] = useState('home');
-  const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
-  const [isStoryFadingIn, setIsStoryFadingIn] = useState(true);
+  const [activeSection, setActiveSection] = useState('home');
 
-
-
-  // Story slides (left image, right text)
-  const storySlides: { src: string; text: string }[] = [
-    { src: '/photo-final/01.png', text: 'February 11, 2024, at the start of Transcordilleras, completely unaware of what it takes to traverse the Andes mountains in 7 days.' },
-    { src: '/photo-final/02.png', text: 'The sunset I saw before riding into Charala, not knowing what new adventure awaited.' },
-    { src: '/photo-final/03.png', text: 'I turned in my tracker and withdrew from the race. Without a plan I decided to stay in town for a bit. Charalá, Santander is a quiet town nestled in Colombia\'s eastern Andes mountains. known for its rich coffee and a spirit of resilience that lingers in the land and its people.' },
-    { src: '/photo-final/04.png', text: 'So much coffee being traded in the town square' },
-    { src: '/photo-final/06.png', text: 'Oscar and his family with a recent harvest on his farm Bellavista' },
-    { src: '/photo-final/05.png', text: 'Bellavista, sits at 1,900 meters above sea level, where Oscar works a few hectares of land with his family and neighbors, pooling coffee and banana harvests to sell in town.' },
-    { src: '/photo-final/07.png', text: 'I was lucky enough to see the flowering of the coffee plant, which lasts only a few days, the flowers then wither and fall off after pollination before cherries begin to grow' },
-    { src: '/photo-final/08.png', text: 'After visiting Oscar, I rode back to Bogotá at my own pace, stopping to take in the views. This is in Villa de Leyva!' },
-    { src: '/photo-final/09.png', text: 'In March 2025 (a full harvest and half later, and a year after my visit to Bellavista), I shipped a small amount form Oscar\'s farm to my apartment in Brooklyn.' },
-    { src: '/photo-final/10.jpeg', text: 'The coffee came with it\'s parchment on! Which is rare and there is virtually no equipment to hull coffee in the US so we had to do it all by hand, what an experience!' },
-    { src: '/photo-final/11.png', text: 'I found an amazing community based roaster in Queens called Multimodal that supports smaller roasters and enthusiasts with the resources to make a great cup' },
-    { src: '/photo-final/12.png', text: 'After a small roast I was able to sell about 20 bags to friends and family.' },
-    { src: '/photo-final/13.png', text: 'Than branding is as minimalist as possible to focus on the coffee itself and its origin while being as transparent as possible' },
-    { src: '/photo-final/14.png', text: 'The first packages being sent out to friends in all corners of the country. LA, SF, Seattle, Atlanta, and Miami' },
-    { src: '/photo-final/15.png', text: 'For orders in NY I hand delivered on my bike, completing a full circle!' }
-  ];
-
-  const changeStory = (nextIndex: number) => {
-    setIsStoryFadingIn(false);
-    setTimeout(() => {
-      setCurrentStoryIndex(nextIndex);
-      setIsStoryFadingIn(true);
-    }, 150);
+  // Handle email subscription
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Here you would typically send the email to your backend
+    console.log('Email submitted:', email);
+    setSubmitted(true);
   };
-  const showPrevStory = () => changeStory((currentStoryIndex - 1 + storySlides.length) % storySlides.length);
-  const showNextStory = () => changeStory((currentStoryIndex + 1) % storySlides.length);
+
+
+  // Load Shopify Buy Button Script
+  useEffect(() => {
+    console.log('HomePage useEffect running - loading Shopify script');
+    
+    const loadShopifyScript = () => {
+      const scriptURL = 'https://sdks.shopifycdn.com/buy-button/latest/buy-button-storefront.min.js';
+      
+      if (window.ShopifyBuy) {
+        if (window.ShopifyBuy.UI) {
+          initShopify();
+        } else {
+          loadScript();
+        }
+      } else {
+        loadScript();
+      }
+
+      function loadScript() {
+        const script = document.createElement('script');
+        script.async = true;
+        script.src = scriptURL;
+        (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(script);
+        script.onload = initShopify;
+      }
+
+      function initShopify() {
+        // Check if already initialized
+        if (shopifyInitialized.current) {
+          console.log('Shopify already initialized, skipping');
+          return;
+        }
+        
+        // Check if product already exists
+        const existingProduct = document.getElementById('product-component-1755456622817');
+        if (existingProduct && existingProduct.children.length > 0) {
+          console.log('Shopify product already loaded, skipping initialization');
+          shopifyInitialized.current = true;
+          return;
+        }
+
+        console.log('Initializing Shopify product...');
+        shopifyInitialized.current = true;
+        
+        const client = window.ShopifyBuy.buildClient({
+          domain: 'origintrip.myshopify.com',
+          storefrontAccessToken: '53c69845a25fb79cfddf04b0e87c308d',
+        });
+        
+        window.ShopifyBuy.UI.onReady(client).then(function (ui) {
+          // Clear any existing content first
+          const productNode = document.getElementById('product-component-1755456622817');
+          if (productNode) {
+            productNode.innerHTML = '';
+          }
+          
+          console.log('Creating Shopify product component...');
+          ui.createComponent('product', {
+            id: '8791679238356',
+            node: productNode,
+            moneyFormat: '%24%7B%7Bamount%7D%7D',
+            options: {
+              "product": {
+                "contents": {
+                  "img": true,
+                  "title": true,
+                  "price": true,
+                  "button": false
+                },
+                "styles": {
+                  "product": {
+                    "@media (min-width: 601px)": {
+                      "max-width": "100%",
+                      "margin-left": "0px",
+                      "margin-bottom": "0px"
+                    }
+                  },
+                  "img": {
+                    "cursor": "pointer"
+                  },
+                  "title": {
+                    "cursor": "pointer"
+                  },
+                  "price": {
+                    "cursor": "pointer"
+                  }
+                },
+                "text": {
+                  "button": "Buy now"
+                }
+              },
+              "productSet": {
+                "styles": {
+                  "products": {
+                    "@media (min-width: 601px)": {
+                      "margin-left": "-20px"
+                    }
+                  }
+                }
+              },
+              "modalProduct": {
+                "contents": {
+                  "img": false,
+                  "imgWithCarousel": true,
+                  "button": false,
+                  "buttonWithQuantity": true
+                },
+                "styles": {
+                  "product": {
+                    "@media (min-width: 601px)": {
+                      "max-width": "100%",
+                      "margin-left": "0px",
+                      "margin-bottom": "0px"
+                    }
+                  },
+                  "button": {
+                    "font-weight": "bold",
+                    ":hover": {
+                      "background-color": "#000000"
+                    },
+                    "background-color": "#000000",
+                    ":focus": {
+                      "background-color": "#000000"
+                    },
+                    "border-radius": "40px",
+                    "padding-left": "58px",
+                    "padding-right": "58px"
+                  }
+                },
+                "text": {
+                  "button": "Add to cart"
+                }
+              },
+              "option": {},
+              "cart": {
+                "styles": {
+                  "button": {
+                    "font-weight": "bold",
+                    ":hover": {
+                      "background-color": "#000000"
+                    },
+                    "background-color": "#000000",
+                    ":focus": {
+                      "background-color": "#000000"
+                    },
+                    "border-radius": "40px"
+                  }
+                },
+                "text": {
+                  "total": "Subtotal",
+                  "button": "Checkout"
+                }
+              },
+              "toggle": {
+                "styles": {
+                  "toggle": {
+                    "font-weight": "bold",
+                    "background-color": "#000000",
+                    ":hover": {
+                      "background-color": "#000000"
+                    },
+                    ":focus": {
+                      "background-color": "#000000"
+                    }
+                  }
+                }
+              }
+            },
+          }).then(function(component) {
+            console.log('Shopify product component created successfully');
+            
+            // Add click handler to the product image and details
+            setTimeout(() => {
+              const productElement = document.getElementById('product-component-1755456622817');
+              if (productElement) {
+                const productImage = productElement.querySelector('img');
+                const productTitle = productElement.querySelector('[data-element="product.title"]');
+                const productPrice = productElement.querySelector('[data-element="product.price"]');
+                
+                [productImage, productTitle, productPrice].forEach(element => {
+                  if (element) {
+                    element.style.cursor = 'pointer';
+                    element.addEventListener('click', () => {
+                      // Get the buy button and click it
+                      const buyButton = document.querySelector('#buy-button-custom');
+                      if (buyButton) {
+                        buyButton.click();
+                      } else {
+                        // Fallback: open Shopify checkout directly
+                        component.node.dispatchEvent(new Event('click', { bubbles: true }));
+                      }
+                    });
+                  }
+                });
+              }
+            }, 1000);
+          });
+        });
+      }
+    };
+
+    loadShopifyScript();
+    
+    // Cleanup function
+    return () => {
+      console.log('HomePage cleanup - clearing Shopify product');
+      const productNode = document.getElementById('product-component-1755456622817');
+      if (productNode) {
+        productNode.innerHTML = '';
+      }
+    };
+  }, []);
+
+
+
+
+
+
 
 
   
@@ -57,39 +251,12 @@ const HomePage: React.FC = () => {
   const coffeeSectionRef = useRef<HTMLElement>(null);
   const coffeeTextRef = useRef<HTMLDivElement>(null);
   
-  // Pinning refs for story section
-  const storySectionRef = useRef<HTMLElement>(null);
-  const storyContentRef = useRef<HTMLDivElement>(null);
+
   
   
  
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      const formData = new FormData(e.target as HTMLFormElement);
-      
-      const response = await fetch('/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams(formData as any).toString(),
-      });
-      
-      if (response.ok) {
-        setSubmitted(true);
-        setEmail(''); // Clear the email field
-      } else {
-        console.error('Form submission failed');
-        // Still show success message for UX, but log error
-        setSubmitted(true);
-      }
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      // Still show success message for UX, but log error
-      setSubmitted(true);
-    }
-  };
+
 
   // Reset to landing page: scroll to top, restore circle
   const resetToLanding = () => {
@@ -226,8 +393,7 @@ const HomePage: React.FC = () => {
           totalSections
         });
         
-        // Normal circle animation for all sections
-        
+        // Note: Circle fade for buy section is handled by specific trigger below
         
         // Get current and next section configs
         const currentConfig = sectionConfigs[sectionIndex];
@@ -493,22 +659,7 @@ const HomePage: React.FC = () => {
 
     // (scrolly section removed)
 
-    // Pin Story section (like others)
-    if (storySectionRef.current && storyContentRef.current) {
-      const storyTrigger = ScrollTrigger.create({
-        trigger: storySectionRef.current,
-        start: "top -100px",
-        end: "bottom 80%",
-        pin: storyContentRef.current,
-        pinSpacing: false
-      });
-      console.log('🎯 STORY SCROLLTRIGGER CREATED:', {
-        trigger: storySectionRef.current,
-        start: storyTrigger.start,
-        end: storyTrigger.end,
-        pin: storyContentRef.current
-      });
-    }
+
 
     // Ensure ScrollTrigger corrects the initial size immediately
     gsap.delayedCall(0.01, () => {
@@ -519,6 +670,45 @@ const HomePage: React.FC = () => {
         documentHeight: document.body.scrollHeight
       });
       ScrollTrigger.refresh();
+    });
+
+    // Specific trigger for buy section circle fade - prevents double circles
+    ScrollTrigger.create({
+      trigger: "#buy",
+      start: "top 85%", // Start fading when buy section approaches
+      end: "bottom 15%", // Keep faded until completely past buy section
+      onEnter: () => {
+        console.log('🛒 Buy section approaching - fading out main circle (buy image has its own circle)');
+        gsap.to(circleRef.current, {
+          opacity: 0,
+          duration: 0.8,
+          ease: "power2.out"
+        });
+      },
+      onLeave: () => {
+        console.log('🛒 Completely past buy section - fading in main circle');
+        gsap.to(circleRef.current, {
+          opacity: 1,
+          duration: 0.8,
+          ease: "power2.out"
+        });
+      },
+      onEnterBack: () => {
+        console.log('🛒 Re-entering buy section from below - fading out main circle');
+        gsap.to(circleRef.current, {
+          opacity: 0,
+          duration: 0.8,
+          ease: "power2.out"
+        });
+      },
+      onLeaveBack: () => {
+        console.log('🛒 Leaving buy section upward - fading in main circle');
+        gsap.to(circleRef.current, {
+          opacity: 1,
+          duration: 0.8,
+          ease: "power2.out"
+        });
+      }
     });
 
     return () => {
@@ -582,17 +772,6 @@ const HomePage: React.FC = () => {
               coffee
             </button>
             <button
-              onClick={() => scrollToSection('story')}
-              className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
-                activeSection === 'story' 
-                  ? 'text-black underline' 
-                  : 'text-black hover:opacity-70 hover:underline'
-              }`}
-            >
-              story
-            </button>
-            
-            <button
               onClick={() => scrollToSection('buy')}
               className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
                 activeSection === 'buy' 
@@ -630,17 +809,21 @@ const HomePage: React.FC = () => {
               <div className="max-w-4xl w-full relative text-left">
                 <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
                   <p className="section-content text-sm sm:text-base leading-relaxed">
-                    Charalá, Santander is a quiet town nestled in Colombia's eastern Andes, known for its rugged mountains, local markets, and a pace that invites you to slow down. I ended up there by chance, exhausted, sunburnt, and one-third of the way through Transcordilleras, a 1,000-kilometer bikepacking race with over 20,000 meters of climbing. I wasn't ready. Not mentally, not physically. By day three, I handed in my tracker and decided to ride back to Bogota on my own terms.
+                    Charalá, Santander is a quiet town nestled in Colombia's eastern Andes, known for its rugged mountains, local markets, and a pace that invites you to slow down. I ended up there by chance, exhausted, sunburnt, and one-third of the way through Transcordilleras, a 1,000-kilometer bikepacking race with over 20,000 meters of climbing. I wasn't ready. Not mentally, not physically. By day three, I handed in my tracker and decided I would ride back to Bogota at my own pace.
                   </p>
                   <p className="section-content text-sm sm:text-base leading-relaxed">
-                    I stayed behind as the other riders left. Over lunch, I asked the hostel manager if he knew any coffee producers. He made a call. A few hours later, Oscar Castro pulled up in his pickup and invited me to visit his farm.
+                    As the other riders left in the morning I stayed behind to plan my new adventure. Over lunch, I randomly asked the hostel manager, Miguel if he knew any coffee producers. He made a call and few hours later, Oscar Castro pulled up in his pickup and invited me to visit his farm.
                   </p>
                   <p className="section-content text-sm sm:text-base leading-relaxed">
-                    Oscar's farm, Bellavista, sits at 1,900 MASL above Charalá. He works a few hectares of land alongside his family and neighbors, also family, pooling their harvests to sell in town. The variety is Castillo, a hardy hybrid that thrives at altitude. It's delicate, floral, sweet, with notes of soft orchard fruit and a structured, clean finish.
+                    Oscar's farm, Bellavista, lives in a stead-spring valley 1,900m above sea level. Oscar works a few hectares of land with his family and neighbors, also family, pooling their harvests (coffee and banana) to sell in town. 
                   </p>
-                  <p className="section-content text-sm sm:text-base leading-relaxed">
-                    This coffee was grown, harvested, sourced, exported, roasted, and packed through small, independent efforts.
-                  </p>
+                  <br />
+                  <button
+                    onClick={() => navigate('/story')}
+                    className="section-content font-bold text-black underline hover:opacity-70 transition-opacity duration-200 text-sm sm:text-base"
+                  >
+                    See full story
+                  </button>
                 </div>
               </div>
             </div>
@@ -652,141 +835,171 @@ const HomePage: React.FC = () => {
           <div ref={coffeeTextRef} className="w-full h-screen flex flex-col items-start justify-center px-4 sm:px-6 md:pl-40 lg:pl-26 xl:pl-100 pr-4 sm:pr-6 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-12 z-40">
             <div className="max-w-4xl w-full relative z-40 text-left">
               <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
-                <p className="section-content text-sm sm:text-base leading-relaxed">
-                  This coffee was grown and hulled by Oscar Castro in Charalá. Unlike most coffees, which pass through several hands before it reaches a cup, this one skipped a few of those. Oscar handled both production and milling; we purchased directly, managed export and import independently, roasted, and packaged in New York. It's a vertically streamlined approach built on trust, transparency, and shared effort.
-                </p>
-                
-                <div className="section-content">
-                  {/* Producer and Variety in Two Columns */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
-                    {/* Producer */}
-                    <div className="space-y-2 sm:space-y-3">
-                      <h3 className="font-medium text-base sm:text-lg">Producer</h3>
-                      <div className="text-sm sm:text-base space-y-1 sm:space-y-2">
-                        <p>Oscar Castro</p>
-                        <p>Finca Bellavista</p>
-                        <p>Charalá, Santander, Colombia</p>
-                        <p>Altitude: 1,900 MASL</p>
+                <div className="section-content" style={{ lineHeight: '14pt' }}>
+                  {/* Title and Description Box */}
+                  <div className="border border-black mb-6" style={{ padding: '20px' }}>
+                    <h2 className="font-bold uppercase tracking-wide text-left mb-4" style={{ fontSize: '14pt', lineHeight: '14pt', paddingTop: '0', paddingBottom: '0' }}>
+                      NOTES
+                    </h2>
+                    <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                      Delicate florals, orchard-fruit sweetness, crisp clean finish. Sourced and roasted by Origen at Multimodal, a collective-oriented shared-roaster in New York.
+                    </p>
+                  </div>
+
+                  {/* Coffee Information Grid - Fixed Width Columns */}
+                  <div className="grid gap-0" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
+                    
+                    {/* Producer Card */}
+                    <div className="border border-black" style={{ padding: '20px' }}>
+                      <h3 className="font-bold uppercase tracking-wide text-left mb-4" style={{ fontSize: '14pt', lineHeight: '14pt', paddingTop: '0', paddingBottom: '0' }}>
+                        PRODUCER
+                      </h3>
+                      <div style={{ lineHeight: '14pt' }}>
+                        <p className="text-black mb-3" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold">Oscar Castro</span>
+                        </p>
+                        <p className="text-black mb-3" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          Finca Bellavista
+                        </p>
+                        <p className="text-black mb-3" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          Charalá, Santander, Colombia
+                        </p>
+                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          Altitude: 1,900 MASL
+                        </p>
                       </div>
                     </div>
 
-                    {/* Variety */}
-                    <div className="space-y-2 sm:space-y-3">
-                      <h3 className="font-medium text-base sm:text-lg">Variety</h3>
-                      <div className="text-sm sm:text-base">
-                        <p className="font-medium mb-2 sm:mb-3">Castillo</p>
+                    {/* Variety Card */}
+                    <div className="border border-black border-l-0" style={{ padding: '20px' }}>
+                      <h3 className="font-bold uppercase tracking-wide text-left mb-4" style={{ fontSize: '14pt', lineHeight: '14pt', paddingTop: '0', paddingBottom: '0' }}>
+                        VARIETY & PROCESS
+                      </h3>
+                      <div style={{ lineHeight: '14pt' }}>
+                        <p className="text-black mb-3" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold">Castillo</span>
+                        </p>
+                        <p className="text-black mb-3" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          Washed
+                        </p>
+                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          Fermented 36 hours
+                        </p>
+                    </div>
+                  </div>
+
+                    {/* Harvest & Lot Card */}
+                    <div className="border border-black border-l-0" style={{ padding: '20px' }}>
+                      <h3 className="font-bold uppercase tracking-wide text-left mb-4" style={{ fontSize: '14pt', lineHeight: '14pt', paddingTop: '0', paddingBottom: '0' }}>
+                        HARVEST & LOT
+                      </h3>
+                      <div style={{ lineHeight: '14pt' }}>
+                        <p className="text-black mb-3" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold">May 2025</span>
+                        </p>
+                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold">50kg</span>
+                        </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Harvest & Lot */}
-                  <div className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
-                    <h3 className="font-medium text-base sm:text-lg">Harvest & Lot</h3>
-                    <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-xs sm:max-w-md">
+                  {/* Supply Chain Card */}
+                  <div className="border border-black border-t-0" style={{ padding: '20px' }}>
+                    <h3 className="font-bold uppercase tracking-wide text-left mb-4" style={{ fontSize: '14pt', lineHeight: '14pt', paddingTop: '0', paddingBottom: '0' }}>
+                      SUPPLY CHAIN
+                    </h3>
+                    <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(8, 1fr)', lineHeight: '14pt' }}>
                       <div>
-                        <p className="text-xs sm:text-sm text-gray-600 mb-1">Harvest Date</p>
-                        <p className="text-sm sm:text-base">May 2025</p>
+                        <p className="font-medium uppercase tracking-widest text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          FARM
+                        </p>
+                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold">Bellavista</span>
+                        </p>
+                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold">$448.55</span>
+                        </p>
                       </div>
                       <div>
-                        <p className="text-xs sm:text-sm text-gray-600 mb-1">Lot Size</p>
-                        <p className="text-sm sm:text-base">50kg</p>
+                        <p className="font-medium uppercase tracking-widest text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          MILL
+                        </p>
+                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold">Cafe Semilla</span>
+                        </p>
+                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold">$TBD</span>
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-medium uppercase tracking-widest text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          FOB
+                        </p>
+                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold">FedEx</span>
+                        </p>
+                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold">$95</span>
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-medium uppercase tracking-widest text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          BUYER
+                        </p>
+                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold">Origen</span>
+                        </p>
+                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold">$TBD</span>
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-medium uppercase tracking-widest text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          EXPORTER
+                        </p>
+                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold">Origen</span>
+                        </p>
+                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold">$TBD</span>
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-medium uppercase tracking-widest text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          IMPORTER
+                        </p>
+                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold">Origen</span>
+                        </p>
+                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold">$TBD</span>
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-medium uppercase tracking-widest text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          ROASTING
+                        </p>
+                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold">Multimodal</span>
+                        </p>
+                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold">$TBD</span>
+                        </p>
+                      </div>
+                      <div>
+                        <p className="font-medium uppercase tracking-widest text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          COGS
+                        </p>
+                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold">$/kg</span>
+                        </p>
+                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                          <span className="font-bold"></span>
+                        </p>
                       </div>
                     </div>
                   </div>
-
-                  {/* Supply Chain - Clean Left-Justified Layout */}
-                  <div className="mt-6 sm:mt-8 lg:mt-10">
-                    <h3 className="font-medium text-base sm:text-lg mb-3 sm:mb-4 lg:mb-6">Supply Chain</h3>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-4 lg:gap-6">
-                      <div className="text-left space-y-1">
-                        <h4 className="font-medium text-sm text-gray-600">Farm Gate</h4>
-                        <p className="text-sm sm:text-base">$448.55 USD</p>
-                      </div>
-                      <div className="text-left space-y-1">
-                        <h4 className="font-medium text-sm text-gray-600">FOB - FOT</h4>
-                        <p className="text-sm sm:text-base">$95</p>
-                      </div>
-                      <div className="text-left space-y-1">
-                        <h4 className="font-medium text-sm text-gray-600">Buyer</h4>
-                        <p className="text-sm sm:text-base">Origen</p>
-                      </div>
-                      <div className="text-left space-y-1">
-                        <h4 className="font-medium text-sm text-gray-600">Exporter</h4>
-                        <p className="text-sm sm:text-base">Origen</p>
-                      </div>
-                      <div className="text-left space-y-1">
-                        <h4 className="font-medium text-sm text-gray-600">Importer</h4>
-                        <p className="text-sm sm:text-base">Origen</p>
-                      </div>
-                      <div className="text-left space-y-1">
-                        <h4 className="font-medium text-sm text-gray-600">Roaster</h4>
-                        <p className="text-sm sm:text-base">Origen / Multimodal</p>
-                      </div>
-                      <div className="text-left space-y-1 col-span-2 sm:col-span-1">
-                        <h4 className="font-medium text-sm text-gray-600">COGS</h4>
-                        <p className="text-sm sm:text-base">$/kg</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Story Section (left image, right text) */}
-        <section ref={storySectionRef} id="story" className="text-black relative pt-20" style={{ height: '300vh' }}>
-          <div ref={storyContentRef} className="w-full h-screen grid grid-cols-1 md:grid-cols-12 items-center px-4 sm:px-6 py-6 sm:py-8 z-40 relative">
-            {/* Left: Image with dots */}
-            <div className="md:col-span-7 flex items-center justify-center pr-0 md:pr-6 lg:pr-10 relative">
-              {/* Dots (15px left of image) */}
-              <div className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2" style={{ transform: 'translateX(-15px) translateY(-50%)' }}>
-                <div className="flex flex-col space-y-3">
-                  {storySlides.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => changeStory(idx)}
-                      aria-label={`Go to slide ${idx + 1}`}
-                      className={`w-2.5 h-2.5 rounded-full border transition-all ${
-                        idx === currentStoryIndex ? 'bg-orange-500 border-orange-500' : 'bg-transparent border-gray-400 hover:border-orange-500'
-                      }`}
-                    />
-                  ))}
-                </div>
-              </div>
-              <img
-                key={currentStoryIndex}
-                src={storySlides[currentStoryIndex].src}
-                alt={`story image ${currentStoryIndex + 1}`}
-                className={`w-full h-auto max-h-[70vh] object-contain rounded-md shadow-sm transition-opacity duration-300 ${
-                  isStoryFadingIn ? 'opacity-100' : 'opacity-0'
-                }`}
-              />
-            </div>
-            {/* Right: Text with arrows */}
-            <div className="md:col-span-5 pl-0 md:pl-6 lg:pl-10">
-              <div className="mb-4">
-                <h3 className="text-xl sm:text-2xl font-medium">{currentStoryIndex + 1} / {storySlides.length}</h3>
-              </div>
-              <p className="text-lg sm:text-2xl leading-relaxed section-content mb-6">
-                {storySlides[currentStoryIndex].text}
-              </p>
-              <div className="flex items-center justify-start">
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={showPrevStory}
-                    aria-label="Previous slide"
-                    className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50"
-                  >
-                    <ChevronLeft size={18} />
-                  </button>
-                  <button
-                    onClick={showNextStory}
-                    aria-label="Next slide"
-                    className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50"
-                  >
-                    <ChevronRight size={18} />
-                  </button>
                 </div>
               </div>
             </div>
@@ -794,41 +1007,95 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Buy Section */}
-        <section id="buy" className="min-h-screen text-black flex flex-col items-center justify-center px-4 sm:px-6 md:pl-32 lg:pl-28 xl:pl-24 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-8 relative pt-20">
-          <div className="max-w-4xl w-full relative z-40 text-left">
-            <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
-              <p className="section-content text-sm sm:text-base leading-relaxed">
-                The next roast will be a small one, about 50kg. Drop your email to stay in the loop, and we'll let you know when pre-order is open a few days before the next roast.
-              </p>
+        <section id="buy" className="text-black relative pt-20" style={{ height: '300vh' }}>
+          <div className="w-full h-screen flex flex-col items-end justify-center px-4 sm:px-6 md:pr-40 lg:pr-26 xl:pr-100 pl-4 sm:pl-6 md:pl-8 lg:pl-12 xl:pl-16 py-6 sm:py-12 z-40">
+            <div className="max-w-4xl w-full relative z-40 text-left">
+              <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
+                <div className="section-content" style={{ lineHeight: '14pt' }}>
+                  {/* Product Grid - Two Column Layout */}
+                  <div className="grid gap-0" style={{ gridTemplateColumns: '1fr 1fr', height: '60vh' }}>
+                    
+                    {/* Details Section - Left */}
+                    <div className="border border-black flex flex-col" style={{ padding: '30px' }}>
+                      <div className="flex-1">
+                        <h3 className="font-bold uppercase tracking-wide text-left mb-6" style={{ fontSize: '16pt', lineHeight: '20pt' }}>
+                          Details
+                        </h3>
+                        <div style={{ lineHeight: '18pt' }}>
+                          <p className="text-black mb-4" style={{ fontSize: '11pt', lineHeight: '18pt' }}>
+                            <span className="font-bold">Castillo</span> variety from Finca Bellavista
+                          </p>
+                          <p className="text-black mb-4" style={{ fontSize: '11pt', lineHeight: '18pt' }}>
+                            Washed process, fermented 36 hours
+                          </p>
+                          <p className="text-black mb-4" style={{ fontSize: '11pt', lineHeight: '18pt' }}>
+                            Charalá, Santander, Colombia
+                          </p>
+                          <p className="text-black mb-6" style={{ fontSize: '11pt', lineHeight: '18pt' }}>
+                            Delicate florals, orchard-fruit sweetness, crisp clean finish
+                          </p>
+                        </div>
+                      </div>
 
-              <div className="section-content">
-                <div className="mt-6 sm:mt-8 lg:mt-10">
-                  <h3 className="font-medium text-base sm:text-lg mb-3 sm:mb-4 lg:mb-6">Get notified when available</h3>
-                  {!submitted ? (
-                    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-                      <div>
-                        <input
-                          type="email"
-                          name="email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          placeholder="Enter your email"
-                          required
-                          className="w-full px-0 py-2 text-sm sm:text-base placeholder-gray-500 text-black bg-transparent border-0 border-b border-gray-300 focus:border-black focus:outline-none focus:ring-0"
+                      {/* Subscribe Form */}
+                      <div className="mt-auto">
+                        <h4 className="font-bold uppercase tracking-wide text-left mb-4" style={{ fontSize: '12pt', lineHeight: '16pt' }}>
+                          Subscribe to stay in the loop
+                        </h4>
+                        <p className="text-black mb-6" style={{ fontSize: '11pt', lineHeight: '18pt' }}>
+                            We'll let you know a few days before the next roast so you can pre-order
+                          </p>
+                        {!submitted ? (
+                          <form onSubmit={handleSubmit} className="space-y-3">
+                            <div>
+                              <input
+                                type="email"
+                                name="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Enter your email"
+                                required
+                                className="w-full px-0 py-2 placeholder-gray-500 text-black bg-transparent border-0 border-b border-black focus:border-black focus:outline-none focus:ring-0"
+                                style={{ fontSize: '10pt', lineHeight: '14pt' }}
+                              />
+                            </div>
+                            <button
+                              type="submit"
+                              className="font-bold text-black border border-black px-4 py-2 hover:bg-black hover:text-white transition-all duration-200 uppercase tracking-wide"
+                              style={{ fontSize: '9pt', lineHeight: '12pt' }}
+                            >
+                              Subscribe
+                            </button>
+                          </form>
+                        ) : (
+                          <div className="text-left py-4">
+                            <p className="text-black" style={{ fontSize: '10pt', lineHeight: '14pt' }}>
+                              <span className="font-bold">Thanks for subscribing!</span> We'll keep you updated.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Product Image Section - Right */}
+                    <div className="border border-black border-l-0 flex flex-col" style={{ padding: '30px' }}>
+                      {/* Product Image Area */}
+                      <div className="flex-1 flex items-center justify-center bg-white mb-6">
+                        <img 
+                          src="/photos/31.jpeg" 
+                          alt="Colombian Coffee"
+                          className="w-full h-full object-cover rounded-lg"
                         />
                       </div>
-                      <button
-                        type="submit"
-                        className="text-left text-sm sm:text-base font-medium text-black hover:opacity-70 transition-all duration-200 underline self-start py-2 active:scale-95"
-                      >
-                        Sign Up
-                      </button>
-                    </form>
-                  ) : (
-                    <div className="text-left py-4">
-                      <p className="text-sm sm:text-base text-gray-600">Thanks for signing up! We'll let you know as soon as the next roast is ready.</p>
+                      
+                      {/* Bottom Label */}
+                      <div className="text-center mt-auto">
+                        <p className="text-black font-medium" style={{ fontSize: '14pt', lineHeight: '18pt' }}>
+                          Roast date: TBC
+                        </p>
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>

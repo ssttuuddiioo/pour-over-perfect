@@ -30,7 +30,10 @@ const CircleTransition: React.FC<CircleTransitionProps> = ({ children, className
       >
         {/* Circle content can vary based on mode */}
         {circleState.mode === 'front' && (
-          <div className="text-white text-center">
+          <div 
+            onClick={() => navigateWithTransition('/story')}
+            className="text-white text-center cursor-pointer hover:text-orange-200 transition-colors w-full h-full flex items-center justify-center"
+          >
             {children}
           </div>
         )}

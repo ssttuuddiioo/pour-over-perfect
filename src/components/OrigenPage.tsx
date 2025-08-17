@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useCircleTransition } from '../context/CircleTransitionContext';
@@ -6,6 +7,7 @@ import { useCircleTransition } from '../context/CircleTransitionContext';
 gsap.registerPlugin(ScrollTrigger);
 
 const OrigenPage: React.FC = () => {
+  const navigate = useNavigate();
   const { circleRef } = useCircleTransition();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -65,6 +67,16 @@ const OrigenPage: React.FC = () => {
                 every cup begins with a seed, nurtured by soil, sun, and the skilled 
                 hands of farmers who understand that great coffee is both art and science.
               </p>
+
+              {/* Read the full story button */}
+              <div className="mb-12">
+                <button
+                  onClick={() => navigate('/story')}
+                  className="font-bold text-black underline hover:opacity-70 transition-opacity duration-200 text-lg md:text-xl"
+                >
+                  Read the full story
+                </button>
+              </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
                 <div className="text-center">
