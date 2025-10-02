@@ -406,11 +406,9 @@ const HomePage: React.FC = () => {
   const coffeeSectionRef = useRef<HTMLElement>(null);
   const coffeeTextRef = useRef<HTMLDivElement>(null);
   
-
-  
-  
- 
-
+  // Pinning refs for buy section
+  const buySectionRef = useRef<HTMLElement>(null);
+  const buyTextRef = useRef<HTMLDivElement>(null);
 
 
   // Reset to landing page: scroll to top, restore circle
@@ -882,9 +880,50 @@ const HomePage: React.FC = () => {
       });
     }
 
-    // (scrolly section removed)
-
-
+    // Set up pinning for buy section
+    if (buySectionRef.current && buyTextRef.current) {
+      const buyTrigger = ScrollTrigger.create({
+        trigger: buySectionRef.current,
+        start: "top -100px",
+        end: "bottom bottom",
+        pin: buyTextRef.current,
+        pinSpacing: false,
+        onEnter: (self) => {
+          console.log('🛒 BUY PIN ENTER:', {
+            scrollY: window.scrollY,
+            progress: self.progress.toFixed(4),
+            start: self.start,
+            end: self.end,
+            direction: self.direction,
+            isActive: self.isActive
+          });
+        },
+        onLeave: (self) => {
+          console.log('🛒 BUY PIN LEAVE:', {
+            scrollY: window.scrollY,
+            progress: self.progress.toFixed(4),
+            start: self.start,
+            end: self.end,
+            direction: self.direction
+          });
+        },
+        onUpdate: (self) => {
+          console.log('🛒 BUY PIN UPDATE:', {
+            scrollY: window.scrollY,
+            progress: self.progress.toFixed(4),
+            velocity: self.getVelocity(),
+            direction: self.direction
+          });
+        }
+      });
+      
+      console.log('🎯 BUY SCROLLTRIGGER CREATED:', {
+        trigger: buySectionRef.current,
+        start: buyTrigger.start,
+        end: buyTrigger.end,
+        pin: buyTextRef.current
+      });
+    }
 
     // Ensure ScrollTrigger corrects the initial size immediately
     gsap.delayedCall(0.01, () => {
@@ -941,7 +980,7 @@ const HomePage: React.FC = () => {
           ref={navRef}
           className="fixed top-0 left-0 right-0 z-50 py-6"
         >
-          <div className="flex justify-center items-center gap-12 sm:gap-16 md:gap-20 lg:gap-24 xl:gap-28">
+          <div className="flex justify-center items-center gap-8 sm:gap-10 md:gap-12 lg:gap-16 xl:gap-20">
             <button
               onClick={() => scrollToSection('origen')}
               className="text-lg sm:text-xl font-bold text-black hover:opacity-70 transition-opacity"
@@ -1177,9 +1216,10 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Buy Section */}
-        <section id="buy" className="text-black relative pt-20" style={{ minHeight: '300vh' }}>
-          <div className="w-full h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-6 sm:py-12 z-40">
-            <div className="max-w-6xl w-full relative z-40">
+        <section ref={buySectionRef} id="buy" className="text-black relative pt-20" style={{ minHeight: '300vh' }}>
+          {/* Pinned content container */}
+          <div ref={buyTextRef} className="w-full min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-6 sm:py-12 relative" style={{ zIndex: 2 }}>
+            <div className="max-w-6xl w-full relative">
               <div className="grid gap-0 grid-cols-1 md:grid-cols-2" style={{ height: 'auto', minHeight: '50vh' }}>
                 
                 {/* Subscribe Section - Left */}
