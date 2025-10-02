@@ -60,6 +60,49 @@ const HomePage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [showNotesTooltip, setShowNotesTooltip] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState<string>('classic');
+
+  // Brewing presets with different recipes
+  const brewingPresets = {
+    classic: {
+      name: 'Classic',
+      description: 'Balanced and approachable',
+      coffeeAmount: 18,
+      ratio: 16.5,
+      bloomRatio: 2,
+      grindSize: 6
+    },
+    bright: {
+      name: 'Bright',
+      description: 'Light and tea-like',
+      coffeeAmount: 15,
+      ratio: 17,
+      bloomRatio: 2.5,
+      grindSize: 5.5
+    },
+    bold: {
+      name: 'Bold',
+      description: 'Rich and full-bodied',
+      coffeeAmount: 20,
+      ratio: 15,
+      bloomRatio: 1.8,
+      grindSize: 6.5
+    }
+  };
+
+  // Apply preset when selected
+  const applyPreset = (presetKey: string) => {
+    const preset = brewingPresets[presetKey as keyof typeof brewingPresets];
+    if (preset) {
+      setSelectedPreset(presetKey);
+      setCoffeeSettings({
+        amount: preset.coffeeAmount,
+        ratio: preset.ratio,
+        bloomRatio: preset.bloomRatio
+      });
+      setGrindSize(preset.grindSize);
+    }
+  };
 
   const brewingTimings = calculateBrewTiming(
     grindSize, 
@@ -1279,8 +1322,45 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Timer Section */}
-        <section id="timer" className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-20 bg-white relative" style={{ marginTop: '20vh' }}>
-          <div className="w-full max-w-[430px] mx-auto">
+        <section id="timer" className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-12 py-20 bg-white relative" style={{ marginTop: '20vh' }}>
+          <div className="w-full max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
+              
+              {/* Left Panel - Presets */}
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-black">Brew Guides</h2>
+                  <p className="text-black text-sm sm:text-base leading-relaxed">
+                    Choose a brewing style that matches your taste. Each preset adjusts the coffee amount, 
+                    water ratio, and timing to create a unique flavor profile.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  {Object.entries(brewingPresets).map(([key, preset]) => (
+                    <button
+                      key={key}
+                      onClick={() => applyPreset(key)}
+                      className={`w-full text-left p-4 sm:p-5 border-2 transition-all ${
+                        selectedPreset === key 
+                          ? 'border-orange-500 bg-orange-50' 
+                          : 'border-black hover:border-orange-500 hover:bg-orange-50'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-lg sm:text-xl font-bold text-black">{preset.name}</h3>
+                        <div className="text-xs text-black opacity-60">
+                          {preset.coffeeAmount}g : {Math.round(preset.coffeeAmount * preset.ratio)}g
+                        </div>
+                      </div>
+                      <p className="text-sm text-black opacity-70">{preset.description}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right Panel - Timer */}
+              <div className="w-full max-w-[430px] mx-auto lg:mx-0">
             {!showBrewTimer ? (
               // Timer Configuration
               <main className="flex-1 space-y-6">
@@ -1427,6 +1507,8 @@ const HomePage: React.FC = () => {
                 </div>
               </div>
             )}
+              </div>
+            </div>
           </div>
         </section>
 
