@@ -7,31 +7,3 @@ export interface CoffeeSettings {
   ratio: number;   // water to coffee ratio
   bloomRatio: number; // 2x or 3x coffee weight
 }
-
-export interface RecipeStep {
-  label: string;
-  duration: number;
-  waterTarget: number | null;
-  instructions: string;
-  type: 'pour' | 'rest';
-}
-
-export interface RecipePreset {
-  name: string;
-  description: string;
-  coffeeAmount: number;
-  ratio: number;
-  bloomRatio: number;
-  grindSize: number;
-  isRecipeMode: true;
-  steps: RecipeStep[];
-}
-
-export interface StandardPreset {
-  name: string;
-  description: string;
-  coffeeAmount: number;
-  ratio: number;
-  bloomRatio: number;
-  grindSize: number;
-}
