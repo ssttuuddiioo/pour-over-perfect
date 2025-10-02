@@ -748,29 +748,6 @@ const HomePage: React.FC = () => {
     // Initialize with first section
     setActiveSection('home');
     
-    // Navigation animation - smoothly moves from center to top with scroll
-    if (navRef.current) {
-      gsap.to(navRef.current, {
-        top: 0,
-        scrollTrigger: {
-          trigger: document.body,
-          start: "top top",
-          end: "+=400",
-          scrub: true,
-          onUpdate: (self) => {
-            if (navRef.current) {
-              // When progress reaches 1, make it fixed
-              if (self.progress >= 0.99) {
-                navRef.current.style.position = 'fixed';
-              } else {
-                navRef.current.style.position = 'absolute';
-              }
-            }
-          }
-        }
-      });
-    }
-    
     // Set up pinning for origen section
     if (origenSectionRef.current && origenTextRef.current) {
       const origenTrigger = ScrollTrigger.create({
@@ -954,45 +931,43 @@ const HomePage: React.FC = () => {
     <div className="min-h-screen">
       {/* Sections */}
       <div className="scroll-smooth">
-        {/* Home Section - Circle and centered navigation */}
+        {/* Home Section - Only the circle */}
         <section id="home" className="min-h-screen flex items-center justify-center relative">
-          {/* Navigation - starts centered, smoothly moves to top with scroll, then becomes fixed */}
-          <nav 
-            ref={navRef}
-            className="absolute left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur-sm py-4"
-            style={{
-              top: '50%',
-              transform: 'translateY(-50%)'
-            }}
-          >
-            <div className="flex justify-center items-center gap-12 sm:gap-16 md:gap-20 lg:gap-24 xl:gap-28">
-              <button
-                onClick={() => scrollToSection('origen')}
-                className="text-lg sm:text-xl font-bold text-black hover:opacity-70 transition-opacity"
-              >
-                Origen
-              </button>
-              <button
-                onClick={() => scrollToSection('coffee')}
-                className="text-lg sm:text-xl font-bold text-black hover:opacity-70 transition-opacity"
-              >
-                Coffee
-              </button>
-              <button
-                onClick={() => scrollToSection('buy')}
-                className="text-lg sm:text-xl font-bold text-black hover:opacity-70 transition-opacity"
-              >
-                Buy
-              </button>
-              <button
-                onClick={() => scrollToSection('timer')}
-                className="text-lg sm:text-xl font-bold text-black hover:opacity-70 transition-opacity"
-              >
-                Timer
-              </button>
-            </div>
-          </nav>
+          {/* Only the circle - clean and minimal */}
         </section>
+
+        {/* Fixed Navigation at Top */}
+        <nav 
+          ref={navRef}
+          className="fixed top-0 left-0 right-0 z-50 py-6"
+        >
+          <div className="flex justify-center items-center gap-12 sm:gap-16 md:gap-20 lg:gap-24 xl:gap-28">
+            <button
+              onClick={() => scrollToSection('origen')}
+              className="text-lg sm:text-xl font-bold text-black hover:opacity-70 transition-opacity"
+            >
+              Origen
+            </button>
+            <button
+              onClick={() => scrollToSection('coffee')}
+              className="text-lg sm:text-xl font-bold text-black hover:opacity-70 transition-opacity"
+            >
+              Coffee
+            </button>
+            <button
+              onClick={() => scrollToSection('buy')}
+              className="text-lg sm:text-xl font-bold text-black hover:opacity-70 transition-opacity"
+            >
+              Buy
+            </button>
+            <button
+              onClick={() => scrollToSection('timer')}
+              className="text-lg sm:text-xl font-bold text-black hover:opacity-70 transition-opacity"
+            >
+              Timer
+            </button>
+          </div>
+        </nav>
 
                 {/* Origen Section */}
         <section ref={origenSectionRef} id="origen" className="text-black relative pt-20" style={{ minHeight: '300vh' }}>
