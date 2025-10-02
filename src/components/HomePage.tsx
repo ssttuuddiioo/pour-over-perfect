@@ -18,7 +18,6 @@ const HomePage: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [navFixed, setNavFixed] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   
   // Slideshow images for Origen section
@@ -749,13 +748,26 @@ const HomePage: React.FC = () => {
     // Initialize with first section
     setActiveSection('home');
     
-    // Navigation animation - centered on load, moves to top and stays fixed
+    // Navigation animation - smoothly moves from center to top with scroll
     if (navRef.current) {
-      ScrollTrigger.create({
-        start: "100px top",
-        end: 99999,
-        onEnter: () => setNavFixed(true),
-        onLeaveBack: () => setNavFixed(false)
+      gsap.to(navRef.current, {
+        top: 0,
+        scrollTrigger: {
+          trigger: document.body,
+          start: "top top",
+          end: "+=400",
+          scrub: true,
+          onUpdate: (self) => {
+            if (navRef.current) {
+              // When progress reaches 1, make it fixed
+              if (self.progress >= 0.99) {
+                navRef.current.style.position = 'fixed';
+              } else {
+                navRef.current.style.position = 'absolute';
+              }
+            }
+          }
+        }
       });
     }
     
@@ -944,17 +956,16 @@ const HomePage: React.FC = () => {
       <div className="scroll-smooth">
         {/* Home Section - Circle and centered navigation */}
         <section id="home" className="min-h-screen flex items-center justify-center relative">
-          {/* Navigation - centered on load, moves to top when scrolling */}
+          {/* Navigation - starts centered, smoothly moves to top with scroll, then becomes fixed */}
           <nav 
             ref={navRef}
-            className={`${navFixed ? 'fixed top-0 left-0 right-0 bg-white bg-opacity-90 backdrop-blur-sm py-4' : 'absolute'} z-50 transition-all duration-500 ease-out`}
-            style={navFixed ? {} : {
+            className="absolute left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur-sm py-4"
+            style={{
               top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)'
+              transform: 'translateY(-50%)'
             }}
           >
-            <div className="flex justify-center items-center gap-8 sm:gap-10 md:gap-12 lg:gap-16">
+            <div className="flex justify-center items-center gap-12 sm:gap-16 md:gap-20 lg:gap-24 xl:gap-28">
               <button
                 onClick={() => scrollToSection('origen')}
                 className="text-lg sm:text-xl font-bold text-black hover:opacity-70 transition-opacity"
