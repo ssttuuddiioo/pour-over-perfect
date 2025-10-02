@@ -6,8 +6,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useCircleTransition } from '../context/CircleTransitionContext';
 import { supabase } from '../lib/supabase';
 import { calculateBrewTiming, formatTime } from '../utils/brewingCalculations';
-import { CoffeeSettings, RecipeStep, RecipePreset, StandardPreset } from '../types/brewing';
-import AppleStylePicker from './AppleStylePicker';
+import { CoffeeSettings, RecipeStep, RecipePreset } from '../types/brewing';
 import InstructionsPanel from './InstructionsPanel';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -20,7 +19,7 @@ const HomePage: React.FC = () => {
   const [activeSection, setActiveSection] = useState('home');
   const [currentSlide, setCurrentSlide] = useState(0);
   const navRef = useRef<HTMLElement>(null);
-  
+
   // Slideshow images for Origen section
   const slideshowImages = [
     '/photos/1.JPG',
@@ -36,62 +35,16 @@ const HomePage: React.FC = () => {
   ];
 
   // Timer state
-  const loadSavedSettings = () => {
-    const savedSettings = localStorage.getItem('coffeeSettings');
-    if (savedSettings) {
-      try {
-        const parsed = JSON.parse(savedSettings);
-        return {
-          amount: 18.0, // Always set to 18g
-          ratio: (parsed.ratio >= 1 && parsed.ratio <= 50) ? parsed.ratio : 16.5,
-          bloomRatio: parsed.bloomRatio || 2
-        };
-      } catch (e) {
-        console.error('Error loading saved settings:', e);
-      }
-    }
-    return { amount: 18.0, ratio: 16.5, bloomRatio: 2 };
-  };
-
-  const [coffeeSettings, setCoffeeSettings] = useState<CoffeeSettings>(loadSavedSettings);
+  const [coffeeSettings, setCoffeeSettings] = useState<CoffeeSettings>({ amount: 15, ratio: 16.7, bloomRatio: 2 });
   const [grindSize, setGrindSize] = useState(6);
   const [showBrewTimer, setShowBrewTimer] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [showNotesTooltip, setShowNotesTooltip] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState<string>('classic');
-  const [isRecipeMode, setIsRecipeMode] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState<string>('hoffmann');
+  const [isRecipeMode] = useState(true); // Always in recipe mode now
   const [recipeSteps, setRecipeSteps] = useState<RecipeStep[] | null>(null);
-
-  // Standard adjustable presets
-  const standardPresets: Record<string, StandardPreset> = {
-    classic: {
-      name: 'Classic',
-      description: 'Balanced and approachable',
-      coffeeAmount: 18,
-      ratio: 16.5,
-      bloomRatio: 2,
-      grindSize: 6
-    },
-    bright: {
-      name: 'Bright',
-      description: 'Light and tea-like',
-      coffeeAmount: 15,
-      ratio: 17,
-      bloomRatio: 2.5,
-      grindSize: 5.5
-    },
-    bold: {
-      name: 'Bold',
-      description: 'Rich and full-bodied',
-      coffeeAmount: 20,
-      ratio: 15,
-      bloomRatio: 1.8,
-      grindSize: 6.5
-    }
-  };
 
   // Famous recipe presets (locked parameters)
   const recipePresets: Record<string, RecipePreset> = {
@@ -221,24 +174,13 @@ const HomePage: React.FC = () => {
     }
   };
 
-  // Combined presets
-  const allPresets = { ...standardPresets, ...recipePresets };
-
   // Apply preset when selected
   const applyPreset = (presetKey: string) => {
-    const preset = allPresets[presetKey];
+    const preset = recipePresets[presetKey];
     if (!preset) return;
 
     setSelectedPreset(presetKey);
-
-    // Check if it's a recipe preset
-    if ('isRecipeMode' in preset && preset.isRecipeMode) {
-      setIsRecipeMode(true);
-      setRecipeSteps(preset.steps);
-    } else {
-      setIsRecipeMode(false);
-      setRecipeSteps(null);
-    }
+    setRecipeSteps(preset.steps);
 
     setCoffeeSettings({
       amount: preset.coffeeAmount,
@@ -248,18 +190,14 @@ const HomePage: React.FC = () => {
     setGrindSize(preset.grindSize);
   };
 
-  // Calculate timings (only used for standard mode)
-  const brewingTimings = calculateBrewTiming(
-    grindSize, 
-    coffeeSettings.amount, 
-    coffeeSettings.ratio, 
-    coffeeSettings.bloomRatio
-  );
+  // Initialize with Hoffmann preset on mount
+  React.useEffect(() => {
+    applyPreset('hoffmann');
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Generate step sequence based on mode
+  // Generate step sequence from recipe steps
   const stepSequence = React.useMemo(() => {
-    if (isRecipeMode && recipeSteps) {
-      // Use predefined recipe steps
+    if (recipeSteps) {
       return recipeSteps.map(step => ({
         label: step.label,
         water: step.waterTarget ? `Pour to ${step.waterTarget}g` : step.instructions.split('.')[0],
@@ -267,20 +205,10 @@ const HomePage: React.FC = () => {
         instructions: step.instructions,
         type: step.type
       }));
-    } else {
-      // Calculate dynamically for standard presets
-      return [
-        { label: 'Bloom', water: `Pour to ${brewingTimings.bloomWater}g`, duration: brewingTimings.bloomDuration, type: 'pour' as const },
-        { label: 'First Pour', water: `Pour to ${brewingTimings.firstPourTarget}g`, duration: brewingTimings.firstPourDuration, type: 'pour' as const },
-        { label: 'Rest', water: 'Let it steep', duration: brewingTimings.restDuration, type: 'rest' as const },
-        { label: 'Second Pour', water: `Pour to ${brewingTimings.secondPourTarget}g`, duration: brewingTimings.secondPourDuration, type: 'pour' as const },
-        { label: 'Rest', water: 'Let it steep', duration: brewingTimings.secondRestDuration, type: 'rest' as const },
-        { label: 'Third Pour', water: `Pour to ${brewingTimings.thirdPourTarget}g`, duration: brewingTimings.thirdPourDuration, type: 'pour' as const },
-        { label: 'Drawdown', water: 'Let coffee drip', duration: brewingTimings.drawdownDuration, type: 'rest' as const },
-        { label: 'Finish', water: 'Enjoy your coffee!', duration: 0, type: 'rest' as const }
-      ];
     }
-  }, [isRecipeMode, recipeSteps, grindSize, coffeeSettings.amount, coffeeSettings.ratio, coffeeSettings.bloomRatio, brewingTimings]);
+    // Default to Hoffmann if no recipe selected (shouldn't happen)
+    return [];
+  }, [recipeSteps]);
 
   const stepEndTimes = stepSequence.reduce((acc, step, i) => {
     acc.push((acc[i - 1] || 0) + step.duration);
@@ -1496,16 +1424,15 @@ const HomePage: React.FC = () => {
               {/* Left Panel - Presets */}
               <div className="space-y-6">
                 <div className="space-y-3">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-black">Brew Guides</h2>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-black">Famous Recipes</h2>
                   <p className="text-black text-sm sm:text-base leading-relaxed">
-                    Choose a brewing style. Adjustable presets let you customize parameters, while famous recipes provide step-by-step guidance.
+                    Choose a brewing method from world-renowned baristas. Each recipe provides step-by-step guidance with precise timing and instructions.
                   </p>
                 </div>
 
-                {/* Standard Adjustable Presets */}
+                {/* Recipe Presets */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-600">Adjustable Presets</h3>
-                  {Object.entries(standardPresets).map(([key, preset]) => (
+                  {Object.entries(recipePresets).map(([key, preset]) => (
                     <button
                       key={key}
                       onClick={() => applyPreset(key)}
@@ -1525,33 +1452,6 @@ const HomePage: React.FC = () => {
                     </button>
                   ))}
                 </div>
-
-                {/* Famous Recipe Presets */}
-                <div className="space-y-3">
-                  <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-600 flex items-center gap-2">
-                    Famous Recipes
-                    <span className="text-xs normal-case bg-orange-100 text-orange-700 px-2 py-0.5 rounded">Step-by-step</span>
-                  </h3>
-                  {Object.entries(recipePresets).map(([key, preset]) => (
-                    <button
-                      key={key}
-                      onClick={() => applyPreset(key)}
-                      className={`w-full text-left p-4 sm:p-5 border-2 transition-all ${
-                        selectedPreset === key 
-                          ? 'border-orange-500 bg-orange-50' 
-                          : 'border-gray-400 border-dashed hover:border-orange-500 hover:bg-orange-50'
-                      }`}
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-lg sm:text-xl font-bold text-black">{preset.name}</h3>
-                        <div className="text-xs text-black opacity-60">
-                          {preset.coffeeAmount}g : {Math.round(preset.coffeeAmount * preset.ratio)}g
-                        </div>
-                      </div>
-                      <p className="text-sm text-black opacity-70">{preset.description}</p>
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Right Panel - Timer */}
@@ -1559,14 +1459,12 @@ const HomePage: React.FC = () => {
             {!showBrewTimer ? (
               // Timer Configuration
               <main className="flex-1 space-y-6">
-                {isRecipeMode && (
-                  <div className="p-4 bg-orange-50 border-l-4 border-orange-500 rounded">
-                    <p className="text-sm text-black">
-                      <span className="font-semibold">Recipe mode:</span> Parameters are locked for this method. 
-                      Select an adjustable preset to customize settings.
-                    </p>
-                  </div>
-                )}
+                <div className="p-4 bg-orange-50 border-l-4 border-orange-500 rounded">
+                  <p className="text-sm text-black">
+                    <span className="font-semibold">Recipe locked:</span> Each method uses specific parameters designed by experts. 
+                    Select a different recipe from the left to change settings.
+                  </p>
+                </div>
                 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col items-center space-y-1">
@@ -1583,57 +1481,31 @@ const HomePage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className={`grid grid-cols-2 gap-10 pb-1 px-2 ${isRecipeMode ? 'opacity-50 pointer-events-none' : ''}`}>
-                  <div className="flex flex-col items-center">
-                    <AppleStylePicker value={coffeeSettings.amount} onChange={(amount) => !isRecipeMode && setCoffeeSettings(prev => ({ ...prev, amount }))} isDarkMode={false} label="Coffee (g)" />
-                  </div>
-                  <div className="flex flex-col items-center">
-                    <AppleStylePicker value={coffeeSettings.ratio} onChange={(ratio) => !isRecipeMode && setCoffeeSettings(prev => ({ ...prev, ratio }))} isDarkMode={false} label="Ratio" />
-                  </div>
-                </div>
-
-                <div className={`flex flex-col space-y-4 ${isRecipeMode ? 'opacity-50 pointer-events-none' : ''}`}>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-black">Grind Size</span>
-                    <span className="text-sm text-black">{grindSize.toFixed(1)}</span>
-                  </div>
-                  <div className="w-full relative">
-                    <div className="absolute w-full -top-3 flex justify-between">
-                      {Array.from({ length: 11 }, (_, i) => (
-                        <div key={i + 1} className="flex flex-col items-center">
-                          <div className="w-px h-2 bg-gray-500" />
-                          <span className="text-xs mt-1 text-gray-500">{i + 1}</span>
-                        </div>
-                      ))}
+                <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                  <h3 className="text-sm font-semibold text-black">Recipe Parameters</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-gray-600">Coffee:</span>
+                      <span className="ml-2 font-medium text-black">{coffeeSettings.amount}g</span>
                     </div>
-                    <div className="w-full relative h-1 mt-6">
-                      <div className="w-full h-1 rounded-full transition-all duration-150 ease-out" style={{ background: `linear-gradient(to right, #ff6700 0%, #ff6700 ${(grindSize - 1) * 10}%, #d1d5db ${(grindSize - 1) * 10}%, #d1d5db 100%)` }}/>
-                      <input type="range" min="1" max="11" step="0.1" value={grindSize} onChange={(e) => !isRecipeMode && setGrindSize(Number(e.target.value))} className="absolute top-0 w-full h-4 -mt-1.5 appearance-none cursor-pointer bg-transparent simple-slider" disabled={isRecipeMode} />
+                    <div>
+                      <span className="text-gray-600">Ratio:</span>
+                      <span className="ml-2 font-medium text-black">1:{coffeeSettings.ratio}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Grind Size:</span>
+                      <span className="ml-2 font-medium text-black">{grindSize.toFixed(1)}</span>
+                    </div>
+                    <div>
+                      <span className="text-gray-600">Bloom Ratio:</span>
+                      <span className="ml-2 font-medium text-black">{coffeeSettings.bloomRatio}×</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="relative">
-                    <button 
-                      onClick={() => {
-                        setShowNotesTooltip(true);
-                        setTimeout(() => setShowNotesTooltip(false), 2000);
-                      }} 
-                      className="h-12 w-full flex items-center justify-center rounded-lg transition-colors hover:opacity-80 bg-gray-100"
-                    >
-                      <span className="text-2xl font-normal text-black">Notes</span>
-                    </button>
-                    {showNotesTooltip && (
-                      <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs py-1 px-3 rounded whitespace-nowrap">
-                        Feature coming soon
-                      </div>
-                    )}
-                  </div>
-                  <button onClick={handleStartBrew} className="h-12 w-full flex items-center justify-center rounded-lg transition-colors hover:opacity-80 bg-gray-100">
-                    <span className="text-2xl font-normal text-black">{isRecipeMode ? 'Start Recipe' : 'Ready'}</span>
-                  </button>
-                </div>
+                <button onClick={handleStartBrew} className="w-full h-14 flex items-center justify-center rounded-lg transition-colors hover:opacity-80 bg-orange-500 hover:bg-orange-600">
+                  <span className="text-2xl font-normal text-white">Start Recipe</span>
+                </button>
               </main>
             ) : (
               // Active Brewing Timer
