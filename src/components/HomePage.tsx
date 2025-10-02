@@ -4,10 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useCircleTransition } from '../context/CircleTransitionContext';
+import { supabase } from '../lib/supabase';
 import { calculateBrewTiming, formatTime } from '../utils/brewingCalculations';
 import { CoffeeSettings } from '../types/brewing';
 import AppleStylePicker from './AppleStylePicker';
-import { supabase } from '../lib/supabase';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -876,44 +876,7 @@ const HomePage: React.FC = () => {
       ScrollTrigger.refresh();
     });
 
-    // Specific trigger for timer section circle fade
-    ScrollTrigger.create({
-      trigger: "#timer",
-      start: "top 85%", // Start fading when timer section approaches
-      end: "bottom 15%", // Keep faded until completely past timer section
-      onEnter: () => {
-        console.log('⏱️ Timer section approaching - fading out main circle');
-        gsap.to(circleRef.current, {
-          opacity: 0,
-          duration: 0.8,
-          ease: "power2.out"
-        });
-      },
-      onLeave: () => {
-        console.log('⏱️ Completely past timer section - fading in main circle');
-        gsap.to(circleRef.current, {
-          opacity: 1,
-          duration: 0.8,
-          ease: "power2.out"
-        });
-      },
-      onEnterBack: () => {
-        console.log('⏱️ Re-entering timer section from below - fading out main circle');
-        gsap.to(circleRef.current, {
-          opacity: 0,
-          duration: 0.8,
-          ease: "power2.out"
-        });
-      },
-      onLeaveBack: () => {
-        console.log('⏱️ Leaving timer section upward - fading in main circle');
-        gsap.to(circleRef.current, {
-          opacity: 1,
-          duration: 0.8,
-          ease: "power2.out"
-        });
-      }
-    });
+    // Timer section removed - circle stays visible throughout homepage
 
     return () => {
       // Cleanup mouse tracking
@@ -984,7 +947,7 @@ const HomePage: React.FC = () => {
         </nav>
 
                 {/* Origen Section */}
-        <section ref={origenSectionRef} id="origen" className="text-black relative pt-20" style={{ height: '300vh' }}>
+        <section ref={origenSectionRef} id="origen" className="text-black relative pt-20" style={{ minHeight: '200vh' }}>
           {/* Pinned text container */}
           <div ref={origenTextRef} className="w-full min-h-screen flex items-center justify-between px-4 sm:px-8 py-12 sm:py-16 relative" style={{ zIndex: 2 }}>
             <div className="w-full flex flex-col md:flex-row items-start justify-between gap-8 md:gap-12">
@@ -1059,7 +1022,7 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Coffee Section */}
-        <section ref={coffeeSectionRef} id="coffee" className="text-black relative pt-20" style={{ height: '300vh' }}>
+        <section ref={coffeeSectionRef} id="coffee" className="text-black relative pt-20" style={{ minHeight: '200vh' }}>
           <div ref={coffeeTextRef} className="w-full min-h-screen flex flex-col items-start justify-center px-4 sm:px-6 md:px-12 lg:px-24 py-12 sm:py-16 z-40">
             <div className="max-w-4xl w-full relative z-40 text-left">
               <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
@@ -1191,7 +1154,7 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Buy Section */}
-        <section id="buy" className="text-black relative pt-20" style={{ height: '300vh' }}>
+        <section id="buy" className="text-black relative pt-20" style={{ minHeight: '200vh' }}>
           <div className="w-full h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-6 sm:py-12 z-40">
             <div className="max-w-6xl w-full relative z-40">
               <div className="grid gap-0 grid-cols-1 md:grid-cols-2" style={{ height: 'auto', minHeight: '50vh' }}>
@@ -1247,7 +1210,7 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Timer Section */}
-        <section id="timer" className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-20 bg-white">
+        <section id="timer" className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-20 bg-white relative" style={{ marginTop: '20vh' }}>
           <div className="w-full max-w-[430px] mx-auto">
             {!showBrewTimer ? (
               // Timer Configuration
@@ -1397,6 +1360,7 @@ const HomePage: React.FC = () => {
             )}
           </div>
         </section>
+
       </div>
 
 
