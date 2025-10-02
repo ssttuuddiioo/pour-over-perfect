@@ -21,8 +21,8 @@ export interface RecipePreset {
 
 export const recipePresets: Record<string, RecipePreset> = {
   hoffmann: {
-    name: 'Hoffmann Method',
-    description: 'Simple and forgiving technique by James Hoffmann',
+    name: "James Hoffmann's V60",
+    description: 'A gentle, multi-pour approach that prioritizes even extraction and consistency.',
     coffeeAmount: 15,
     ratio: 16.7,
     bloomRatio: 2,
@@ -34,35 +34,35 @@ export const recipePresets: Record<string, RecipePreset> = {
         duration: 45,
         waterTarget: 30,
         type: 'pour',
-        instructions: 'Pour 30g water (2× coffee weight) in center using a gentle circular motion to wet all grounds evenly. Wait for 45 seconds while the coffee blooms and releases CO2.'
+        instructions: 'Pour 30g water in gentle circles to wet all grounds. Wait 45 seconds.'
       },
       {
         label: 'First Pour',
         duration: 30,
         waterTarget: 150,
         type: 'pour',
-        instructions: 'Pour in slow concentric circles from center outward until you reach 150g total on the scale (60% of total water). Try to complete this pour by 1:15 on the timer. Maintain a steady, gentle flow.'
+        instructions: 'Pour slowly in circles until your scale reads 150g total. Maintain steady flow.'
       },
       {
-        label: 'Continue Pouring',
+        label: 'Second Pour',
         duration: 30,
         waterTarget: 250,
         type: 'pour',
-        instructions: 'Continue pouring gently in concentric circles until you reach 250g total on the scale (100% of water). Aim to complete this by 1:45. Keep the water level consistent throughout the pour.'
+        instructions: 'Keep pouring in circles until scale reads 250g total. Stay gentle and consistent.'
       },
       {
         label: 'Drawdown',
         duration: 45,
         waterTarget: null,
         type: 'rest',
-        instructions: 'Let the coffee drain completely. Avoid disturbing the brew bed. The coffee should finish draining by 2:30-3:00. If it drains too fast, grind finer next time. If too slow, grind coarser.'
+        instructions: 'Let coffee drain completely without touching it. Should finish around 2:30-3:00.'
       }
     ]
   },
 
   foursix: {
-    name: '4:6 Method',
-    description: 'Tetsu Kasuya\'s World Brewers Cup winning technique',
+    name: "Tetsu Kasuya's 4:6",
+    description: 'A precise, five-pour technique that lets you dial in sweetness and strength independently.',
     coffeeAmount: 20,
     ratio: 15,
     bloomRatio: 2,
@@ -70,53 +70,53 @@ export const recipePresets: Record<string, RecipePreset> = {
     isRecipeMode: true,
     steps: [
       {
-        label: 'First Pour - 40%',
+        label: 'First Pour',
         duration: 45,
         waterTarget: 60,
         type: 'pour',
-        instructions: 'Pour 60g water in the center of the coffee bed. This first pour (along with the second) controls the sweetness and acidity of your brew. Wait 45 seconds before the next pour.'
+        instructions: 'Pour 60g water in the center. Wait 45 seconds.'
       },
       {
-        label: 'Second Pour - 40%',
+        label: 'Second Pour',
         duration: 45,
         waterTarget: 120,
         type: 'pour',
-        instructions: 'Pour another 60g water (120g total on scale) in the center. The first two pours together represent 40% of total water and control flavor balance. Wait 45 seconds.'
+        instructions: 'Pour 60g more (120g total on scale). Wait 45 seconds.'
       },
       {
-        label: 'Third Pour - 60%',
+        label: 'Third Pour',
         duration: 45,
         waterTarget: 180,
         type: 'pour',
-        instructions: 'Pour 60g water (180g total) in the center. This pour begins the second phase (60% of water) which controls the strength of the brew. Wait 45 seconds.'
+        instructions: 'Pour 60g more (180g total). Wait 45 seconds.'
       },
       {
-        label: 'Fourth Pour - 60%',
+        label: 'Fourth Pour',
         duration: 45,
         waterTarget: 240,
         type: 'pour',
-        instructions: 'Pour 60g water (240g total) in the center. Continue controlling brew strength with this pour. Wait 45 seconds before the final pour.'
+        instructions: 'Pour 60g more (240g total). Wait 45 seconds.'
       },
       {
-        label: 'Fifth Pour - 60%',
+        label: 'Fifth Pour',
         duration: 45,
         waterTarget: 300,
         type: 'pour',
-        instructions: 'Pour the final 60g water (300g total) in the center. This completes the 60% phase. Wait 45 seconds for drawdown to begin.'
+        instructions: 'Pour final 60g (300g total). Wait 45 seconds.'
       },
       {
         label: 'Drawdown',
         duration: 45,
         waterTarget: null,
         type: 'rest',
-        instructions: 'Let the coffee drain completely. Total brew time should be around 3:30-4:00. The method\'s precision allows you to adjust sweetness (first 40%) and strength (last 60%) independently in future brews.'
+        instructions: 'Let coffee drain completely. Should finish around 3:30-4:00.'
       }
     ]
   },
 
   rao: {
-    name: 'Rao Method',
-    description: 'Scott Rao\'s center-pour technique for clarity',
+    name: "Scott Rao's V60",
+    description: 'A simplified single-pour technique focused on clarity and bringing out delicate flavors.',
     coffeeAmount: 22,
     ratio: 16.7,
     bloomRatio: 3,
@@ -128,21 +128,21 @@ export const recipePresets: Record<string, RecipePreset> = {
         duration: 45,
         waterTarget: 66,
         type: 'pour',
-        instructions: 'Pour 66g water (3× coffee weight) directly in the center of the coffee bed. Avoid agitating the grounds too much. Let bloom for 30-45 seconds while gases release.'
+        instructions: 'Pour 66g water directly in the center. Avoid stirring. Wait 45 seconds.'
       },
       {
         label: 'Main Pour',
         duration: 45,
         waterTarget: 367,
         type: 'pour',
-        instructions: 'Pour the remaining 301g water in one continuous, steady stream directly in the center. Do NOT use circular motions—keep the pour focused on the center. Aim to finish pouring by 1:30 on the timer. The single pour technique maximizes clarity and highlights delicate flavors.'
+        instructions: 'Pour remaining 301g in one steady stream in the center only. No circles. Finish by 1:30.'
       },
       {
         label: 'Drawdown',
         duration: 60,
         waterTarget: null,
         type: 'rest',
-        instructions: 'Let the coffee drain completely without disturbing the brew bed. Total brew time should be 2:30-3:30. The center-pour technique creates a focused extraction that emphasizes clarity and sweetness in light roasts.'
+        instructions: 'Let coffee drain completely. Should finish around 2:30-3:30.'
       }
     ]
   }

@@ -1351,58 +1351,48 @@ const HomePage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Right Panel - Timer */}
+              {/* Right Panel - Timer Preview or Active Timer */}
               <div className="w-full max-w-[430px] mx-auto lg:mx-0">
             {!showBrewTimer ? (
-              // Timer Configuration
-              <main className="flex-1 space-y-6">
+              // Timer Preview with Steps
+              <div className="flex flex-col space-y-4">
+                {/* Target Info */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col items-center space-y-1">
-                    <span className="text-xs text-black">Target Time</span>
+                    <span className="text-xs text-black uppercase tracking-wide">Target Time</span>
                     <div className="h-12 w-full flex items-center justify-center rounded-lg bg-gray-100">
-                      <span className="text-2xl font-normal text-black">{formatTime(brewingTimings.totalTime)}</span>
+                      <span className="text-2xl font-normal text-black">{formatTime(totalTime)}</span>
                     </div>
                   </div>
                   <div className="flex flex-col items-center space-y-1">
-                    <span className="text-xs text-black">Target Water</span>
+                    <span className="text-xs text-black uppercase tracking-wide">Target Water</span>
                     <div className="h-12 w-full flex items-center justify-center rounded-lg bg-gray-100">
                       <span className="text-2xl font-normal text-black">{Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Recipe parameters info */}
-                <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-4 text-center">
-                  <p className="text-sm text-orange-900 font-semibold mb-1">📖 Recipe Parameters</p>
-                  <div className="text-xs text-orange-800 space-y-1">
-                    <p><span className="font-semibold">Coffee:</span> {coffeeSettings.amount}g</p>
-                    <p><span className="font-semibold">Water:</span> {Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g (1:{coffeeSettings.ratio})</p>
-                    <p><span className="font-semibold">Grind:</span> {grindSize.toFixed(1)}</p>
-                  </div>
+                {/* Steps Preview */}
+                <div className="space-y-2">
+                  <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Steps Preview</h3>
+                  {stepSequence.map((step, index) => (
+                    <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-black">{step.label}</span>
+                        <span className="text-xs text-gray-600">{step.water}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="relative">
-                    <button 
-                      onClick={() => {
-                        setShowNotesTooltip(true);
-                        setTimeout(() => setShowNotesTooltip(false), 2000);
-                      }} 
-                      className="h-12 w-full flex items-center justify-center rounded-lg transition-colors hover:opacity-80 bg-gray-100"
-                    >
-                      <span className="text-2xl font-normal text-black">Notes</span>
-                    </button>
-                    {showNotesTooltip && (
-                      <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs py-1 px-3 rounded whitespace-nowrap">
-                        Feature coming soon
-                      </div>
-                    )}
-                  </div>
-                  <button onClick={handleStartBrew} className="h-12 w-full flex items-center justify-center rounded-lg transition-colors hover:opacity-80 bg-gray-100">
-                    <span className="text-2xl font-normal text-black">Start Recipe</span>
-                  </button>
-                </div>
-              </main>
+                {/* Start Button */}
+                <button 
+                  onClick={handleStartBrew} 
+                  className="w-full py-3 rounded-lg bg-orange-500 hover:bg-orange-600 transition-colors"
+                >
+                  <span className="text-xl font-semibold text-white">Ready</span>
+                </button>
+              </div>
             ) : (
               // Active Brewing Timer - two-column layout with instructions
               <div className="w-full lg:col-span-2 lg:max-w-none">
