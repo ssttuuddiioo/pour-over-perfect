@@ -947,7 +947,7 @@ const HomePage: React.FC = () => {
         </nav>
 
                 {/* Origen Section */}
-        <section ref={origenSectionRef} id="origen" className="text-black relative pt-20" style={{ minHeight: '200vh' }}>
+        <section ref={origenSectionRef} id="origen" className="text-black relative pt-20" style={{ minHeight: '300vh' }}>
           {/* Pinned text container */}
           <div ref={origenTextRef} className="w-full min-h-screen flex items-center justify-between px-4 sm:px-8 py-12 sm:py-16 relative" style={{ zIndex: 2 }}>
             <div className="w-full flex flex-col md:flex-row items-start justify-between gap-8 md:gap-12">
@@ -1022,9 +1022,9 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Coffee Section */}
-        <section ref={coffeeSectionRef} id="coffee" className="text-black relative pt-20" style={{ minHeight: '200vh' }}>
-          <div ref={coffeeTextRef} className="w-full min-h-screen flex flex-col items-start justify-center px-4 sm:px-6 md:px-12 lg:px-24 py-12 sm:py-16 z-40">
-            <div className="max-w-4xl w-full relative z-40 text-left">
+        <section ref={coffeeSectionRef} id="coffee" className="text-black relative pt-20" style={{ minHeight: '300vh' }}>
+          <div ref={coffeeTextRef} className="w-full min-h-screen flex flex-col items-start justify-center px-4 sm:px-6 md:px-12 lg:px-24 py-12 sm:py-16" style={{ zIndex: 2 }}>
+            <div className="max-w-4xl w-full relative text-left" style={{ zIndex: 2 }}>
               <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
                 <div className="section-content" style={{ lineHeight: '14pt' }}>
                   {/* Title and Description Box */}
@@ -1154,7 +1154,7 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Buy Section */}
-        <section id="buy" className="text-black relative pt-20" style={{ minHeight: '200vh' }}>
+        <section id="buy" className="text-black relative pt-20" style={{ minHeight: '300vh' }}>
           <div className="w-full h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-6 sm:py-12 z-40">
             <div className="max-w-6xl w-full relative z-40">
               <div className="grid gap-0 grid-cols-1 md:grid-cols-2" style={{ height: 'auto', minHeight: '50vh' }}>
