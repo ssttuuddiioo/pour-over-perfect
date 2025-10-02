@@ -18,6 +18,8 @@ const HomePage: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [navFixed, setNavFixed] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
   
   // Slideshow images for Origen section
   const slideshowImages = [
@@ -491,6 +493,8 @@ const HomePage: React.FC = () => {
   // Mouse tracking state
   const mousePosition = useRef({ x: 0, y: 0 });
   const targetPosition = useRef({ x: 0, y: 0 });
+  const isPinned = useRef(false);
+  const pinnedPosition = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     if (!circleRef.current) return;
@@ -530,10 +534,23 @@ const HomePage: React.FC = () => {
     
     // Mouse tracking - smooth follow effect
     const handleMouseMove = (e: MouseEvent) => {
-      mousePosition.current = {
+      if (!isPinned.current) {
+        mousePosition.current = {
+          x: e.clientX,
+          y: e.clientY
+        };
+      }
+    };
+
+    // Click to pin/unpin circle position
+    const handleClick = (e: MouseEvent) => {
+      isPinned.current = true;
+      pinnedPosition.current = {
         x: e.clientX,
         y: e.clientY
       };
+      targetPosition.current = { ...pinnedPosition.current };
+      mousePosition.current = { ...pinnedPosition.current };
     };
 
     // Smooth animation loop for mouse following
@@ -545,9 +562,13 @@ const HomePage: React.FC = () => {
         return start + (end - start) * factor;
       };
       
-      // Smoothly interpolate towards mouse position
-      targetPosition.current.x = lerp(targetPosition.current.x, mousePosition.current.x, 0.1);
-      targetPosition.current.y = lerp(targetPosition.current.y, mousePosition.current.y, 0.1);
+      // Use pinned position if pinned, otherwise follow mouse
+      const targetX = isPinned.current ? pinnedPosition.current.x : mousePosition.current.x;
+      const targetY = isPinned.current ? pinnedPosition.current.y : mousePosition.current.y;
+      
+      // Smoothly interpolate towards target position
+      targetPosition.current.x = lerp(targetPosition.current.x, targetX, isPinned.current ? 1 : 0.1);
+      targetPosition.current.y = lerp(targetPosition.current.y, targetY, isPinned.current ? 1 : 0.1);
       
       // Apply position with offset to keep circle centered on cursor
       gsap.set(circleRef.current, {
@@ -562,6 +583,7 @@ const HomePage: React.FC = () => {
     
     // Start mouse tracking
     window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('click', handleClick);
     const animationFrame = requestAnimationFrame(animateCirclePosition);
     
     // Initialize target position to center of screen
@@ -727,12 +749,22 @@ const HomePage: React.FC = () => {
     // Initialize with first section
     setActiveSection('home');
     
+    // Navigation animation - centered on load, moves to top and stays fixed
+    if (navRef.current) {
+      ScrollTrigger.create({
+        start: "100px top",
+        end: 99999,
+        onEnter: () => setNavFixed(true),
+        onLeaveBack: () => setNavFixed(false)
+      });
+    }
+    
     // Set up pinning for origen section
     if (origenSectionRef.current && origenTextRef.current) {
       const origenTrigger = ScrollTrigger.create({
         trigger: origenSectionRef.current,
         start: "top -100px",
-        end: "bottom 80%",
+        end: "bottom bottom",
         pin: origenTextRef.current,
         pinSpacing: false,
         onEnter: (self) => {
@@ -800,7 +832,7 @@ const HomePage: React.FC = () => {
       const coffeeTrigger = ScrollTrigger.create({
         trigger: coffeeSectionRef.current,
         start: "top -100px",
-        end: "bottom 80%",
+        end: "bottom bottom",
         pin: coffeeTextRef.current,
         pinSpacing: false,
         onEnter: (self) => {
@@ -881,6 +913,7 @@ const HomePage: React.FC = () => {
     return () => {
       // Cleanup mouse tracking
       window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('click', handleClick);
       cancelAnimationFrame(animationFrame);
       
       // Cleanup ScrollTriggers
@@ -909,42 +942,46 @@ const HomePage: React.FC = () => {
     <div className="min-h-screen">
       {/* Sections */}
       <div className="scroll-smooth">
-        {/* Home Section - Only the circle */}
+        {/* Home Section - Circle and centered navigation */}
         <section id="home" className="min-h-screen flex items-center justify-center relative">
-          <div className="text-center">
-            {/* Only the circle - clean and minimal */}
-          </div>
+          {/* Navigation - centered on load, moves to top when scrolling */}
+          <nav 
+            ref={navRef}
+            className={`${navFixed ? 'fixed top-0 left-0 right-0 bg-white bg-opacity-90 backdrop-blur-sm py-4' : 'absolute'} z-50 transition-all duration-500 ease-out`}
+            style={navFixed ? {} : {
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)'
+            }}
+          >
+            <div className="flex justify-center items-center gap-8 sm:gap-10 md:gap-12 lg:gap-16">
+              <button
+                onClick={() => scrollToSection('origen')}
+                className="text-lg sm:text-xl font-bold text-black hover:opacity-70 transition-opacity"
+              >
+                Origen
+              </button>
+              <button
+                onClick={() => scrollToSection('coffee')}
+                className="text-lg sm:text-xl font-bold text-black hover:opacity-70 transition-opacity"
+              >
+                Coffee
+              </button>
+              <button
+                onClick={() => scrollToSection('buy')}
+                className="text-lg sm:text-xl font-bold text-black hover:opacity-70 transition-opacity"
+              >
+                Buy
+              </button>
+              <button
+                onClick={() => scrollToSection('timer')}
+                className="text-lg sm:text-xl font-bold text-black hover:opacity-70 transition-opacity"
+              >
+                Timer
+              </button>
+            </div>
+          </nav>
         </section>
-
-        {/* Fixed Navigation Bar at Top */}
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur-sm py-6">
-          <div className="flex justify-center items-center gap-12 sm:gap-16 md:gap-20 lg:gap-24">
-            <button
-              onClick={() => scrollToSection('origen')}
-              className="text-xl sm:text-2xl font-bold text-black hover:opacity-70 transition-opacity"
-            >
-              Origen
-            </button>
-            <button
-              onClick={() => scrollToSection('coffee')}
-              className="text-xl sm:text-2xl font-bold text-black hover:opacity-70 transition-opacity"
-            >
-              Coffee
-            </button>
-            <button
-              onClick={() => scrollToSection('buy')}
-              className="text-xl sm:text-2xl font-bold text-black hover:opacity-70 transition-opacity"
-            >
-              Buy
-            </button>
-            <button
-              onClick={() => scrollToSection('timer')}
-              className="text-xl sm:text-2xl font-bold text-black hover:opacity-70 transition-opacity"
-            >
-              Timer
-            </button>
-          </div>
-        </nav>
 
                 {/* Origen Section */}
         <section ref={origenSectionRef} id="origen" className="text-black relative pt-20" style={{ minHeight: '300vh' }}>
