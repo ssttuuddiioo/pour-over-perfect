@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.58.0",
     "@types/react-router-dom": "^5.3.3",
     "gsap": "^3.13.0",
     "idb": "^8.0.3",

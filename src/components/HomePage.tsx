@@ -4,6 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useCircleTransition } from '../context/CircleTransitionContext';
+import { calculateBrewTiming, formatTime } from '../utils/brewingCalculations';
+import { CoffeeSettings } from '../types/brewing';
+import AppleStylePicker from './AppleStylePicker';
+import { supabase } from '../lib/supabase';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -13,13 +17,163 @@ const HomePage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
+  const [currentSlide, setCurrentSlide] = useState(0);
+  
+  // Slideshow images for Origen section
+  const slideshowImages = [
+    '/photos/1.JPG',
+    '/photos/2.JPG',
+    '/photos/4.JPG',
+    '/photos/5.JPG',
+    '/photos/6.jpg',
+    '/photos/01.JPG',
+    '/photos/02.jpg',
+    '/photos/03.JPG',
+    '/photos/04.jpg',
+    '/photos/05.JPG',
+  ];
+
+  // Timer state
+  const loadSavedSettings = () => {
+    const savedSettings = localStorage.getItem('coffeeSettings');
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        return {
+          amount: 18.0, // Always set to 18g
+          ratio: (parsed.ratio >= 1 && parsed.ratio <= 50) ? parsed.ratio : 16.5,
+          bloomRatio: parsed.bloomRatio || 2
+        };
+      } catch (e) {
+        console.error('Error loading saved settings:', e);
+      }
+    }
+    return { amount: 18.0, ratio: 16.5, bloomRatio: 2 };
+  };
+
+  const [coffeeSettings, setCoffeeSettings] = useState<CoffeeSettings>(loadSavedSettings);
+  const [grindSize, setGrindSize] = useState(6);
+  const [showBrewTimer, setShowBrewTimer] = useState(false);
+  const [isRunning, setIsRunning] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [showNotesTooltip, setShowNotesTooltip] = useState(false);
+
+  const brewingTimings = calculateBrewTiming(
+    grindSize, 
+    coffeeSettings.amount, 
+    coffeeSettings.ratio, 
+    coffeeSettings.bloomRatio
+  );
+
+  const stepSequence = [
+    { label: 'Bloom', water: `Pour to ${brewingTimings.bloomWater}g`, duration: brewingTimings.bloomDuration },
+    { label: 'First Pour', water: `Pour to ${brewingTimings.firstPourTarget}g`, duration: brewingTimings.firstPourDuration },
+    { label: 'Rest', water: 'Let it steep', duration: brewingTimings.restDuration },
+    { label: 'Second Pour', water: `Pour to ${brewingTimings.secondPourTarget}g`, duration: brewingTimings.secondPourDuration },
+    { label: 'Rest', water: 'Let it steep', duration: brewingTimings.secondRestDuration },
+    { label: 'Third Pour', water: `Pour to ${brewingTimings.thirdPourTarget}g`, duration: brewingTimings.thirdPourDuration },
+    { label: 'Drawdown', water: 'Let coffee drip', duration: brewingTimings.drawdownDuration },
+    { label: 'Finish', water: 'Enjoy your coffee!', duration: 0 }
+  ];
+
+  const stepEndTimes = stepSequence.reduce((acc, step, i) => {
+    acc.push((acc[i - 1] || 0) + step.duration);
+    return acc;
+  }, [] as number[]);
+
+  const totalTime = stepEndTimes[stepEndTimes.length - 1] || 0;
+  const isFinished = elapsed >= totalTime;
+
+  const softChimeUrl = 'https://cdn.pixabay.com/audio/2022/10/16/audio_12b6b9b6b2.mp3';
+
+  useEffect(() => {
+    if (isRunning && !isFinished) {
+      intervalRef.current = setInterval(() => {
+        setElapsed(prev => {
+          const newElapsed = prev + 0.1;
+          const newCurrentStep = stepEndTimes.findIndex(endTime => newElapsed < endTime);
+          const actualNewStep = newCurrentStep === -1 ? stepSequence.length - 1 : newCurrentStep;
+          
+          if (actualNewStep !== currentStep) {
+            const completedStepIndex = actualNewStep - 1;
+            const completedStep = stepSequence[completedStepIndex];
+            const isPourStep = completedStep && (completedStep.label.includes('Pour') || completedStep.label.includes('Bloom'));
+            if (isPourStep && completedStepIndex >= 0) {
+              try {
+                const audio = new Audio(softChimeUrl);
+                audio.volume = 0.3;
+                audio.play().catch(() => {});
+              } catch (error) {}
+              if ('vibrate' in navigator) navigator.vibrate(100);
+            }
+          }
+          
+          setCurrentStep(actualNewStep);
+          
+          if (newElapsed >= totalTime) {
+            setIsRunning(false);
+            return totalTime;
+          }
+          
+          return newElapsed;
+        });
+      }, 100);
+    } else {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [isRunning, isFinished, totalTime, stepEndTimes.length, stepSequence.length, currentStep]);
+
+  const handleStartBrew = () => {
+    setElapsed(0);
+    setCurrentStep(0);
+    setIsRunning(true);
+    setShowBrewTimer(true);
+  };
+
+  const handleTimerPause = () => setIsRunning(false);
+  const handleTimerStart = () => setIsRunning(true);
+  const handleTimerReset = () => {
+    setIsRunning(false);
+    setElapsed(0);
+    setCurrentStep(0);
+  };
+  const handleTimerDone = () => {
+    setShowBrewTimer(false);
+    handleTimerReset();
+  };
+
+  useEffect(() => {
+    localStorage.setItem('coffeeSettings', JSON.stringify(coffeeSettings));
+  }, [coffeeSettings]);
 
   // Handle email subscription
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send the email to your backend
-    console.log('Email submitted:', email);
-    setSubmitted(true);
+    
+    try {
+      // Save email to Supabase
+      const { error } = await supabase
+        .from('origen emails')
+        .insert([{ email: email }]);
+
+      if (error) {
+        console.error('Error saving email:', error);
+        alert('There was an error subscribing. Please try again.');
+        return;
+      }
+
+      console.log('Email submitted successfully:', email);
+      setSubmitted(true);
+      setEmail(''); // Clear the input
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      alert('There was an error subscribing. Please try again.');
+    }
   };
 
 
@@ -325,14 +479,18 @@ const HomePage: React.FC = () => {
     }
   };
 
-  // Section configurations for circle animation - responsive values (30% smaller)
+  // Section configurations for circle animation - 1.5x larger
   const sectionConfigs = [
-    { id: 'home', size: 252, scale: 0.56 },
-    { id: 'origen', size: 392, scale: 0.84 },
-    { id: 'coffee', size: 455, scale: 0.91 },
-    { id: 'story', size: 490, scale: 0.98 },
-    { id: 'buy', size: 525, scale: 1.05 }
+    { id: 'home', size: 378, scale: 0.84 },
+    { id: 'origen', size: 588, scale: 1.26 },
+    { id: 'coffee', size: 682.5, scale: 1.365 },
+    { id: 'buy', size: 787.5, scale: 1.575 },
+    { id: 'timer', size: 840, scale: 1.68 }
   ];
+
+  // Mouse tracking state
+  const mousePosition = useRef({ x: 0, y: 0 });
+  const targetPosition = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     if (!circleRef.current) return;
@@ -369,6 +527,52 @@ const HomePage: React.FC = () => {
     
     // Initialize circle immediately to prevent white screen
     initializeCircle();
+    
+    // Mouse tracking - smooth follow effect
+    const handleMouseMove = (e: MouseEvent) => {
+      mousePosition.current = {
+        x: e.clientX,
+        y: e.clientY
+      };
+    };
+
+    // Smooth animation loop for mouse following
+    const animateCirclePosition = () => {
+      if (!circleRef.current) return;
+      
+      // Lerp (linear interpolation) for smooth following
+      const lerp = (start: number, end: number, factor: number) => {
+        return start + (end - start) * factor;
+      };
+      
+      // Smoothly interpolate towards mouse position
+      targetPosition.current.x = lerp(targetPosition.current.x, mousePosition.current.x, 0.1);
+      targetPosition.current.y = lerp(targetPosition.current.y, mousePosition.current.y, 0.1);
+      
+      // Apply position with offset to keep circle centered on cursor
+      gsap.set(circleRef.current, {
+        left: targetPosition.current.x,
+        top: targetPosition.current.y,
+        xPercent: -50,
+        yPercent: -50
+      });
+      
+      requestAnimationFrame(animateCirclePosition);
+    };
+    
+    // Start mouse tracking
+    window.addEventListener('mousemove', handleMouseMove);
+    const animationFrame = requestAnimationFrame(animateCirclePosition);
+    
+    // Initialize target position to center of screen
+    targetPosition.current = {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2
+    };
+    mousePosition.current = {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2
+    };
     
     // Set up progressive circle resizing based on scroll position
     const totalSections = sectionConfigs.length;
@@ -672,13 +876,13 @@ const HomePage: React.FC = () => {
       ScrollTrigger.refresh();
     });
 
-    // Specific trigger for buy section circle fade - prevents double circles
+    // Specific trigger for timer section circle fade
     ScrollTrigger.create({
-      trigger: "#buy",
-      start: "top 85%", // Start fading when buy section approaches
-      end: "bottom 15%", // Keep faded until completely past buy section
+      trigger: "#timer",
+      start: "top 85%", // Start fading when timer section approaches
+      end: "bottom 15%", // Keep faded until completely past timer section
       onEnter: () => {
-        console.log('🛒 Buy section approaching - fading out main circle (buy image has its own circle)');
+        console.log('⏱️ Timer section approaching - fading out main circle');
         gsap.to(circleRef.current, {
           opacity: 0,
           duration: 0.8,
@@ -686,7 +890,7 @@ const HomePage: React.FC = () => {
         });
       },
       onLeave: () => {
-        console.log('🛒 Completely past buy section - fading in main circle');
+        console.log('⏱️ Completely past timer section - fading in main circle');
         gsap.to(circleRef.current, {
           opacity: 1,
           duration: 0.8,
@@ -694,7 +898,7 @@ const HomePage: React.FC = () => {
         });
       },
       onEnterBack: () => {
-        console.log('🛒 Re-entering buy section from below - fading out main circle');
+        console.log('⏱️ Re-entering timer section from below - fading out main circle');
         gsap.to(circleRef.current, {
           opacity: 0,
           duration: 0.8,
@@ -702,7 +906,7 @@ const HomePage: React.FC = () => {
         });
       },
       onLeaveBack: () => {
-        console.log('🛒 Leaving buy section upward - fading in main circle');
+        console.log('⏱️ Leaving timer section upward - fading in main circle');
         gsap.to(circleRef.current, {
           opacity: 1,
           duration: 0.8,
@@ -712,6 +916,11 @@ const HomePage: React.FC = () => {
     });
 
     return () => {
+      // Cleanup mouse tracking
+      window.removeEventListener('mousemove', handleMouseMove);
+      cancelAnimationFrame(animationFrame);
+      
+      // Cleanup ScrollTriggers
       const allTriggers = ScrollTrigger.getAll();
       console.log('🧹 CLEANUP SCROLLTRIGGERS:', {
         triggerCount: allTriggers.length,
@@ -735,95 +944,114 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Top Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur-sm border-b border-gray-200">
-        <div className="flex justify-center items-center py-4 px-4 sm:px-6">
-          <div className="flex space-x-4 sm:space-x-6 md:space-x-8 lg:space-x-10">
-            <button
-              onClick={() => {
-                resetToLanding();
-              }}
-              className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
-                activeSection === 'home' 
-                  ? 'text-black underline' 
-                  : 'text-black hover:opacity-70 hover:underline'
-              }`}
-            >
-              home
-            </button>
+      {/* Sections */}
+      <div className="scroll-smooth">
+        {/* Home Section - Only the circle */}
+        <section id="home" className="min-h-screen flex items-center justify-center relative">
+          <div className="text-center">
+            {/* Only the circle - clean and minimal */}
+          </div>
+        </section>
+
+        {/* Fixed Navigation Bar at Top */}
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur-sm py-6">
+          <div className="flex justify-center items-center gap-12 sm:gap-16 md:gap-20 lg:gap-24">
             <button
               onClick={() => scrollToSection('origen')}
-              className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
-                activeSection === 'origen' 
-                  ? 'text-black underline' 
-                  : 'text-black hover:opacity-70 hover:underline'
-              }`}
+              className="text-xl sm:text-2xl font-bold text-black hover:opacity-70 transition-opacity"
             >
-              origen
+              Origen
             </button>
             <button
               onClick={() => scrollToSection('coffee')}
-              className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
-                activeSection === 'coffee' 
-                  ? 'text-black underline' 
-                  : 'text-black hover:opacity-70 hover:underline'
-              }`}
+              className="text-xl sm:text-2xl font-bold text-black hover:opacity-70 transition-opacity"
             >
-              coffee
+              Coffee
             </button>
             <button
               onClick={() => scrollToSection('buy')}
-              className={`text-sm sm:text-base md:text-lg font-medium transition-opacity ${
-                activeSection === 'buy' 
-                  ? 'text-black underline' 
-                  : 'text-black hover:opacity-70 hover:underline'
-              }`}
+              className="text-xl sm:text-2xl font-bold text-black hover:opacity-70 transition-opacity"
             >
-              buy
+              Buy
             </button>
             <button
-              onClick={() => navigate('/timer')}
-              className="text-sm sm:text-base md:text-lg font-medium text-black hover:opacity-70 hover:underline transition-opacity"
+              onClick={() => scrollToSection('timer')}
+              className="text-xl sm:text-2xl font-bold text-black hover:opacity-70 transition-opacity"
             >
-              timer
+              Timer
             </button>
           </div>
-        </div>
-      </nav>
-
-      {/* Sections */}
-      <div className="scroll-smooth">
-        {/* Home Section */}
-        <section id="home" className="min-h-screen flex items-center justify-center relative pt-20">
-          <div className="text-center">
-            {/* Minimal home section - just the circle and navigation */}
-          </div>
-        </section>
+        </nav>
 
                 {/* Origen Section */}
         <section ref={origenSectionRef} id="origen" className="text-black relative pt-20" style={{ height: '300vh' }}>
           {/* Pinned text container */}
-          <div ref={origenTextRef} className="w-full h-screen flex flex-col items-start justify-center px-4 sm:px-6 md:pr-8 lg:pr-12 xl:pr-16 pl-4 sm:pl-6 py-6 sm:py-8 relative" style={{ zIndex: 2 }}>
-            {/* Right side text content */}
-            <div className="w-full md:pl-[66.67%] lg:pl-[66.67%] xl:pl-[66.67%]">
-              <div className="max-w-4xl w-full relative text-left">
-                <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
+          <div ref={origenTextRef} className="w-full min-h-screen flex items-center justify-between px-4 sm:px-8 py-12 sm:py-16 relative" style={{ zIndex: 2 }}>
+            <div className="w-full flex flex-col md:flex-row items-start justify-between gap-8 md:gap-12">
+              {/* Left side - Slideshow */}
+              <div className="w-full md:w-auto md:ml-0 lg:ml-8 xl:ml-12 relative flex-shrink-0">
+                <div className="flex flex-col">
+                  <div className="relative w-full max-w-[350px] mx-auto md:mx-0 md:w-[420px] lg:w-[480px] aspect-[3/4] overflow-hidden">
+                    <img 
+                      src={slideshowImages[currentSlide]} 
+                      alt={`Slide ${currentSlide + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  
+                  {/* Navigation arrows - beneath image */}
+                  <div className="flex items-center justify-center gap-8 mt-4">
+                    <button
+                      onClick={() => setCurrentSlide((prev) => (prev === 0 ? slideshowImages.length - 1 : prev - 1))}
+                      className="hover:opacity-60 transition-opacity"
+                      aria-label="Previous slide"
+                    >
+                      <ChevronLeft className="w-8 h-8 text-black" strokeWidth={1.5} />
+                    </button>
+                    
+                    {/* Slide indicators */}
+                    <div className="flex gap-2">
+                      {slideshowImages.map((_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setCurrentSlide(index)}
+                          className={`w-1.5 h-1.5 rounded-full transition-all ${
+                            index === currentSlide ? 'bg-black w-4' : 'bg-black bg-opacity-30'
+                          }`}
+                          aria-label={`Go to slide ${index + 1}`}
+                        />
+                      ))}
+                    </div>
+                    
+                    <button
+                      onClick={() => setCurrentSlide((prev) => (prev === slideshowImages.length - 1 ? 0 : prev + 1))}
+                      className="hover:opacity-60 transition-opacity"
+                      aria-label="Next slide"
+                    >
+                      <ChevronRight className="w-8 h-8 text-black" strokeWidth={1.5} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right side text content */}
+              <div className="w-full md:w-auto md:max-w-[500px] lg:max-w-[550px] md:mr-0 lg:mr-8 xl:mr-12 flex items-center mt-8 md:mt-0">
+                <div className="text-black leading-relaxed space-y-4 sm:space-y-5">
                   <p className="section-content text-sm sm:text-base leading-relaxed">
-                    Charalá, Santander is a quiet town nestled in Colombia's eastern Andes, known for its rugged mountains, local markets, and a pace that invites you to slow down. I ended up there by chance, exhausted, sunburnt, and one-third of the way through Transcordilleras, a 1,000-kilometer bikepacking race with over 20,000 meters of climbing. I wasn't ready. Not mentally, not physically. By day three, I handed in my tracker and decided I would ride back to Bogota at my own pace.
+                    Origen began with a chance encounter in the mountains of Colombia. While attempting the Transcordilleras bikepacking race through the eastern Andes, I found myself exhausted in Charalá, Santander, a quiet town known for its resilient spirit and exceptional coffee.
                   </p>
                   <p className="section-content text-sm sm:text-base leading-relaxed">
-                    As the other riders left in the morning I stayed behind to plan my new adventure. Over lunch, I randomly asked the hostel manager, Miguel if he knew any coffee producers. He made a call and few hours later, Oscar Castro pulled up in his pickup and invited me to visit his farm.
+                    A simple question to a hostel manager led me to Oscar Castro's farm, Bellavista, perched at 1,900 meters above sea level. What started as a farm visit became a direct relationship with the families who grow our coffee.
                   </p>
                   <p className="section-content text-sm sm:text-base leading-relaxed">
-                    Oscar's farm, Bellavista, lives in a stead-spring valley 1,900m above sea level. Oscar works a few hectares of land with his family and neighbors, also family, pooling their harvests (coffee and banana) to sell in town. 
+                    Our first harvest came from Oscar and his neighbors' pooled crop. Castillo variety beans, delicate and floral with notes of soft orchard fruit and a structured, clean finish. The coffee arrived in New York still in parchment, which meant hulling every bean by hand. What could have been outsourced became an education in the labor behind every cup.
                   </p>
-                  <br />
-                  <button
-                    onClick={() => navigate('/story')}
-                    className="section-content font-bold text-black underline hover:opacity-70 transition-opacity duration-200 text-sm sm:text-base"
-                  >
-                    See full story
-                  </button>
+                  <p className="section-content text-sm sm:text-base leading-relaxed">
+                    Origen is about slowing down: experiencing Colombia through its coffee, understanding the work that goes into each harvest, and building direct relationships with the people who make it possible. We're a small operation learning as we go, committed to keeping waste minimal and connections meaningful.
+                  </p>
+                  <p className="section-content text-sm sm:text-base leading-relaxed">
+                    From farm to roast to your cup, every batch tells the story of where it came from.
+                  </p>
                 </div>
               </div>
             </div>
@@ -832,72 +1060,72 @@ const HomePage: React.FC = () => {
 
         {/* Coffee Section */}
         <section ref={coffeeSectionRef} id="coffee" className="text-black relative pt-20" style={{ height: '300vh' }}>
-          <div ref={coffeeTextRef} className="w-full h-screen flex flex-col items-start justify-center px-4 sm:px-6 md:pl-40 lg:pl-26 xl:pl-100 pr-4 sm:pr-6 md:pr-8 lg:pr-12 xl:pr-16 py-6 sm:py-12 z-40">
+          <div ref={coffeeTextRef} className="w-full min-h-screen flex flex-col items-start justify-center px-4 sm:px-6 md:px-12 lg:px-24 py-12 sm:py-16 z-40">
             <div className="max-w-4xl w-full relative z-40 text-left">
               <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
                 <div className="section-content" style={{ lineHeight: '14pt' }}>
                   {/* Title and Description Box */}
-                  <div className="border border-black mb-6" style={{ padding: '20px' }}>
-                    <h2 className="font-bold uppercase tracking-wide text-left mb-4" style={{ fontSize: '14pt', lineHeight: '14pt', paddingTop: '0', paddingBottom: '0' }}>
+                  <div className="border border-black mb-6 p-4 sm:p-5 md:p-6">
+                    <h2 className="font-bold uppercase tracking-wide text-left mb-3 sm:mb-4 text-xs sm:text-sm">
                       NOTES
                     </h2>
-                    <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                    <p className="text-black text-xs sm:text-sm leading-relaxed">
                       Delicate florals, orchard-fruit sweetness, crisp clean finish. Sourced and roasted by Origen at Multimodal, a collective-oriented shared-roaster in New York.
                     </p>
                   </div>
 
-                  {/* Coffee Information Grid - Fixed Width Columns */}
-                  <div className="grid gap-0" style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
+                  {/* Coffee Information Grid - Responsive */}
+                  <div className="grid gap-0 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
                     
                     {/* Producer Card */}
-                    <div className="border border-black" style={{ padding: '20px' }}>
-                      <h3 className="font-bold uppercase tracking-wide text-left mb-4" style={{ fontSize: '14pt', lineHeight: '14pt', paddingTop: '0', paddingBottom: '0' }}>
+                    <div className="border border-black p-4 sm:p-5">
+                      <h3 className="font-bold uppercase tracking-wide text-left mb-3 sm:mb-4 text-xs sm:text-sm">
                         PRODUCER
                       </h3>
-                      <div style={{ lineHeight: '14pt' }}>
-                        <p className="text-black mb-3" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                      <div className="space-y-2">
+                        <p className="text-black text-xs sm:text-sm">
                           <span className="font-bold">Oscar Castro</span>
                         </p>
-                        <p className="text-black mb-3" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                        <p className="text-black text-xs sm:text-sm">
                           Finca Bellavista
                         </p>
-                        <p className="text-black mb-3" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                        <p className="text-black text-xs sm:text-sm">
                           Charalá, Santander, Colombia
                         </p>
-                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                        <p className="text-black text-xs sm:text-sm">
                           Altitude: 1,900 MASL
                         </p>
                       </div>
                     </div>
 
                     {/* Variety Card */}
-                    <div className="border border-black border-l-0" style={{ padding: '20px' }}>
-                      <h3 className="font-bold uppercase tracking-wide text-left mb-4" style={{ fontSize: '14pt', lineHeight: '14pt', paddingTop: '0', paddingBottom: '0' }}>
+                    <div className="border border-black sm:border-l-0 border-t-0 sm:border-t p-4 sm:p-5">
+                      <h3 className="font-bold uppercase tracking-wide text-left mb-3 sm:mb-4 text-xs sm:text-sm">
                         VARIETY & PROCESS
                       </h3>
-                      <div style={{ lineHeight: '14pt' }}>
-                        <p className="text-black mb-3" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                      <div className="space-y-2">
+                        <p className="text-black text-xs sm:text-sm">
                           <span className="font-bold">Castillo</span>
                         </p>
-                        <p className="text-black mb-3" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                        <p className="text-black text-xs sm:text-sm">
                           Washed
                         </p>
-                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                        <p className="text-black text-xs sm:text-sm">
                           Fermented 36 hours
                         </p>
                     </div>
                   </div>
 
                     {/* Harvest & Lot Card */}
-                    <div className="border border-black border-l-0" style={{ padding: '20px' }}>
-                      <h3 className="font-bold uppercase tracking-wide text-left mb-4" style={{ fontSize: '14pt', lineHeight: '14pt', paddingTop: '0', paddingBottom: '0' }}>
+                    <div className="border border-black md:border-l-0 border-t-0 p-4 sm:p-5">
+                      <h3 className="font-bold uppercase tracking-wide text-left mb-3 sm:mb-4 text-xs sm:text-sm">
                         HARVEST & LOT
                       </h3>
-                      <div style={{ lineHeight: '14pt' }}>
-                        <p className="text-black mb-3" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                      <div className="space-y-2">
+                        <p className="text-black text-xs sm:text-sm">
                           <span className="font-bold">May 2025</span>
                         </p>
-                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                        <p className="text-black text-xs sm:text-sm">
                           <span className="font-bold">50kg</span>
                         </p>
                       </div>
@@ -905,97 +1133,53 @@ const HomePage: React.FC = () => {
                   </div>
 
                   {/* Supply Chain Card */}
-                  <div className="border border-black border-t-0" style={{ padding: '20px' }}>
-                    <h3 className="font-bold uppercase tracking-wide text-left mb-4" style={{ fontSize: '14pt', lineHeight: '14pt', paddingTop: '0', paddingBottom: '0' }}>
+                  <div className="border border-black border-t-0 p-4 sm:p-5 md:p-6">
+                    <h3 className="font-bold uppercase tracking-wide text-left mb-4 sm:mb-6 text-xs sm:text-sm">
                       SUPPLY CHAIN
                     </h3>
-                    <div className="grid gap-6" style={{ gridTemplateColumns: 'repeat(8, 1fr)', lineHeight: '14pt' }}>
-                      <div>
-                        <p className="font-medium uppercase tracking-widest text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                    <div className="grid gap-4 sm:gap-6 grid-cols-2 md:grid-cols-4">
+                      <div className="space-y-1">
+                        <p className="font-medium uppercase tracking-widest text-black text-xs">
                           FARM
                         </p>
-                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                        <p className="text-black text-xs sm:text-sm">
                           <span className="font-bold">Bellavista</span>
                         </p>
-                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                        <p className="text-black text-xs sm:text-sm">
                           <span className="font-bold">$448.55</span>
                         </p>
                       </div>
-                      <div>
-                        <p className="font-medium uppercase tracking-widest text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
-                          MILL
+                      <div className="space-y-1">
+                        <p className="font-medium uppercase tracking-widest text-black text-xs">
+                          MILL AND EXPORT
                         </p>
-                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                        <p className="text-black text-xs sm:text-sm">
                           <span className="font-bold">Cafe Semilla</span>
                         </p>
-                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
-                          <span className="font-bold">$TBD</span>
+                        <p className="text-black text-xs sm:text-sm">
+                          <span className="font-bold">$400</span>
                         </p>
                       </div>
-                      <div>
-                        <p className="font-medium uppercase tracking-widest text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
-                          FOB
+                      <div className="space-y-1">
+                        <p className="font-medium uppercase tracking-widest text-black text-xs">
+                          PACKAGING
                         </p>
-                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
-                          <span className="font-bold">FedEx</span>
+                        <p className="text-black text-xs sm:text-sm">
+                          <span className="font-bold">-</span>
                         </p>
-                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
-                          <span className="font-bold">$95</span>
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-medium uppercase tracking-widest text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
-                          BUYER
-                        </p>
-                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
-                          <span className="font-bold">Origen</span>
-                        </p>
-                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
-                          <span className="font-bold">$TBD</span>
+                        <p className="text-black text-xs sm:text-sm">
+                          <span className="font-bold">TBD</span>
                         </p>
                       </div>
-                      <div>
-                        <p className="font-medium uppercase tracking-widest text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
-                          EXPORTER
-                        </p>
-                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
-                          <span className="font-bold">Origen</span>
-                        </p>
-                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
-                          <span className="font-bold">$TBD</span>
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-medium uppercase tracking-widest text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
-                          IMPORTER
-                        </p>
-                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
-                          <span className="font-bold">Origen</span>
-                        </p>
-                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
-                          <span className="font-bold">$TBD</span>
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-medium uppercase tracking-widest text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
-                          ROASTING
-                        </p>
-                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
-                          <span className="font-bold">Multimodal</span>
-                        </p>
-                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
-                          <span className="font-bold">$TBD</span>
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-medium uppercase tracking-widest text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
+                      <div className="space-y-1">
+                        <p className="font-medium uppercase tracking-widest text-black text-xs">
                           COGS
                         </p>
-                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
-                          <span className="font-bold">$/kg</span>
+                        <p className="text-black text-xs sm:text-sm">
+                          <span className="font-bold">Total</span>
                         </p>
-                        <p className="text-black" style={{ fontSize: '9pt', lineHeight: '14pt' }}>
-                          <span className="font-bold"></span>
+                        <p className="text-black text-xs sm:text-sm">
+                          <span className="font-bold">TBD</span>
                         </p>
                       </div>
                     </div>
@@ -1008,97 +1192,209 @@ const HomePage: React.FC = () => {
 
         {/* Buy Section */}
         <section id="buy" className="text-black relative pt-20" style={{ height: '300vh' }}>
-          <div className="w-full h-screen flex flex-col items-end justify-center px-4 sm:px-6 md:pr-40 lg:pr-26 xl:pr-100 pl-4 sm:pl-6 md:pl-8 lg:pl-12 xl:pl-16 py-6 sm:py-12 z-40">
-            <div className="max-w-4xl w-full relative z-40 text-left">
-              <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
-                <div className="section-content" style={{ lineHeight: '14pt' }}>
-                  {/* Product Grid - Two Column Layout */}
-                  <div className="grid gap-0" style={{ gridTemplateColumns: '1fr 1fr', height: '60vh' }}>
+          <div className="w-full h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-6 sm:py-12 z-40">
+            <div className="max-w-6xl w-full relative z-40">
+              <div className="grid gap-0 grid-cols-1 md:grid-cols-2" style={{ height: 'auto', minHeight: '50vh' }}>
+                
+                {/* Subscribe Section - Left */}
+                <div className="border border-black flex flex-col justify-center p-6 sm:p-8 md:p-10">
+                  <div>
+                    <p className="text-black mb-6 sm:mb-8 leading-relaxed text-sm sm:text-base md:text-lg">
+                      Get added to the list, and we'll reach out when the roast is ready for pre-order.
+                    </p>
                     
-                    {/* Details Section - Left */}
-                    <div className="border border-black flex flex-col" style={{ padding: '30px' }}>
-                      <div className="flex-1">
-                        <h3 className="font-bold uppercase tracking-wide text-left mb-6" style={{ fontSize: '16pt', lineHeight: '20pt' }}>
-                          Details
-                        </h3>
-                        <div style={{ lineHeight: '18pt' }}>
-                          <p className="text-black mb-4" style={{ fontSize: '11pt', lineHeight: '18pt' }}>
-                            <span className="font-bold">Castillo</span> variety from Finca Bellavista
-                          </p>
-                          <p className="text-black mb-4" style={{ fontSize: '11pt', lineHeight: '18pt' }}>
-                            Washed process, fermented 36 hours
-                          </p>
-                          <p className="text-black mb-4" style={{ fontSize: '11pt', lineHeight: '18pt' }}>
-                            Charalá, Santander, Colombia
-                          </p>
-                          <p className="text-black mb-6" style={{ fontSize: '11pt', lineHeight: '18pt' }}>
-                            Delicate florals, orchard-fruit sweetness, crisp clean finish
-                          </p>
+                    {!submitted ? (
+                      <form onSubmit={handleSubmit} className="space-y-6">
+                        <div>
+                          <input
+                            type="email"
+                            name="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="Enter your email"
+                            required
+                            className="w-full px-0 py-3 sm:py-4 placeholder-gray-500 text-black bg-transparent border-0 border-b-2 border-black focus:border-black focus:outline-none focus:ring-0 text-base sm:text-lg"
+                          />
                         </div>
-                      </div>
-
-                      {/* Subscribe Form */}
-                      <div className="mt-auto">
-                        <h4 className="font-bold uppercase tracking-wide text-left mb-4" style={{ fontSize: '12pt', lineHeight: '16pt' }}>
-                          Subscribe to stay in the loop
-                        </h4>
-                        <p className="text-black mb-6" style={{ fontSize: '11pt', lineHeight: '18pt' }}>
-                            We'll let you know a few days before the next roast so you can pre-order
-                          </p>
-                        {!submitted ? (
-                          <form onSubmit={handleSubmit} className="space-y-3">
-                            <div>
-                              <input
-                                type="email"
-                                name="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="Enter your email"
-                                required
-                                className="w-full px-0 py-2 placeholder-gray-500 text-black bg-transparent border-0 border-b border-black focus:border-black focus:outline-none focus:ring-0"
-                                style={{ fontSize: '10pt', lineHeight: '14pt' }}
-                              />
-                            </div>
-                            <button
-                              type="submit"
-                              className="font-bold text-black border border-black px-4 py-2 hover:bg-black hover:text-white transition-all duration-200 uppercase tracking-wide"
-                              style={{ fontSize: '9pt', lineHeight: '12pt' }}
-                            >
-                              Subscribe
-                            </button>
-                          </form>
-                        ) : (
-                          <div className="text-left py-4">
-                            <p className="text-black" style={{ fontSize: '10pt', lineHeight: '14pt' }}>
-                              <span className="font-bold">Thanks for subscribing!</span> We'll keep you updated.
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Product Image Section - Right */}
-                    <div className="border border-black border-l-0 flex flex-col" style={{ padding: '30px' }}>
-                      {/* Product Image Area */}
-                      <div className="flex-1 flex items-center justify-center bg-white mb-6">
-                        <img 
-                          src="/photos/31.jpeg" 
-                          alt="Colombian Coffee"
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      </div>
-                      
-                      {/* Bottom Label */}
-                      <div className="text-center mt-auto">
-                        <p className="text-black font-medium" style={{ fontSize: '14pt', lineHeight: '18pt' }}>
-                          Roast date: TBC
+                        <button
+                          type="submit"
+                          className="font-bold text-black border-2 border-black px-6 sm:px-8 py-2 sm:py-3 hover:bg-black hover:text-white transition-all duration-200 uppercase tracking-wide text-xs sm:text-sm"
+                        >
+                          Subscribe
+                        </button>
+                      </form>
+                    ) : (
+                      <div className="py-4">
+                        <p className="text-black text-base sm:text-lg">
+                          <span className="font-bold">Thanks for subscribing!</span> We'll keep you updated.
                         </p>
                       </div>
-                    </div>
+                    )}
                   </div>
+                </div>
+
+                {/* Product Image - Right - Hidden on mobile */}
+                <div className="hidden md:flex border border-black border-l-0 items-center justify-center p-8">
+                  <img 
+                    src="/photos/31.jpeg" 
+                    alt="Coffee Package"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Timer Section */}
+        <section id="timer" className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-20 bg-white">
+          <div className="w-full max-w-[430px] mx-auto">
+            {!showBrewTimer ? (
+              // Timer Configuration
+              <main className="flex-1 space-y-6">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col items-center space-y-1">
+                    <span className="text-xs text-black">Target Time</span>
+                    <div className="h-12 w-full flex items-center justify-center rounded-lg bg-gray-100">
+                      <span className="text-2xl font-normal text-black">{formatTime(brewingTimings.totalTime)}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-center space-y-1">
+                    <span className="text-xs text-black">Target Water</span>
+                    <div className="h-12 w-full flex items-center justify-center rounded-lg bg-gray-100">
+                      <span className="text-2xl font-normal text-black">{Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-10 pb-1 px-2">
+                  <div className="flex flex-col items-center">
+                    <AppleStylePicker value={coffeeSettings.amount} onChange={(amount) => setCoffeeSettings(prev => ({ ...prev, amount }))} isDarkMode={false} label="Coffee (g)" />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <AppleStylePicker value={coffeeSettings.ratio} onChange={(ratio) => setCoffeeSettings(prev => ({ ...prev, ratio }))} isDarkMode={false} label="Ratio" />
+                  </div>
+                </div>
+
+                <div className="flex flex-col space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-black">Grind Size</span>
+                    <span className="text-sm text-black">{grindSize.toFixed(1)}</span>
+                  </div>
+                  <div className="w-full relative">
+                    <div className="absolute w-full -top-3 flex justify-between">
+                      {Array.from({ length: 11 }, (_, i) => (
+                        <div key={i + 1} className="flex flex-col items-center">
+                          <div className="w-px h-2 bg-gray-500" />
+                          <span className="text-xs mt-1 text-gray-500">{i + 1}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="w-full relative h-1 mt-6">
+                      <div className="w-full h-1 rounded-full transition-all duration-150 ease-out" style={{ background: `linear-gradient(to right, #ff6700 0%, #ff6700 ${(grindSize - 1) * 10}%, #d1d5db ${(grindSize - 1) * 10}%, #d1d5db 100%)` }}/>
+                      <input type="range" min="1" max="11" step="0.1" value={grindSize} onChange={(e) => setGrindSize(Number(e.target.value))} className="absolute top-0 w-full h-4 -mt-1.5 appearance-none cursor-pointer bg-transparent simple-slider" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="relative">
+                    <button 
+                      onClick={() => {
+                        setShowNotesTooltip(true);
+                        setTimeout(() => setShowNotesTooltip(false), 2000);
+                      }} 
+                      className="h-12 w-full flex items-center justify-center rounded-lg transition-colors hover:opacity-80 bg-gray-100"
+                    >
+                      <span className="text-2xl font-normal text-black">Notes</span>
+                    </button>
+                    {showNotesTooltip && (
+                      <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs py-1 px-3 rounded whitespace-nowrap">
+                        Feature coming soon
+                      </div>
+                    )}
+                  </div>
+                  <button onClick={handleStartBrew} className="h-12 w-full flex items-center justify-center rounded-lg transition-colors hover:opacity-80 bg-gray-100">
+                    <span className="text-2xl font-normal text-black">Ready</span>
+                  </button>
+                </div>
+              </main>
+            ) : (
+              // Active Brewing Timer
+              <div className="flex flex-col w-full">
+                {/* Top Info Bar */}
+                <div className="flex justify-between items-end mb-6 w-full">
+                  <div className="flex flex-col items-start">
+                    <div className="text-xs uppercase tracking-wider text-gray-400">Target time</div>
+                    <div className="text-2xl font-light mt-1 text-black">{formatTime(totalTime)}</div>
+                  </div>
+                  <div className="flex flex-col items-center flex-1">
+                    <div className="text-xs uppercase tracking-wider text-gray-400">Time left</div>
+                    <div className="text-2xl font-light mt-1 text-black">{formatTime(Math.ceil(Math.max(0, totalTime - elapsed)))}</div>
+                  </div>
+                  <div className="flex flex-col items-end">
+                    <div className="text-xs uppercase tracking-wider text-gray-400">Current step</div>
+                    <div className="text-2xl font-light mt-1 text-black">{Math.ceil(Math.max(0, (stepEndTimes[currentStep] || 0) - elapsed))}s</div>
+                  </div>
+                </div>
+
+                {/* Step List */}
+                <div className="relative overflow-y-auto mb-12" style={{ minHeight: 206, maxHeight: 'calc(100vh - 400px)' }}>
+                  <div className="space-y-1">
+                    {stepSequence.slice(0, -1).map((step, index) => {
+                      const isActive = index === currentStep;
+                      const isCompleted = elapsed >= (stepEndTimes[index] || 0);
+                      const stepStart = index === 0 ? 0 : stepEndTimes[index - 1];
+                      const stepEnd = stepEndTimes[index] || 0;
+                      const stepDuration = Math.max(0, stepEnd - stepStart);
+                      const stepElapsed = Math.max(0, elapsed - stepStart);
+                      const stepProgress = stepDuration > 0 ? Math.min((stepElapsed / stepDuration) * 100, 100) : 0;
+                      const targetWeight = step.water.includes('Pour to') ? step.water.replace('Pour to ', '') : '';
+                      
+                      return (
+                        <div
+                          key={index}
+                          className={`py-3 px-3 rounded-lg transition-all ${
+                            isActive ? 'bg-orange-50 border border-orange-500' : ''
+                          }`}
+                        >
+                          <div className="flex justify-between items-center">
+                            <span style={{ color: isCompleted ? 'rgba(0,0,0,0.5)' : '#000', fontWeight: isActive ? 600 : 400 }}>
+                              {step.label}
+                            </span>
+                            <span style={{ color: isCompleted ? 'rgba(0,0,0,0.5)' : '#000', fontWeight: isActive ? 600 : 400 }}>
+                              {targetWeight || `${Math.round(stepDuration)}s`}
+                            </span>
+                          </div>
+                          {index < stepSequence.length - 2 && isActive && !isCompleted && (
+                            <div className="relative w-full mt-2 h-[2px] bg-gray-200 rounded">
+                              <div 
+                                className="absolute top-0 h-[2px] bg-orange-500 rounded transition-all duration-100"
+                                style={{ width: `${stepProgress}%` }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex w-full justify-between gap-4">
+                  <button onClick={handleTimerDone} className="py-3 px-8 flex-1 rounded-full text-base font-medium transition-colors text-black hover:bg-gray-50 bg-gray-100">
+                    Done
+                  </button>
+                  <button 
+                    onClick={isRunning ? handleTimerPause : handleTimerStart} 
+                    className="py-3 px-8 flex-1 rounded-full text-base font-medium transition-colors text-black hover:bg-gray-50 bg-gray-100"
+                    disabled={isFinished}
+                  >
+                    {isRunning ? 'Pause' : 'Start'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </section>
       </div>
