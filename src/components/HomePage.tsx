@@ -6,8 +6,9 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useCircleTransition } from '../context/CircleTransitionContext';
 import { supabase } from '../lib/supabase';
 import { calculateBrewTiming, formatTime } from '../utils/brewingCalculations';
-import { CoffeeSettings } from '../types/brewing';
+import { CoffeeSettings, RecipeStep, RecipePreset, StandardPreset } from '../types/brewing';
 import AppleStylePicker from './AppleStylePicker';
+import InstructionsPanel from './InstructionsPanel';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -61,9 +62,11 @@ const HomePage: React.FC = () => {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [showNotesTooltip, setShowNotesTooltip] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<string>('classic');
+  const [isRecipeMode, setIsRecipeMode] = useState(false);
+  const [recipeSteps, setRecipeSteps] = useState<RecipeStep[] | null>(null);
 
-  // Brewing presets with different recipes
-  const brewingPresets = {
+  // Standard adjustable presets
+  const standardPresets: Record<string, StandardPreset> = {
     classic: {
       name: 'Classic',
       description: 'Balanced and approachable',
@@ -90,20 +93,162 @@ const HomePage: React.FC = () => {
     }
   };
 
-  // Apply preset when selected
-  const applyPreset = (presetKey: string) => {
-    const preset = brewingPresets[presetKey as keyof typeof brewingPresets];
-    if (preset) {
-      setSelectedPreset(presetKey);
-      setCoffeeSettings({
-        amount: preset.coffeeAmount,
-        ratio: preset.ratio,
-        bloomRatio: preset.bloomRatio
-      });
-      setGrindSize(preset.grindSize);
+  // Famous recipe presets (locked parameters)
+  const recipePresets: Record<string, RecipePreset> = {
+    hoffmann: {
+      name: 'Hoffmann Method',
+      description: 'James Hoffmann\'s ultimate technique',
+      coffeeAmount: 15,
+      ratio: 16.7,
+      bloomRatio: 2,
+      grindSize: 6,
+      isRecipeMode: true,
+      steps: [
+        {
+          label: 'Bloom',
+          duration: 45,
+          waterTarget: 30,
+          instructions: 'Pour 30g water (2× coffee weight) in center using a gentle circular motion to wet all grounds evenly. Wait for 45 seconds while the coffee blooms and releases CO2.',
+          type: 'pour'
+        },
+        {
+          label: 'First Pour',
+          duration: 30,
+          waterTarget: 150,
+          instructions: 'Pour in slow concentric circles from center outward until you reach 150g total on the scale (60% of total water). Try to complete this pour by 1:15 on the timer. Maintain a steady, gentle flow.',
+          type: 'pour'
+        },
+        {
+          label: 'Continue Pouring',
+          duration: 30,
+          waterTarget: 250,
+          instructions: 'Continue pouring gently in concentric circles until you reach 250g total on the scale (100% of water). Aim to complete this by 1:45. Keep the water level consistent throughout the pour.',
+          type: 'pour'
+        },
+        {
+          label: 'Drawdown',
+          duration: 45,
+          waterTarget: null,
+          instructions: 'Let the coffee drain completely. Avoid disturbing the brew bed. The coffee should finish draining by 2:30-3:00. If it drains too fast, grind finer next time. If too slow, grind coarser.',
+          type: 'rest'
+        }
+      ]
+    },
+    fourSix: {
+      name: '4:6 Method',
+      description: 'Tetsu Kasuya\'s award-winning recipe',
+      coffeeAmount: 20,
+      ratio: 15,
+      bloomRatio: 2,
+      grindSize: 6,
+      isRecipeMode: true,
+      steps: [
+        {
+          label: 'First Pour - 40%',
+          duration: 45,
+          waterTarget: 60,
+          instructions: 'Pour 60g water in the center of the coffee bed. This first pour (along with the second) controls the sweetness and acidity of your brew. Wait 45 seconds before the next pour.',
+          type: 'pour'
+        },
+        {
+          label: 'Second Pour - 40%',
+          duration: 45,
+          waterTarget: 120,
+          instructions: 'Pour another 60g water (120g total on scale) in the center. The first two pours together represent 40% of total water and control flavor balance. Wait 45 seconds.',
+          type: 'pour'
+        },
+        {
+          label: 'Third Pour - 60%',
+          duration: 45,
+          waterTarget: 180,
+          instructions: 'Pour 60g water (180g total) in the center. This pour begins the second phase (60% of water) which controls the strength of the brew. Wait 45 seconds.',
+          type: 'pour'
+        },
+        {
+          label: 'Fourth Pour - 60%',
+          duration: 45,
+          waterTarget: 240,
+          instructions: 'Pour 60g water (240g total) in the center. Continue controlling brew strength with this pour. Wait 45 seconds before the final pour.',
+          type: 'pour'
+        },
+        {
+          label: 'Fifth Pour - 60%',
+          duration: 45,
+          waterTarget: 300,
+          instructions: 'Pour the final 60g water (300g total) in the center. This completes the 60% phase. Wait 45 seconds for drawdown to begin.',
+          type: 'pour'
+        },
+        {
+          label: 'Drawdown',
+          duration: 45,
+          waterTarget: null,
+          instructions: 'Let the coffee drain completely. Total brew time should be around 3:30-4:00. The method\'s precision allows you to adjust sweetness (first 40%) and strength (last 60%) independently in future brews.',
+          type: 'rest'
+        }
+      ]
+    },
+    rao: {
+      name: 'Rao Method',
+      description: 'Scott Rao\'s clarity-focused approach',
+      coffeeAmount: 22,
+      ratio: 16.7,
+      bloomRatio: 3,
+      grindSize: 6,
+      isRecipeMode: true,
+      steps: [
+        {
+          label: 'Bloom',
+          duration: 45,
+          waterTarget: 66,
+          instructions: 'Pour 66g water (3× coffee weight) directly in the center of the coffee bed. Avoid agitating the grounds too much. Let bloom for 30-45 seconds while gases release.',
+          type: 'pour'
+        },
+        {
+          label: 'Main Pour',
+          duration: 45,
+          waterTarget: 367,
+          instructions: 'Pour the remaining 301g water in one continuous, steady stream directly in the center. Do NOT use circular motions—keep the pour focused on the center. Aim to finish pouring by 1:30 on the timer. The single pour technique maximizes clarity and highlights delicate flavors.',
+          type: 'pour'
+        },
+        {
+          label: 'Drawdown',
+          duration: 60,
+          waterTarget: null,
+          instructions: 'Let the coffee drain completely without disturbing the brew bed. Total brew time should be 2:30-3:30. The center-pour technique creates a focused extraction that emphasizes clarity and sweetness in light roasts.',
+          type: 'rest'
+        }
+      ]
     }
   };
 
+  // Combined presets
+  const allPresets = { ...standardPresets, ...recipePresets };
+
+  // Apply preset when selected
+  const applyPreset = (presetKey: string) => {
+    const preset = allPresets[presetKey];
+    if (!preset) return;
+
+    setSelectedPreset(presetKey);
+
+    // Check if it's a recipe preset
+    if ('isRecipeMode' in preset && preset.isRecipeMode) {
+      setIsRecipeMode(true);
+      setRecipeSteps(preset.steps);
+    } else {
+      setIsRecipeMode(false);
+      setRecipeSteps(null);
+    }
+
+    setCoffeeSettings({
+      amount: preset.coffeeAmount,
+      ratio: preset.ratio,
+      bloomRatio: preset.bloomRatio
+    });
+    setGrindSize(preset.grindSize);
+  };
+
+  // Calculate timings (only used for standard mode)
   const brewingTimings = calculateBrewTiming(
     grindSize, 
     coffeeSettings.amount, 
@@ -111,16 +256,31 @@ const HomePage: React.FC = () => {
     coffeeSettings.bloomRatio
   );
 
-  const stepSequence = [
-    { label: 'Bloom', water: `Pour to ${brewingTimings.bloomWater}g`, duration: brewingTimings.bloomDuration },
-    { label: 'First Pour', water: `Pour to ${brewingTimings.firstPourTarget}g`, duration: brewingTimings.firstPourDuration },
-    { label: 'Rest', water: 'Let it steep', duration: brewingTimings.restDuration },
-    { label: 'Second Pour', water: `Pour to ${brewingTimings.secondPourTarget}g`, duration: brewingTimings.secondPourDuration },
-    { label: 'Rest', water: 'Let it steep', duration: brewingTimings.secondRestDuration },
-    { label: 'Third Pour', water: `Pour to ${brewingTimings.thirdPourTarget}g`, duration: brewingTimings.thirdPourDuration },
-    { label: 'Drawdown', water: 'Let coffee drip', duration: brewingTimings.drawdownDuration },
-    { label: 'Finish', water: 'Enjoy your coffee!', duration: 0 }
-  ];
+  // Generate step sequence based on mode
+  const stepSequence = React.useMemo(() => {
+    if (isRecipeMode && recipeSteps) {
+      // Use predefined recipe steps
+      return recipeSteps.map(step => ({
+        label: step.label,
+        water: step.waterTarget ? `Pour to ${step.waterTarget}g` : step.instructions.split('.')[0],
+        duration: step.duration,
+        instructions: step.instructions,
+        type: step.type
+      }));
+    } else {
+      // Calculate dynamically for standard presets
+      return [
+        { label: 'Bloom', water: `Pour to ${brewingTimings.bloomWater}g`, duration: brewingTimings.bloomDuration, type: 'pour' as const },
+        { label: 'First Pour', water: `Pour to ${brewingTimings.firstPourTarget}g`, duration: brewingTimings.firstPourDuration, type: 'pour' as const },
+        { label: 'Rest', water: 'Let it steep', duration: brewingTimings.restDuration, type: 'rest' as const },
+        { label: 'Second Pour', water: `Pour to ${brewingTimings.secondPourTarget}g`, duration: brewingTimings.secondPourDuration, type: 'pour' as const },
+        { label: 'Rest', water: 'Let it steep', duration: brewingTimings.secondRestDuration, type: 'rest' as const },
+        { label: 'Third Pour', water: `Pour to ${brewingTimings.thirdPourTarget}g`, duration: brewingTimings.thirdPourDuration, type: 'pour' as const },
+        { label: 'Drawdown', water: 'Let coffee drip', duration: brewingTimings.drawdownDuration, type: 'rest' as const },
+        { label: 'Finish', water: 'Enjoy your coffee!', duration: 0, type: 'rest' as const }
+      ];
+    }
+  }, [isRecipeMode, recipeSteps, grindSize, coffeeSettings.amount, coffeeSettings.ratio, coffeeSettings.bloomRatio, brewingTimings]);
 
   const stepEndTimes = stepSequence.reduce((acc, step, i) => {
     acc.push((acc[i - 1] || 0) + step.duration);
@@ -143,7 +303,14 @@ const HomePage: React.FC = () => {
           if (actualNewStep !== currentStep) {
             const completedStepIndex = actualNewStep - 1;
             const completedStep = stepSequence[completedStepIndex];
-            const isPourStep = completedStep && (completedStep.label.includes('Pour') || completedStep.label.includes('Bloom'));
+            
+            // Check type field if available (recipe mode), else use label (standard mode)
+            const isPourStep = completedStep && (
+              completedStep.type === 'pour' ||
+              completedStep.label.includes('Pour') || 
+              completedStep.label.includes('Bloom')
+            );
+            
             if (isPourStep && completedStepIndex >= 0) {
               try {
                 const audio = new Audio(softChimeUrl);
@@ -1331,13 +1498,14 @@ const HomePage: React.FC = () => {
                 <div className="space-y-3">
                   <h2 className="text-2xl sm:text-3xl font-bold text-black">Brew Guides</h2>
                   <p className="text-black text-sm sm:text-base leading-relaxed">
-                    Choose a brewing style that matches your taste. Each preset adjusts the coffee amount, 
-                    water ratio, and timing to create a unique flavor profile.
+                    Choose a brewing style. Adjustable presets let you customize parameters, while famous recipes provide step-by-step guidance.
                   </p>
                 </div>
 
+                {/* Standard Adjustable Presets */}
                 <div className="space-y-3">
-                  {Object.entries(brewingPresets).map(([key, preset]) => (
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-600">Adjustable Presets</h3>
+                  {Object.entries(standardPresets).map(([key, preset]) => (
                     <button
                       key={key}
                       onClick={() => applyPreset(key)}
@@ -1357,18 +1525,54 @@ const HomePage: React.FC = () => {
                     </button>
                   ))}
                 </div>
+
+                {/* Famous Recipe Presets */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-600 flex items-center gap-2">
+                    Famous Recipes
+                    <span className="text-xs normal-case bg-orange-100 text-orange-700 px-2 py-0.5 rounded">Step-by-step</span>
+                  </h3>
+                  {Object.entries(recipePresets).map(([key, preset]) => (
+                    <button
+                      key={key}
+                      onClick={() => applyPreset(key)}
+                      className={`w-full text-left p-4 sm:p-5 border-2 transition-all ${
+                        selectedPreset === key 
+                          ? 'border-orange-500 bg-orange-50' 
+                          : 'border-gray-400 border-dashed hover:border-orange-500 hover:bg-orange-50'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-lg sm:text-xl font-bold text-black">{preset.name}</h3>
+                        <div className="text-xs text-black opacity-60">
+                          {preset.coffeeAmount}g : {Math.round(preset.coffeeAmount * preset.ratio)}g
+                        </div>
+                      </div>
+                      <p className="text-sm text-black opacity-70">{preset.description}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Right Panel - Timer */}
-              <div className="w-full max-w-[430px] mx-auto lg:mx-0">
+              <div className={`w-full ${!showBrewTimer || !isRecipeMode ? 'max-w-[430px] mx-auto lg:mx-0' : ''}`}>
             {!showBrewTimer ? (
               // Timer Configuration
               <main className="flex-1 space-y-6">
+                {isRecipeMode && (
+                  <div className="p-4 bg-orange-50 border-l-4 border-orange-500 rounded">
+                    <p className="text-sm text-black">
+                      <span className="font-semibold">Recipe mode:</span> Parameters are locked for this method. 
+                      Select an adjustable preset to customize settings.
+                    </p>
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col items-center space-y-1">
                     <span className="text-xs text-black">Target Time</span>
                     <div className="h-12 w-full flex items-center justify-center rounded-lg bg-gray-100">
-                      <span className="text-2xl font-normal text-black">{formatTime(brewingTimings.totalTime)}</span>
+                      <span className="text-2xl font-normal text-black">{formatTime(totalTime)}</span>
                     </div>
                   </div>
                   <div className="flex flex-col items-center space-y-1">
@@ -1379,16 +1583,16 @@ const HomePage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-10 pb-1 px-2">
+                <div className={`grid grid-cols-2 gap-10 pb-1 px-2 ${isRecipeMode ? 'opacity-50 pointer-events-none' : ''}`}>
                   <div className="flex flex-col items-center">
-                    <AppleStylePicker value={coffeeSettings.amount} onChange={(amount) => setCoffeeSettings(prev => ({ ...prev, amount }))} isDarkMode={false} label="Coffee (g)" />
+                    <AppleStylePicker value={coffeeSettings.amount} onChange={(amount) => !isRecipeMode && setCoffeeSettings(prev => ({ ...prev, amount }))} isDarkMode={false} label="Coffee (g)" />
                   </div>
                   <div className="flex flex-col items-center">
-                    <AppleStylePicker value={coffeeSettings.ratio} onChange={(ratio) => setCoffeeSettings(prev => ({ ...prev, ratio }))} isDarkMode={false} label="Ratio" />
+                    <AppleStylePicker value={coffeeSettings.ratio} onChange={(ratio) => !isRecipeMode && setCoffeeSettings(prev => ({ ...prev, ratio }))} isDarkMode={false} label="Ratio" />
                   </div>
                 </div>
 
-                <div className="flex flex-col space-y-4">
+                <div className={`flex flex-col space-y-4 ${isRecipeMode ? 'opacity-50 pointer-events-none' : ''}`}>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-black">Grind Size</span>
                     <span className="text-sm text-black">{grindSize.toFixed(1)}</span>
@@ -1404,7 +1608,7 @@ const HomePage: React.FC = () => {
                     </div>
                     <div className="w-full relative h-1 mt-6">
                       <div className="w-full h-1 rounded-full transition-all duration-150 ease-out" style={{ background: `linear-gradient(to right, #ff6700 0%, #ff6700 ${(grindSize - 1) * 10}%, #d1d5db ${(grindSize - 1) * 10}%, #d1d5db 100%)` }}/>
-                      <input type="range" min="1" max="11" step="0.1" value={grindSize} onChange={(e) => setGrindSize(Number(e.target.value))} className="absolute top-0 w-full h-4 -mt-1.5 appearance-none cursor-pointer bg-transparent simple-slider" />
+                      <input type="range" min="1" max="11" step="0.1" value={grindSize} onChange={(e) => !isRecipeMode && setGrindSize(Number(e.target.value))} className="absolute top-0 w-full h-4 -mt-1.5 appearance-none cursor-pointer bg-transparent simple-slider" disabled={isRecipeMode} />
                     </div>
                   </div>
                 </div>
@@ -1427,13 +1631,22 @@ const HomePage: React.FC = () => {
                     )}
                   </div>
                   <button onClick={handleStartBrew} className="h-12 w-full flex items-center justify-center rounded-lg transition-colors hover:opacity-80 bg-gray-100">
-                    <span className="text-2xl font-normal text-black">Ready</span>
+                    <span className="text-2xl font-normal text-black">{isRecipeMode ? 'Start Recipe' : 'Ready'}</span>
                   </button>
                 </div>
               </main>
             ) : (
               // Active Brewing Timer
-              <div className="flex flex-col w-full">
+              <div className={`flex ${isRecipeMode ? 'flex-col lg:flex-row gap-8' : 'flex-col'} w-full`}>
+                {/* Instructions Panel (Recipe Mode Only) */}
+                {isRecipeMode && recipeSteps && (
+                  <div className="lg:w-2/5 flex-shrink-0">
+                    <InstructionsPanel steps={recipeSteps} currentStep={currentStep} />
+                  </div>
+                )}
+                
+                {/* Timer Display */}
+                <div className={`flex flex-col w-full ${isRecipeMode ? 'lg:w-3/5' : ''}`}>
                 {/* Top Info Bar */}
                 <div className="flex justify-between items-end mb-6 w-full">
                   <div className="flex flex-col items-start">
@@ -1504,6 +1717,7 @@ const HomePage: React.FC = () => {
                   >
                     {isRunning ? 'Pause' : 'Start'}
                   </button>
+                </div>
                 </div>
               </div>
             )}
