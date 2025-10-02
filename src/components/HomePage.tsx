@@ -539,15 +539,21 @@ const HomePage: React.FC = () => {
       }
     };
 
-    // Click to pin/unpin circle position
+    // Click to toggle pin/unpin circle position
     const handleClick = (e: MouseEvent) => {
-      isPinned.current = true;
-      pinnedPosition.current = {
-        x: e.clientX,
-        y: e.clientY
-      };
-      targetPosition.current = { ...pinnedPosition.current };
-      mousePosition.current = { ...pinnedPosition.current };
+      if (isPinned.current) {
+        // Unpin - circle will start following mouse again
+        isPinned.current = false;
+      } else {
+        // Pin at current click location
+        isPinned.current = true;
+        pinnedPosition.current = {
+          x: e.clientX,
+          y: e.clientY
+        };
+        targetPosition.current = { ...pinnedPosition.current };
+        mousePosition.current = { ...pinnedPosition.current };
+      }
     };
 
     // Smooth animation loop for mouse following
