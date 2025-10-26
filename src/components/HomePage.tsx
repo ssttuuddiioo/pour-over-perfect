@@ -8,8 +8,6 @@ import { supabase } from '../lib/supabase';
 import { calculateBrewTiming, formatTime } from '../utils/brewingCalculations';
 import { CoffeeSettings } from '../types/brewing';
 import AppleStylePicker from './AppleStylePicker';
-import InstructionsPanel from './InstructionsPanel';
-import { recipePresets, RecipePreset } from '../data/recipePresets';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -62,28 +60,7 @@ const HomePage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const [showNotesTooltip, setShowNotesTooltip] = useState(false);
-  const [selectedPreset, setSelectedPreset] = useState<string>('hoffmann');
 
-  // Apply preset when selected
-  const applyPreset = (presetKey: string) => {
-    const recipePreset = recipePresets[presetKey];
-    if (recipePreset) {
-      setSelectedPreset(presetKey);
-      setCoffeeSettings({
-        amount: recipePreset.coffeeAmount,
-        ratio: recipePreset.ratio,
-        bloomRatio: recipePreset.bloomRatio
-      });
-      setGrindSize(recipePreset.grindSize);
-    }
-  };
-  
-  // Get current recipe preset (always in recipe mode now)
-  const getCurrentRecipe = (): RecipePreset | null => {
-    return recipePresets[selectedPreset] || null;
-  };
-
-  // Calculate brewing timings for standard presets
   const brewingTimings = calculateBrewTiming(
     grindSize, 
     coffeeSettings.amount, 
@@ -91,23 +68,16 @@ const HomePage: React.FC = () => {
     coffeeSettings.bloomRatio
   );
 
-  // Generate step sequence from recipe (always recipe mode now)
-  const stepSequence = (() => {
-    const currentRecipe = getCurrentRecipe();
-    
-    if (currentRecipe) {
-      return currentRecipe.steps.map(step => ({
-        label: step.label,
-        water: step.waterTarget ? `Pour to ${step.waterTarget}g` : step.label === 'Drawdown' ? 'Let coffee drip' : 'Let it steep',
-        duration: step.duration,
-        type: step.type, // Keep type for audio/haptic logic
-        instructions: step.instructions // Keep instructions for InstructionsPanel
-      }));
-    }
-    
-    // Fallback to default if no recipe found (shouldn't happen)
-    return [];
-  })();
+  const stepSequence = [
+    { label: 'Bloom', water: `Pour to ${brewingTimings.bloomWater}g`, duration: brewingTimings.bloomDuration },
+    { label: 'First Pour', water: `Pour to ${brewingTimings.firstPourTarget}g`, duration: brewingTimings.firstPourDuration },
+    { label: 'Rest', water: 'Let it steep', duration: brewingTimings.restDuration },
+    { label: 'Second Pour', water: `Pour to ${brewingTimings.secondPourTarget}g`, duration: brewingTimings.secondPourDuration },
+    { label: 'Rest', water: 'Let it steep', duration: brewingTimings.secondRestDuration },
+    { label: 'Third Pour', water: `Pour to ${brewingTimings.thirdPourTarget}g`, duration: brewingTimings.thirdPourDuration },
+    { label: 'Drawdown', water: 'Let coffee drip', duration: brewingTimings.drawdownDuration },
+    { label: 'Finish', water: 'Enjoy your coffee!', duration: 0 }
+  ];
 
   const stepEndTimes = stepSequence.reduce((acc, step, i) => {
     acc.push((acc[i - 1] || 0) + step.duration);
@@ -130,8 +100,7 @@ const HomePage: React.FC = () => {
           if (actualNewStep !== currentStep) {
             const completedStepIndex = actualNewStep - 1;
             const completedStep = stepSequence[completedStepIndex];
-            // Trigger audio/haptic only for 'pour' type steps
-            const isPourStep = completedStep && completedStep.type === 'pour';
+            const isPourStep = completedStep && (completedStep.label.includes('Pour') || completedStep.label.includes('Bloom'));
             if (isPourStep && completedStepIndex >= 0) {
               try {
                 const audio = new Audio(softChimeUrl);
@@ -178,11 +147,6 @@ const HomePage: React.FC = () => {
     setShowBrewTimer(false);
     handleTimerReset();
   };
-
-  // Initialize with Hoffmann preset on mount
-  useEffect(() => {
-    applyPreset('hoffmann');
-  }, []);
 
   useEffect(() => {
     localStorage.setItem('coffeeSettings', JSON.stringify(coffeeSettings));
@@ -788,8 +752,10 @@ const HomePage: React.FC = () => {
     // Initialize with first section
     setActiveSection('home');
     
-    // Set up pinning for origen section
-    if (origenSectionRef.current && origenTextRef.current) {
+    // Set up pinning for origen section (desktop only)
+    const isMobile = window.innerWidth < 768;
+    
+    if (origenSectionRef.current && origenTextRef.current && !isMobile) {
       const origenTrigger = ScrollTrigger.create({
         trigger: origenSectionRef.current,
         start: "top -100px",
@@ -856,8 +822,8 @@ const HomePage: React.FC = () => {
 
     }
 
-    // Set up pinning for coffee section
-    if (coffeeSectionRef.current && coffeeTextRef.current) {
+    // Set up pinning for coffee section (desktop only)
+    if (coffeeSectionRef.current && coffeeTextRef.current && !isMobile) {
       const coffeeTrigger = ScrollTrigger.create({
         trigger: coffeeSectionRef.current,
         start: "top -100px",
@@ -922,8 +888,8 @@ const HomePage: React.FC = () => {
       });
     }
 
-    // Set up pinning for buy section
-    if (buySectionRef.current && buyTextRef.current) {
+    // Set up pinning for buy section (desktop only)
+    if (buySectionRef.current && buyTextRef.current && !isMobile) {
       const buyTrigger = ScrollTrigger.create({
         trigger: buySectionRef.current,
         start: "top -100px",
@@ -1051,9 +1017,9 @@ const HomePage: React.FC = () => {
         </nav>
 
                 {/* Origen Section */}
-        <section ref={origenSectionRef} id="origen" className="text-black relative pt-20" style={{ minHeight: '300vh' }}>
+        <section ref={origenSectionRef} id="origen" className="text-black relative pt-20 md:min-h-[300vh]">
           {/* Pinned text container */}
-          <div ref={origenTextRef} className="w-full min-h-screen flex items-center justify-between px-4 sm:px-8 py-12 sm:py-16 relative" style={{ zIndex: 2 }}>
+          <div ref={origenTextRef} className="w-full min-h-screen md:min-h-screen flex items-center justify-between px-4 sm:px-8 py-12 sm:py-16 mb-12 md:mb-0 relative" style={{ zIndex: 2 }}>
             <div className="w-full flex flex-col md:flex-row items-start justify-between gap-8 md:gap-12">
               {/* Left side - Slideshow */}
               <div className="w-full md:w-auto md:ml-0 lg:ml-8 xl:ml-12 relative flex-shrink-0">
@@ -1126,8 +1092,8 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Coffee Section */}
-        <section ref={coffeeSectionRef} id="coffee" className="text-black relative pt-20" style={{ minHeight: '300vh' }}>
-          <div ref={coffeeTextRef} className="w-full min-h-screen flex flex-col items-start justify-center px-4 sm:px-6 md:px-12 lg:px-24 py-12 sm:py-16" style={{ zIndex: 2 }}>
+        <section ref={coffeeSectionRef} id="coffee" className="text-black relative pt-20 md:min-h-[300vh]">
+          <div ref={coffeeTextRef} className="w-full min-h-screen md:min-h-screen flex flex-col items-start justify-center px-4 sm:px-6 md:px-12 lg:px-24 py-12 sm:py-16 mb-12 md:mb-0" style={{ zIndex: 2 }}>
             <div className="max-w-4xl w-full relative text-left" style={{ zIndex: 2 }}>
               <div className="text-black leading-relaxed space-y-4 sm:space-y-6 md:space-y-8">
                 <div className="section-content" style={{ lineHeight: '14pt' }}>
@@ -1258,9 +1224,9 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Buy Section */}
-        <section ref={buySectionRef} id="buy" className="text-black relative pt-20" style={{ minHeight: '300vh' }}>
+        <section ref={buySectionRef} id="buy" className="text-black relative pt-20 md:min-h-[300vh]">
           {/* Pinned content container */}
-          <div ref={buyTextRef} className="w-full min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-6 sm:py-12 relative" style={{ zIndex: 2 }}>
+          <div ref={buyTextRef} className="w-full min-h-screen md:min-h-screen flex flex-col items-center justify-center px-4 sm:px-6 py-6 sm:py-12 mb-12 md:mb-0 relative" style={{ zIndex: 2 }}>
             <div className="max-w-6xl w-full relative">
               <div className="grid gap-0 grid-cols-1 md:grid-cols-2" style={{ height: 'auto', minHeight: '50vh' }}>
                 
@@ -1315,98 +1281,83 @@ const HomePage: React.FC = () => {
         </section>
 
         {/* Timer Section */}
-        <section id="timer" className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-12 py-20 bg-white relative" style={{ marginTop: '20vh' }}>
-          <div className="w-full max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
-              
-              {/* Left Panel - Presets */}
-              <div className="space-y-6">
-                <div className="space-y-3">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-black">Famous Recipes</h2>
-                  <p className="text-black text-sm sm:text-base leading-relaxed">
-                    Choose a world-class pour-over recipe with step-by-step instructions to guide you through the perfect brew.
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  {Object.entries(recipePresets).map(([key, recipe]) => (
-                    <button
-                      key={key}
-                      onClick={() => applyPreset(key)}
-                      className={`w-full text-left p-4 sm:p-5 border-2 transition-all ${
-                        selectedPreset === key 
-                          ? 'border-orange-500 bg-orange-50' 
-                          : 'border-black hover:border-orange-500 hover:bg-orange-50'
-                      }`}
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-lg sm:text-xl font-bold text-black">{recipe.name}</h3>
-                        <div className="text-xs text-black opacity-60">
-                          {recipe.coffeeAmount}g : {Math.round(recipe.coffeeAmount * recipe.ratio)}g
-                        </div>
-                      </div>
-                      <p className="text-sm text-black opacity-70">{recipe.description}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Right Panel - Timer Preview or Active Timer */}
-              <div className="w-full max-w-[430px] mx-auto lg:mx-0">
+        <section id="timer" className="min-h-screen flex items-center justify-center px-4 sm:px-6 py-20 bg-white relative" style={{ marginTop: '20vh' }}>
+          <div className="w-full max-w-[430px] mx-auto">
             {!showBrewTimer ? (
-              // Timer Preview with Steps
-              <div className="flex flex-col space-y-4">
-                {/* Target Info */}
+              // Timer Configuration
+              <main className="flex-1 space-y-6">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex flex-col items-center space-y-1">
-                    <span className="text-xs text-black uppercase tracking-wide">Target Time</span>
+                    <span className="text-xs text-black">Target Time</span>
                     <div className="h-12 w-full flex items-center justify-center rounded-lg bg-gray-100">
-                      <span className="text-2xl font-normal text-black">{formatTime(totalTime)}</span>
+                      <span className="text-2xl font-normal text-black">{formatTime(brewingTimings.totalTime)}</span>
                     </div>
                   </div>
                   <div className="flex flex-col items-center space-y-1">
-                    <span className="text-xs text-black uppercase tracking-wide">Target Water</span>
+                    <span className="text-xs text-black">Target Water</span>
                     <div className="h-12 w-full flex items-center justify-center rounded-lg bg-gray-100">
                       <span className="text-2xl font-normal text-black">{Math.round(coffeeSettings.amount * coffeeSettings.ratio)}g</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Steps Preview */}
-                <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Steps Preview</h3>
-                  {stepSequence.map((step, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-black">{step.label}</span>
-                        <span className="text-xs text-gray-600">{step.water}</span>
-                      </div>
-                    </div>
-                  ))}
+                <div className="grid grid-cols-2 gap-10 pb-1 px-2">
+                  <div className="flex flex-col items-center">
+                    <AppleStylePicker value={coffeeSettings.amount} onChange={(amount) => setCoffeeSettings(prev => ({ ...prev, amount }))} isDarkMode={false} label="Coffee (g)" />
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <AppleStylePicker value={coffeeSettings.ratio} onChange={(ratio) => setCoffeeSettings(prev => ({ ...prev, ratio }))} isDarkMode={false} label="Ratio" />
+                  </div>
                 </div>
 
-                {/* Start Button */}
-                <button 
-                  onClick={handleStartBrew} 
-                  className="w-full py-3 rounded-lg bg-orange-500 hover:bg-orange-600 transition-colors"
-                >
-                  <span className="text-xl font-semibold text-white">Ready</span>
-                </button>
-              </div>
-            ) : (
-              // Active Brewing Timer - two-column layout with instructions
-              <div className="w-full lg:col-span-2 lg:max-w-none">
-                <div className="grid grid-cols-1 lg:grid-cols-[40%_60%] gap-6">
-                  
-                  {/* Instructions Panel */}
-                  <div className="h-full">
-                    <InstructionsPanel steps={stepSequence} currentStep={currentStep} />
+                <div className="flex flex-col space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-black">Grind Size</span>
+                    <span className="text-sm text-black">{grindSize.toFixed(1)}</span>
                   </div>
+                  <div className="w-full relative">
+                    <div className="absolute w-full -top-3 flex justify-between">
+                      {Array.from({ length: 11 }, (_, i) => (
+                        <div key={i + 1} className="flex flex-col items-center">
+                          <div className="w-px h-2 bg-gray-500" />
+                          <span className="text-xs mt-1 text-gray-500">{i + 1}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="w-full relative h-1 mt-6">
+                      <div className="w-full h-1 rounded-full transition-all duration-150 ease-out" style={{ background: `linear-gradient(to right, #ff6700 0%, #ff6700 ${(grindSize - 1) * 10}%, #d1d5db ${(grindSize - 1) * 10}%, #d1d5db 100%)` }}/>
+                      <input type="range" min="1" max="11" step="0.1" value={grindSize} onChange={(e) => setGrindSize(Number(e.target.value))} className="absolute top-0 w-full h-4 -mt-1.5 appearance-none cursor-pointer bg-transparent simple-slider" />
+                    </div>
+                  </div>
+                </div>
 
-                  {/* Timer Panel */}
-                  <div className="flex flex-col w-full">
-                    {/* Top Info Bar */}
-                    <div className="flex justify-between items-end mb-6 w-full">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="relative">
+                    <button 
+                      onClick={() => {
+                        setShowNotesTooltip(true);
+                        setTimeout(() => setShowNotesTooltip(false), 2000);
+                      }} 
+                      className="h-12 w-full flex items-center justify-center rounded-lg transition-colors hover:opacity-80 bg-gray-100"
+                    >
+                      <span className="text-2xl font-normal text-black">Notes</span>
+                    </button>
+                    {showNotesTooltip && (
+                      <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs py-1 px-3 rounded whitespace-nowrap">
+                        Feature coming soon
+                      </div>
+                    )}
+                  </div>
+                  <button onClick={handleStartBrew} className="h-12 w-full flex items-center justify-center rounded-lg transition-colors hover:opacity-80 bg-gray-100">
+                    <span className="text-2xl font-normal text-black">Ready</span>
+                  </button>
+                </div>
+              </main>
+            ) : (
+              // Active Brewing Timer
+              <div className="flex flex-col w-full">
+                {/* Top Info Bar */}
+                <div className="flex justify-between items-end mb-6 w-full">
                   <div className="flex flex-col items-start">
                     <div className="text-xs uppercase tracking-wider text-gray-400">Target time</div>
                     <div className="text-2xl font-light mt-1 text-black">{formatTime(totalTime)}</div>
@@ -1476,12 +1427,8 @@ const HomePage: React.FC = () => {
                     {isRunning ? 'Pause' : 'Start'}
                   </button>
                 </div>
-                  </div>
-                </div>
               </div>
             )}
-              </div>
-            </div>
           </div>
         </section>
 
