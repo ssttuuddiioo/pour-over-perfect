@@ -268,13 +268,6 @@ const StoryPage: React.FC = () => {
                   src={slide.src}
                   alt={`story image ${index + 1}`}
                   className="w-full h-full object-cover rounded-lg"
-                  onError={(e) => {
-                    console.error(`Failed to load image: ${slide.src}`);
-                    console.log('Image element:', e.target);
-                  }}
-                  onLoad={() => {
-                    console.log(`Successfully loaded: ${slide.src}`);
-                  }}
                 />
               </div>
             ))}
@@ -388,13 +381,6 @@ const StoryPage: React.FC = () => {
                   src={slide.src}
                   alt={`story image ${index + 1}`}
                   className="w-full h-full object-cover rounded-lg"
-                  onError={(e) => {
-                    console.error(`Failed to load image: ${slide.src}`);
-                    console.log('Image element:', e.target);
-                  }}
-                  onLoad={() => {
-                    console.log(`Successfully loaded: ${slide.src}`);
-                  }}
                 />
               </div>
             ))}

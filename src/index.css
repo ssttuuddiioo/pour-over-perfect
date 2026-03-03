@@ -1,5 +1,4 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -22,22 +21,18 @@
   html {
     font-family: 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-font-smoothing: antialiased;
-    /* Prevent zoom on input focus */
     -webkit-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
-    /* Smooth scrolling optimizations */
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     overflow-x: hidden;
   }
 
   body {
-    @apply bg-black text-white;
     font-family: 'Space Grotesk', sans-serif;
     background-color: #f4f4f4;
     color: #FFFFFF;
     min-height: max(884px, 100dvh);
-    /* Scrolling optimizations */
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
     scroll-behavior: smooth;
@@ -45,350 +40,32 @@
 }
 
 @layer components {
-  .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200 
-           focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black;
-  }
-  
-  .btn-primary {
-    background-color: #FFFFFF;
-    color: #000000;
-    @apply w-full py-3 rounded-lg text-base font-semibold;
-  }
-  
-  .btn-secondary {
-    background-color: #1F1F1F;
-    color: #FFFFFF;
-    @apply px-3 py-2 rounded-lg text-sm font-medium;
-  }
-
-  .btn-secondary-outline {
-    border: 1px solid #404040;
-    color: #FFFFFF;
-    @apply px-3 py-2 rounded-lg text-sm font-medium;
-  }
-
-  .card {
-    background-color: #1F1F1F;
-    border-radius: 0.5rem;
-    padding: 0.75rem;
-  }
-
-  .selected-card {
-    border: 1px solid #FFFFFF;
-    background-color: #1F1F1F;
-    @apply p-3 text-center rounded-lg;
-  }
-
-  .unselected-card {
-    background-color: #404040;
-    @apply p-3 text-center rounded-lg;
-  }
-
-  .input-display {
-    background-color: #1F1F1F;
-    border-radius: 0.5rem;
-    @apply p-3 text-center;
-  }
-
   input[type="range"] {
     @apply appearance-none bg-gray-700 h-1 rounded-full;
   }
 
   input[type="range"]::-webkit-slider-thumb {
-    @apply appearance-none w-3 h-3 rounded-full bg-gray-100 cursor-pointer 
+    @apply appearance-none w-3 h-3 rounded-full bg-gray-100 cursor-pointer
            hover:ring-2 hover:ring-gray-100 hover:ring-offset-2 hover:ring-offset-gray-900;
-  }
-
-  .amount-btn {
-    @apply py-1.5 px-3 text-sm rounded-lg transition-colors duration-200;
-  }
-
-  .amount-btn-active {
-    @apply bg-gray-100 text-gray-900;
-  }
-
-  .amount-btn-inactive {
-    @apply bg-gray-800 text-gray-300 hover:bg-gray-700;
-  }
-
-  .circular-progress {
-    position: relative;
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    background: conic-gradient(#FFFFFF var(--progress), #404040 0);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  
-  .circular-progress::before {
-    content: '';
-    position: absolute;
-    width: calc(100% - 12px);
-    height: calc(100% - 12px);
-    background-color: #000000;
-    border-radius: 50%;
-  }
-  
-  .progress-value {
-    position: relative;
-    z-index: 1;
-    text-align: center;
-  }
-  
-  .font-roboto-mono {
-    font-family: 'Roboto Mono', monospace;
-  }
-
-  .step-pulse {
-    animation: step-pulse 2s infinite;
-  }
-
-  @keyframes step-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.8; }
-  }
-
-  .progress-bar {
-    transition: width 0.1s ease-out;
-  }
-
-  /* Hide browser spinner arrows on number inputs */
-  .no-spinners::-webkit-outer-spin-button,
-  .no-spinners::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-
-  .no-spinners[type=number] {
-    -moz-appearance: textfield;
   }
 
   /* Prevent zoom and remove focus highlighting on inputs */
   input, textarea, select {
-    font-size: 16px !important; /* Prevents zoom */
-    outline: none !important; /* Removes focus outline */
-    -webkit-tap-highlight-color: transparent !important; /* Removes tap highlight */
+    font-size: 16px !important;
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent !important;
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
   }
 
-  /* Remove focus rings and highlights */
   input:focus, textarea:focus, select:focus {
     outline: none !important;
     box-shadow: none !important;
     -webkit-tap-highlight-color: transparent !important;
   }
 
-  /* Line clamp utilities */
-  .line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  /* Touch optimization */
-  .touch-manipulation {
-    touch-action: manipulation;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
-    min-height: 44px;
-    min-width: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-
-
-
-
-
-  /* Custom slider styles for grind size */
-  .slider {
-    appearance: none;
-    background: transparent;
-    cursor: pointer;
-  }
-
-  .slider::-webkit-slider-thumb {
-    appearance: none;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #ff6700;
-    cursor: pointer;
-    transition: transform 0.1s ease;
-    border: none;
-    box-shadow: 0 2px 6px rgba(255, 103, 0, 0.3);
-  }
-
-  .slider::-webkit-slider-thumb:hover {
-    transform: scale(1.1);
-    box-shadow: 0 3px 8px rgba(255, 103, 0, 0.4);
-  }
-
-  .slider::-webkit-slider-thumb:active {
-    transform: scale(1.2);
-  }
-
-  .slider::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background: #ff6700;
-    cursor: pointer;
-    border: none;
-    box-shadow: 0 2px 6px rgba(255, 103, 0, 0.3);
-    transition: transform 0.1s ease;
-  }
-
-  .slider::-moz-range-thumb:hover {
-    transform: scale(1.1);
-    box-shadow: 0 3px 8px rgba(255, 103, 0, 0.4);
-  }
-
-  .slider::-moz-range-thumb:active {
-    transform: scale(1.2);
-  }
-
-  .slider::-webkit-slider-track {
-    background: transparent;
-  }
-
-  .slider::-moz-range-track {
-    background: transparent;
-  }
-
-  /* Clean slider styles matching the design */
-  .slider-clean {
-    appearance: none;
-    background: transparent;
-    cursor: pointer;
-  }
-
-  .slider-clean::-webkit-slider-thumb {
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #ff6700;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    border: none;
-    box-shadow: 0 2px 8px rgba(255, 103, 0, 0.4);
-  }
-
-  .slider-clean::-webkit-slider-thumb:hover {
-    transform: scale(1.15);
-    box-shadow: 0 3px 12px rgba(255, 103, 0, 0.5);
-  }
-
-  .slider-clean::-webkit-slider-thumb:active {
-    transform: scale(1.25);
-    box-shadow: 0 4px 16px rgba(255, 103, 0, 0.6);
-  }
-
-  .slider-clean::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: #ff6700;
-    cursor: pointer;
-    border: none;
-    box-shadow: 0 2px 8px rgba(255, 103, 0, 0.4);
-    transition: all 0.15s ease;
-  }
-
-  .slider-clean::-moz-range-thumb:hover {
-    transform: scale(1.15);
-    box-shadow: 0 3px 12px rgba(255, 103, 0, 0.5);
-  }
-
-  .slider-clean::-moz-range-thumb:active {
-    transform: scale(1.25);
-    box-shadow: 0 4px 16px rgba(255, 103, 0, 0.6);
-  }
-
-  .slider-clean::-webkit-slider-track {
-    background: transparent;
-    height: 0;
-  }
-
-  .slider-clean::-moz-range-track {
-    background: transparent;
-    height: 0;
-  }
-
-  /* Precision instrument slider */
-  .precision-slider {
-    appearance: none;
-    background: transparent;
-    cursor: pointer;
-  }
-
-  .precision-slider::-webkit-slider-thumb {
-    appearance: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #FF6A00;
-    cursor: pointer;
-    transition: all 120ms cubic-bezier(0.4, 0, 0.2, 1);
-    border: none;
-    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.2);
-    position: relative;
-    z-index: 10;
-    margin-top: -18px; /* Center knob on the 4px track */
-  }
-
-  .precision-slider::-webkit-slider-thumb:hover {
-    box-shadow: 0 6px 6px rgba(0, 0, 0, 0.25);
-  }
-
-  .precision-slider::-webkit-slider-thumb:active {
-    box-shadow: 0 8px 8px rgba(0, 0, 0, 0.3);
-  }
-
-  .precision-slider::-moz-range-thumb {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #FF6A00;
-    cursor: pointer;
-    border: none;
-    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.2);
-    transition: all 120ms cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    z-index: 10;
-  }
-
-  .precision-slider::-moz-range-thumb:hover {
-    box-shadow: 0 6px 6px rgba(0, 0, 0, 0.25);
-  }
-
-  .precision-slider::-moz-range-thumb:active {
-    box-shadow: 0 8px 8px rgba(0, 0, 0, 0.3);
-  }
-
-  .precision-slider::-webkit-slider-track {
-    background: transparent;
-    height: 4px;
-    position: relative;
-  }
-
-  .precision-slider::-moz-range-track {
-    background: transparent;
-    height: 4px;
-    position: relative;
-  }
-
-  /* Simple slider styles - completely remove all browser defaults */
+  /* Grind size slider */
   .simple-slider {
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -443,15 +120,7 @@
     transform: scale(1.2);
   }
 
-  /* Completely hide all track elements */
-  .simple-slider::-webkit-slider-track {
-    background: transparent !important;
-    border: none !important;
-    height: 0 !important;
-    width: 100% !important;
-    -webkit-appearance: none !important;
-  }
-
+  .simple-slider::-webkit-slider-track,
   .simple-slider::-webkit-slider-runnable-track {
     background: transparent !important;
     border: none !important;
@@ -472,54 +141,15 @@
     background: transparent !important;
     height: 0 !important;
   }
-
-  .simple-slider::-ms-track {
-    background: transparent !important;
-    border: none !important;
-    height: 0 !important;
-    color: transparent !important;
-  }
-
-  .simple-slider::-ms-fill-lower {
-    background: transparent !important;
-  }
-
-  .simple-slider::-ms-fill-upper {
-    background: transparent !important;
-  }
 }
 
-/* 
-  Scrollbar hiding was causing issues on desktop.
-  Commenting out for now.
-
-  ::-webkit-scrollbar {
-    width: 0 !important;
-    background: transparent;
-  }
-  html, body, * {
-    scrollbar-width: none; 
-    -ms-overflow-style: none;
-  } 
-*/
-
-
-
-
-
-
-
-
-
-/* Smooth circle animation optimizations - always visible and centered */
+/* Circle transition animation */
 .fixed.bg-\[#FF6700\].rounded-full {
-  /* Hardware acceleration for smooth 60fps animation */
   transform: translate(-50%, -50%) translateZ(0) !important;
   will-change: transform, width, height;
   backface-visibility: hidden;
   perspective: 1000px;
-  /* Pin to background layer and ensure visibility */
-  z-index: -1 !important;
+  z-index: 1 !important;
   position: fixed !important;
   left: 50% !important;
   top: 50% !important;
@@ -527,6 +157,3 @@
   visibility: visible !important;
   display: flex !important;
 }
-
-
-

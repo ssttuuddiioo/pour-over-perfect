@@ -1,19 +1,32 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext';
-import { calculateBrewTiming, formatTime } from '../utils/brewingCalculations';
+import { formatTime } from '../utils/brewingCalculations';
 import { CoffeeSettings } from '../types/brewing';
+import { useBrewTimer, StepInfo } from '../hooks/useBrewTimer';
 import AppleStylePicker from './AppleStylePicker';
+import Navigation from './shared/Navigation';
 
-// Helper components will be moved here directly to keep this file self-contained
+interface BrewTimerPageProps {
+  elapsed: number;
+  fullStepSequence: StepInfo[];
+  fullCurrentStep: number;
+  fullStepEndTimes: number[];
+  handlePause: () => void;
+  handleResume: () => void;
+  timerActive: boolean;
+  timerPaused: boolean;
+  finished: boolean;
+  formatTime: (seconds: number) => string;
+  onBack: () => void;
+  onDone: () => void;
+}
 
-function CompletionPrompt({ 
-  onLogExperience, 
-  onSkip 
-}: { 
-  onLogExperience: () => void, 
-  onSkip: () => void 
-}) {
+interface CompletionPromptProps {
+  onLogExperience: () => void;
+  onSkip: () => void;
+}
+
+function CompletionPrompt({ onLogExperience, onSkip }: CompletionPromptProps) {
   return (
     <div className="min-h-screen flex flex-col bg-gray-100 text-black">
       <div className="flex flex-col items-center w-full max-w-[430px] mx-auto px-4 py-12">
@@ -41,23 +54,18 @@ function CompletionPrompt({
 
 function BrewTimerPage({
   elapsed,
-  getStepInstruction,
   fullStepSequence,
   fullCurrentStep,
   fullStepEndTimes,
   handlePause,
   handleResume,
-  handleReset,
   timerActive,
   timerPaused,
   finished,
   formatTime,
   onBack,
-  onDone,
-  onSaveRecipe
-}: any) {
-  const isDarkMode = false; // Force light mode
-  const navigate = useNavigate();
+  onDone
+}: BrewTimerPageProps) {
   const totalTime = fullStepEndTimes[fullStepEndTimes.length - 1] || 1;
   const timeRemaining = Math.max(0, totalTime - elapsed);
   
@@ -83,36 +91,10 @@ function BrewTimerPage({
     };
   }, []);
 
-  // Scroll to section function for navigation
-  const scrollToSection = (sectionId: string) => {
-    if (sectionId === 'timer') {
-      // Already on timer page, do nothing
-      return;
-    }
-    navigate('/');
-    // Add a small delay to ensure navigation completes before scrolling
-    setTimeout(() => {
-      const element = document.getElementById(sectionId);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 100);
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-gray-100 text-black">
       {/* Top Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur-sm border-b border-gray-200">
-        <div className="flex justify-center items-center py-4 px-4 sm:px-6">
-          <div className="flex space-x-4 sm:space-x-6 md:space-x-8 lg:space-x-10">
-            <button onClick={() => scrollToSection('home')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">home</button>
-            <button onClick={() => scrollToSection('origen')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">origen</button>
-            <button onClick={() => scrollToSection('coffee')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">coffee</button>
-            <button onClick={() => scrollToSection('buy')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">buy</button>
-            <button className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black underline">timer</button>
-          </div>
-        </div>
-      </nav>
+      <Navigation variant="page" />
       
       <div className="flex flex-col items-center justify-center w-full h-full pt-20">
         <div className="w-full max-w-[430px] mx-auto px-4 py-6 relative">
@@ -164,7 +146,7 @@ function BrewTimerPage({
                       }}
                     />
                     <div className="space-y-0.5 relative z-40">
-                      {fullStepSequence.slice(0, -1).map((step: any, index: number) => {
+                      {fullStepSequence.slice(0, -1).map((step: StepInfo, index: number) => {
                         const isActive = index === fullCurrentStep;
                         const isCompleted = elapsed >= (fullStepEndTimes[index] || 0);
                         const stepStart = index === 0 ? 0 : fullStepEndTimes[index - 1];
@@ -231,138 +213,53 @@ function BrewTimerPage({
   );
 }
 
-const defaultCoffeeOptions = [15, 30];
-const defaultRatioOptions = [15, 18];
-const softChimeUrl = 'https://cdn.pixabay.com/audio/2022/10/16/audio_12b6b9b6b2.mp3';
+const loadSavedSettings = (): CoffeeSettings => {
+  const savedSettings = localStorage.getItem('coffeeSettings');
+  if (savedSettings) {
+    try {
+      const parsed = JSON.parse(savedSettings);
+      return {
+        amount: (parsed.amount >= 1 && parsed.amount <= 50) ? parsed.amount : 15.0,
+        ratio: (parsed.ratio >= 1 && parsed.ratio <= 50) ? parsed.ratio : 15.0,
+        bloomRatio: parsed.bloomRatio || 2
+      };
+    } catch (e) {
+      console.error('Error loading saved settings:', e);
+    }
+  }
+  return { amount: 15.0, ratio: 15.0, bloomRatio: 2 };
+};
 
 const BrewingApp: React.FC = () => {
   const navigate = useNavigate();
-  
-  const loadSavedSettings = () => {
-    const savedSettings = localStorage.getItem('coffeeSettings');
-    if (savedSettings) {
-      try {
-        const parsed = JSON.parse(savedSettings);
-        return {
-          amount: (parsed.amount >= 1 && parsed.amount <= 50) ? parsed.amount : 15.0,
-          ratio: (parsed.ratio >= 1 && parsed.ratio <= 50) ? parsed.ratio : 15.0,
-          bloomRatio: parsed.bloomRatio || 2
-        };
-      } catch (e) {
-        console.error('Error loading saved settings:', e);
-      }
-    }
-    return { amount: 15.0, ratio: 15.0, bloomRatio: 2 };
-  };
 
   const [coffeeSettings, setCoffeeSettings] = useState<CoffeeSettings>(loadSavedSettings);
   const [grindSize, setGrindSize] = useState(6);
-  const [showBrewTimer, setShowBrewTimer] = useState(false);
-  const [isRunning, setIsRunning] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
-  const [currentStep, setCurrentStep] = useState(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  
-  const brewingTimings = calculateBrewTiming(
-    grindSize, 
-    coffeeSettings.amount, 
-    coffeeSettings.ratio, 
-    coffeeSettings.bloomRatio
-  );
 
-  const stepSequence = [
-    { label: 'Bloom', water: `Pour to ${brewingTimings.bloomWater}g`, duration: brewingTimings.bloomDuration },
-    { label: 'First Pour', water: `Pour to ${brewingTimings.firstPourTarget}g`, duration: brewingTimings.firstPourDuration },
-    { label: 'Rest', water: 'Let it steep', duration: brewingTimings.restDuration },
-    { label: 'Second Pour', water: `Pour to ${brewingTimings.secondPourTarget}g`, duration: brewingTimings.secondPourDuration },
-    { label: 'Rest', water: 'Let it steep', duration: brewingTimings.secondRestDuration },
-    { label: 'Third Pour', water: `Pour to ${brewingTimings.thirdPourTarget}g`, duration: brewingTimings.thirdPourDuration },
-    { label: 'Drawdown', water: 'Let coffee drip', duration: brewingTimings.drawdownDuration },
-    { label: 'Finish', water: 'Enjoy your coffee!', duration: 0 }
-  ];
-
-  const stepEndTimes = stepSequence.reduce((acc, step, i) => {
-    acc.push((acc[i - 1] || 0) + step.duration);
-    return acc;
-  }, [] as number[]);
-
-  const totalTime = stepEndTimes[stepEndTimes.length - 1] || 0;
-  const isFinished = elapsed >= totalTime;
-
-  useEffect(() => {
-    if (isRunning && !isFinished) {
-      intervalRef.current = setInterval(() => {
-        setElapsed(prev => {
-          const newElapsed = prev + 0.1;
-          const newCurrentStep = stepEndTimes.findIndex(endTime => newElapsed < endTime);
-          const actualNewStep = newCurrentStep === -1 ? stepSequence.length - 1 : newCurrentStep;
-          
-          if (actualNewStep !== currentStep) {
-            const completedStepIndex = actualNewStep - 1;
-            const completedStep = stepSequence[completedStepIndex];
-            const isPourStep = completedStep && (completedStep.label.includes('Pour') || completedStep.label.includes('Bloom'));
-            if (isPourStep && completedStepIndex >= 0) {
-              try {
-                const audio = new Audio(softChimeUrl);
-                audio.volume = 0.3;
-                audio.play().catch(() => {});
-              } catch (error) {}
-              if ('vibrate' in navigator) navigator.vibrate(100);
-            }
-          }
-          
-          setCurrentStep(actualNewStep);
-          
-          if (newElapsed >= totalTime) {
-            setIsRunning(false);
-            setShowBrewTimer(false); // Or show completion screen
-            return totalTime;
-          }
-          
-          return newElapsed;
-        });
-      }, 100);
-    } else {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [isRunning, isFinished, totalTime, stepEndTimes.length, stepSequence.length, currentStep]);
+  const {
+    elapsed,
+    currentStep,
+    isRunning,
+    isFinished,
+    showBrewTimer,
+    stepSequence,
+    stepEndTimes,
+    totalTime,
+    brewingTimings,
+    start,
+    pause,
+    resume,
+    reset,
+    done,
+  } = useBrewTimer({ coffeeSettings, grindSize });
 
   const handleStart = () => {
-    setElapsed(0);
-    setCurrentStep(0);
-    setIsRunning(false); // Will be started by BrewTimerPage
-    setShowBrewTimer(true);
-  };
-  
-  const handleTimerStart = () => setIsRunning(true);
-  const handleTimerPause = () => setIsRunning(false);
-  const handleTimerReset = () => {
-    setIsRunning(false);
-    setElapsed(0);
-    setCurrentStep(0);
+    start();
   };
   const handleBack = () => {
-    setShowBrewTimer(false);
-    handleTimerReset();
+    done();
   };
-  const handleTimerDone = () => {
-    setShowBrewTimer(false);
-    handleTimerReset();
-  };
-  
-  const getStepInstruction = () => {
-    if (isFinished) return 'Finished! Enjoy your coffee ☕';
-    if (!showBrewTimer || !stepSequence[currentStep]) return `Target brew time: ${formatTime(brewingTimings.totalTime)}`;
-    const step = stepSequence[currentStep];
-    const targetWeight = step.water.match(/(\d+g)/);
-    if (targetWeight) return `Pour to ${targetWeight[0]}`;
-    if (step.label === 'Finish') return `Done! Target time: ${formatTime(totalTime)}`;
-    return step.label;
-  };
-  
+
   useEffect(() => {
     localStorage.setItem('coffeeSettings', JSON.stringify(coffeeSettings));
   }, [coffeeSettings]);
@@ -375,40 +272,21 @@ const BrewingApp: React.FC = () => {
     };
   }, []);
 
-  // Scroll to section function for navigation  
-  const scrollToSection = (sectionId: string) => {
-    if (sectionId === 'timer') {
-      // Already on timer page, do nothing
-      return;
-    }
-    navigate('/');
-    // Add a small delay to ensure navigation completes before scrolling
-    setTimeout(() => {
-      const element = document.getElementById(sectionId);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 100);
-  };
-
   if (showBrewTimer) {
     return (
       <BrewTimerPage
         elapsed={elapsed}
-        getStepInstruction={getStepInstruction}
         fullStepSequence={stepSequence}
         fullCurrentStep={currentStep}
         fullStepEndTimes={stepEndTimes}
-        handlePause={handleTimerPause}
-        handleResume={handleTimerStart}
-        handleReset={handleTimerReset}
+        handlePause={pause}
+        handleResume={resume}
         timerActive={isRunning}
         timerPaused={!isRunning}
         finished={isFinished}
         formatTime={formatTime}
         onBack={handleBack}
-        onDone={handleTimerDone}
-        onSaveRecipe={() => { /* Implement save recipe functionality */ }}
+        onDone={done}
       />
     );
   }
@@ -417,17 +295,7 @@ const BrewingApp: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 text-black">
       {/* Top Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white bg-opacity-90 backdrop-blur-sm border-b border-gray-200">
-        <div className="flex justify-center items-center py-4 px-4 sm:px-6">
-          <div className="flex space-x-4 sm:space-x-6 md:space-x-8 lg:space-x-10">
-            <button onClick={() => scrollToSection('home')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">home</button>
-            <button onClick={() => scrollToSection('origen')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">origen</button>
-            <button onClick={() => scrollToSection('coffee')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">coffee</button>
-            <button onClick={() => scrollToSection('buy')} className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black hover:opacity-70 hover:underline">buy</button>
-            <button className="text-sm sm:text-base md:text-lg font-medium transition-opacity text-black underline">timer</button>
-          </div>
-        </div>
-      </nav>
+      <Navigation variant="page" />
       
       <div className="h-full flex flex-col w-full max-w-[430px] mx-auto pt-24 pb-4 px-4 sm:px-6 md:px-8 relative z-20">
         <div className="flex items-center gap-3 mb-6 pt-4">
