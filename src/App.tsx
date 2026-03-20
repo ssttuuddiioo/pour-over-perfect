@@ -4,6 +4,7 @@ import BrewingApp from './components/BrewingApp';
 import HomePage from './components/HomePage';
 import GalleryPage from './components/GalleryPage';
 import CoffeePage from './components/CoffeePage';
+import BuyPage from './components/BuyPage';
 import StoryPage from './components/StoryPage';
 import { ThemeProvider } from './context/ThemeContext';
 import { CircleTransitionProvider } from './context/CircleTransitionContext';
@@ -52,7 +53,7 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
-            path="/coffee"
+            path="/origen"
             element={
               <ErrorBoundary fallback={<PageErrorFallback />}>
                 <CoffeePage />
@@ -60,7 +61,15 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
-            path="/timer" 
+            path="/buy"
+            element={
+              <ErrorBoundary fallback={<PageErrorFallback />}>
+                <BuyPage />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/timer"
             element={
               <ErrorBoundary fallback={<PageErrorFallback />}>
                 <BrewingApp />

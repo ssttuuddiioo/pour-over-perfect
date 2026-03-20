@@ -25,9 +25,15 @@ interface CircleState {
   isVisible: boolean;
 }
 
+interface CirclePosition {
+  x: number;
+  y: number;
+}
+
 interface CircleTransitionContextType {
   circleState: CircleState;
   circleRef: React.RefObject<HTMLDivElement>;
+  circlePosition: React.MutableRefObject<CirclePosition>;
   navigateWithTransition: (to: string) => void;
   setCircleMode: (mode: CircleMode) => void;
 }
@@ -46,7 +52,8 @@ export const CircleTransitionProvider: React.FC<{ children: React.ReactNode }> =
   const location = useLocation();
   const navigate = useNavigate();
   const circleRef = useRef<HTMLDivElement>(null);
-  
+  const circlePosition = useRef<CirclePosition>({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+
   const [circleState, setCircleState] = useState<CircleState>({
     mode: 'front',
     isTransitioning: false,
@@ -59,7 +66,9 @@ export const CircleTransitionProvider: React.FC<{ children: React.ReactNode }> =
       case '/': return 'gallery';
       case '/home': return 'front';
       case '/timer': return 'timer';
-      case '/coffee': return 'coffee';
+      case '/origen': return 'coffee';
+      case '/about': return 'front';
+      case '/buy': return 'front';
       case '/contact': return 'contact';
       case '/calm': return 'calm';
       case '/origen': return 'origen';
@@ -105,20 +114,15 @@ export const CircleTransitionProvider: React.FC<{ children: React.ReactNode }> =
   useEffect(() => {
     const newMode = getCircleModeFromPath(location.pathname);
 
-    if (location.pathname === '/timer') {
+    // Circle visible on gallery and origen pages only — use GSAP directly, no state updates
+    if (location.pathname === '/' || location.pathname === '/origen') {
       if (circleRef.current) {
-        gsap.set(circleRef.current, { opacity: 1, pointerEvents: 'auto' });
+        gsap.set(circleRef.current, { pointerEvents: 'none', display: 'flex' });
       }
-      setCircleState(prev => ({ ...prev, isVisible: true, mode: 'timer' }));
-    } else if (!circleState.isVisible) {
+    } else {
       if (circleRef.current) {
-        gsap.set(circleRef.current, { opacity: 1, pointerEvents: 'auto' });
+        gsap.set(circleRef.current, { opacity: 0, pointerEvents: 'none', display: 'none' });
       }
-      setCircleState(prev => ({ ...prev, isVisible: true }));
-    }
-
-    if (newMode !== circleState.mode) {
-      setCircleState(prev => ({ ...prev, mode: newMode }));
     }
   }, [location.pathname]);
 
@@ -148,6 +152,7 @@ export const CircleTransitionProvider: React.FC<{ children: React.ReactNode }> =
     <CircleTransitionContext.Provider value={{
       circleState,
       circleRef,
+      circlePosition,
       navigateWithTransition,
       setCircleMode
     }}>

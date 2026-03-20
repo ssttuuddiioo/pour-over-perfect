@@ -28,7 +28,8 @@ interface CompletionPromptProps {
 
 function CompletionPrompt({ onLogExperience, onSkip }: CompletionPromptProps) {
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100 text-black">
+    <div className="min-h-screen flex flex-col bg-white text-black">
+      <Navigation variant="homepage" />
       <div className="flex flex-col items-center w-full max-w-[430px] mx-auto px-4 py-12">
         <div className="text-6xl mb-4">☕</div>
         <h1 className="text-3xl font-bold mb-4 text-black">Brew Complete!</h1>
@@ -92,11 +93,9 @@ function BrewTimerPage({
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-100 text-black">
-      {/* Top Navigation */}
-      <Navigation variant="page" />
-      
-      <div className="flex flex-col items-center justify-center w-full h-full pt-20">
+    <div className="min-h-screen flex flex-col bg-white text-black">
+      <Navigation variant="homepage" />
+      <div className="min-h-screen flex flex-col justify-center">
         <div className="w-full max-w-[430px] mx-auto px-4 py-6 relative">
           <div className="flex flex-col w-full relative z-40">
             {/* Top Info Bar */}
@@ -213,21 +212,29 @@ function BrewTimerPage({
   );
 }
 
+const DEFAULT_SETTINGS: CoffeeSettings = { amount: 20.0, ratio: 15.0, bloomRatio: 2 };
+
 const loadSavedSettings = (): CoffeeSettings => {
+  // Clear old defaults
   const savedSettings = localStorage.getItem('coffeeSettings');
   if (savedSettings) {
     try {
       const parsed = JSON.parse(savedSettings);
-      return {
-        amount: (parsed.amount >= 1 && parsed.amount <= 50) ? parsed.amount : 15.0,
-        ratio: (parsed.ratio >= 1 && parsed.ratio <= 50) ? parsed.ratio : 15.0,
-        bloomRatio: parsed.bloomRatio || 2
-      };
+      // Only restore if user has actively changed from a known default
+      if (parsed._version === 2) {
+        return {
+          amount: (parsed.amount >= 1 && parsed.amount <= 50) ? parsed.amount : DEFAULT_SETTINGS.amount,
+          ratio: (parsed.ratio >= 1 && parsed.ratio <= 50) ? parsed.ratio : DEFAULT_SETTINGS.ratio,
+          bloomRatio: parsed.bloomRatio || DEFAULT_SETTINGS.bloomRatio,
+        };
+      }
     } catch (e) {
       console.error('Error loading saved settings:', e);
     }
+    // Old format — clear it so new defaults apply
+    localStorage.removeItem('coffeeSettings');
   }
-  return { amount: 15.0, ratio: 15.0, bloomRatio: 2 };
+  return { ...DEFAULT_SETTINGS };
 };
 
 const BrewingApp: React.FC = () => {
@@ -261,7 +268,7 @@ const BrewingApp: React.FC = () => {
   };
 
   useEffect(() => {
-    localStorage.setItem('coffeeSettings', JSON.stringify(coffeeSettings));
+    localStorage.setItem('coffeeSettings', JSON.stringify({ ...coffeeSettings, _version: 2 }));
   }, [coffeeSettings]);
 
   // Prevent scrolling on timer configuration page
@@ -293,11 +300,9 @@ const BrewingApp: React.FC = () => {
 
   // Main page UI
   return (
-    <div className="min-h-screen bg-gray-100 text-black">
-      {/* Top Navigation */}
-      <Navigation variant="page" />
-      
-      <div className="h-full flex flex-col w-full max-w-[430px] mx-auto pt-24 pb-4 px-4 sm:px-6 md:px-8 relative z-20">
+    <div className="min-h-screen bg-white text-black">
+      <Navigation variant="homepage" />
+      <div className="min-h-screen flex flex-col justify-center w-full max-w-[430px] mx-auto py-8 px-4 sm:px-6 md:px-8 relative z-20">
         <div className="flex items-center gap-3 mb-6 pt-4">
           <button 
             onClick={() => navigate('/')} 
@@ -307,7 +312,7 @@ const BrewingApp: React.FC = () => {
           <h1 className="text-sm font-medium text-black">Pour Perfect</h1>
         </div>
 
-        <main className="flex-1 space-y-6 relative z-30">
+        <main className="space-y-6 relative z-30">
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col items-center space-y-1">
               <span className="text-xs text-black">Target Time</span>
@@ -328,7 +333,7 @@ const BrewingApp: React.FC = () => {
               <AppleStylePicker value={coffeeSettings.amount} onChange={(amount) => setCoffeeSettings(prev => ({ ...prev, amount }))} isDarkMode={false} label="Coffee (g)" />
             </div>
             <div className="flex flex-col items-center">
-              <AppleStylePicker value={coffeeSettings.ratio} onChange={(ratio) => setCoffeeSettings(prev => ({ ...prev, ratio }))} isDarkMode={false} label="Ratio" />
+              <AppleStylePicker value={coffeeSettings.ratio} onChange={(ratio) => setCoffeeSettings(prev => ({ ...prev, ratio }))} isDarkMode={false} label="Water Ratio" />
             </div>
           </div>
 

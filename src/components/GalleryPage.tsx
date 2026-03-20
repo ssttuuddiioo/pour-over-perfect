@@ -66,7 +66,7 @@ interface TileItem {
 }
 
 const GalleryPage: React.FC = () => {
-  const { circleRef } = useCircleTransition();
+  const { circleRef, circlePosition } = useCircleTransition();
   const containerRef = useRef<HTMLDivElement>(null);
   const hoverTitleRef = useRef<HTMLDivElement>(null);
   const detailTitleRef = useRef<HTMLDivElement>(null);
@@ -332,8 +332,8 @@ const GalleryPage: React.FC = () => {
         height: 840,
         scale: 0.6,
         position: 'fixed',
-        left: '50%',
-        top: '50%',
+        left: circlePosition.current.x,
+        top: circlePosition.current.y,
         xPercent: -50,
         yPercent: -50,
         transformOrigin: 'center center',
@@ -346,8 +346,8 @@ const GalleryPage: React.FC = () => {
         visibility: 'visible',
         display: 'flex',
       });
-      const cx = window.innerWidth / 2;
-      const cy = window.innerHeight / 2;
+      const cx = circlePosition.current.x;
+      const cy = circlePosition.current.y;
       circleTargetPos.current = { x: cx, y: cy };
       circleMousePos.current = { x: cx, y: cy };
     }
@@ -657,6 +657,10 @@ const GalleryPage: React.FC = () => {
           yPercent: -50,
           opacity: 1,
         });
+
+        // Sync to shared context so other pages can pick up position
+        circlePosition.current.x = circleTargetPos.current.x;
+        circlePosition.current.y = circleTargetPos.current.y;
       }
 
       frameId = requestAnimationFrame(render);
@@ -696,79 +700,21 @@ const GalleryPage: React.FC = () => {
       <Navigation variant="homepage" />
       <div ref={containerRef} className="w-full h-full relative" style={{ zIndex: 20 }} />
 
-      {/* Hover title — centered on page */}
-      <div
-        ref={hoverTitleRef}
-        style={{
-          position: 'fixed',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          opacity: 0,
-          zIndex: 15,
-          pointerEvents: 'none',
-          fontFamily: 'serif',
-          fontSize: 'clamp(1.25rem, 2.5vw, 2rem)',
-          color: '#000',
-          textAlign: 'center',
-          whiteSpace: 'nowrap',
-          letterSpacing: '0.02em',
-        }}
-      />
-
-      {/* Detail title — top left, visible after click zoom */}
-      <div
-        ref={detailTitleRef}
-        style={{
-          position: 'fixed',
-          top: '12vh',
-          left: '6%',
-          opacity: 0,
-          zIndex: 25,
-          pointerEvents: 'none',
-          fontFamily: 'serif',
-          fontSize: 'clamp(0.95rem, 1.3vw, 1.15rem)',
-          fontWeight: 'bold',
-          color: '#000',
-          letterSpacing: '0.01em',
-        }}
-      />
-
-      {/* Detail blurb — bottom right, visible after click zoom */}
-      <div
-        ref={detailBlurbRef}
-        style={{
-          position: 'fixed',
-          bottom: '8vh',
-          right: '6%',
-          opacity: 0,
-          zIndex: 25,
-          pointerEvents: 'none',
-          fontFamily: 'serif',
-          fontSize: 'clamp(0.78rem, 0.95vw, 0.88rem)',
-          color: '#555',
-          lineHeight: 1.5,
-          maxWidth: '300px',
-          textAlign: 'left',
-          letterSpacing: '0.04em',
-        }}
-      />
-      {/* Slideshow arrows */}
+      {/* Slideshow arrows — positioned halfway between image and canvas edge */}
       <button
         ref={arrowLeftRef}
         className="detail-arrow"
         onClick={() => navigateSlide(-1)}
         style={{
           position: 'fixed',
-          left: '20px',
+          left: '12.5%',
           top: '50%',
-          transform: 'translateY(-50%)',
+          transform: 'translate(-50%, -50%)',
           opacity: 0,
           zIndex: 30,
           background: 'none',
           border: 'none',
           cursor: 'pointer',
-          fontFamily: 'serif',
           fontSize: '1.5rem',
           color: '#000',
           padding: '10px',
@@ -782,15 +728,14 @@ const GalleryPage: React.FC = () => {
         onClick={() => navigateSlide(1)}
         style={{
           position: 'fixed',
-          right: '20px',
+          right: '12.5%',
           top: '50%',
-          transform: 'translateY(-50%)',
+          transform: 'translate(50%, -50%)',
           opacity: 0,
           zIndex: 30,
           background: 'none',
           border: 'none',
           cursor: 'pointer',
-          fontFamily: 'serif',
           fontSize: '1.5rem',
           color: '#000',
           padding: '10px',

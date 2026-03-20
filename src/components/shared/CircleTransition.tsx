@@ -6,38 +6,25 @@ interface CircleTransitionProps {
   className?: string;
 }
 
-const CircleTransition: React.FC<CircleTransitionProps> = ({ children, className = '' }) => {
-  const { circleRef, circleState, navigateWithTransition } = useCircleTransition();
+const CircleTransition: React.FC<CircleTransitionProps> = ({ className = '' }) => {
+  const { circleRef } = useCircleTransition();
 
   return (
-    <>
-      {/* Fixed circle that transitions between states - Always behind content */}
-      <div
-        ref={circleRef}
-        className={`fixed bg-[#FF6700] rounded-full flex items-center justify-center ${className}`}
-        style={{
-          pointerEvents: circleState.mode === 'timer' ? 'auto' : 'none',
-          zIndex: 1,
-          position: 'fixed',
-          left: '50%',
-          top: '50%',
-          transform: 'translate(-50%, -50%)',
-          transformOrigin: 'center center',
-          margin: 0,
-          padding: 0
-        }}
-      >
-        {circleState.mode === 'timer' && (
-          <div
-            onClick={() => navigateWithTransition('/')}
-            className="text-white text-center cursor-pointer hover:text-orange-200 transition-colors"
-          >
-            <div className="text-4xl mb-2">⏱</div>
-            <div className="text-sm font-medium">Timer</div>
-          </div>
-        )}
-      </div>
-    </>
+    <div
+      ref={circleRef}
+      className={`fixed bg-[#FF6700] rounded-full ${className}`}
+      style={{
+        pointerEvents: 'none',
+        zIndex: 1,
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        opacity: 0,
+        transformOrigin: 'center center',
+        margin: 0,
+        padding: 0,
+      }}
+    />
   );
 };
 
