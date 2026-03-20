@@ -12,26 +12,24 @@ export const Navigation: React.FC<NavigationProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const isHomePage = location.pathname === '/';
+  const isHomePage = location.pathname === '/' || location.pathname === '/home';
   const isTimerPage = location.pathname === '/timer';
   const isStoryPage = location.pathname === '/story';
 
   const handleNavClick = (sectionId: string) => {
+    // Coffee has its own page now
+    if (sectionId === 'coffee') {
+      navigate('/coffee');
+      return;
+    }
     if (isHomePage && onScrollToSection) {
       onScrollToSection(sectionId);
     } else {
-      // Navigate to home page and scroll to section
-      navigate('/');
+      navigate('/home');
       setTimeout(() => {
         const element = document.getElementById(sectionId);
         if (element) {
-          if (sectionId === 'coffee') {
-            const rect = element.getBoundingClientRect();
-            const targetScrollY = window.scrollY + rect.top + 100;
-            window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
-          } else {
-            element.scrollIntoView({ behavior: 'smooth' });
-          }
+          element.scrollIntoView({ behavior: 'smooth' });
         }
       }, 100);
     }

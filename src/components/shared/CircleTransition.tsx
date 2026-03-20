@@ -17,13 +17,12 @@ const CircleTransition: React.FC<CircleTransitionProps> = ({ children, className
         className={`fixed bg-[#FF6700] rounded-full flex items-center justify-center ${className}`}
         style={{
           pointerEvents: circleState.mode === 'timer' ? 'auto' : 'none',
-          zIndex: 30, // Above page content (z-20) so it floats over the slideshow
+          zIndex: 1,
           position: 'fixed',
           left: '50%',
           top: '50%',
           transform: 'translate(-50%, -50%)',
           transformOrigin: 'center center',
-          // Ensure perfect centering on all devices
           margin: 0,
           padding: 0
         }}

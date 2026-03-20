@@ -24,7 +24,7 @@ const HomePage: React.FC = () => {
   const storyTextsRef = useRef<(HTMLDivElement | null)[]>([]);
 
   const storySlides = [
-    { src: '/photo-final/01.png', text: 'February 11, 2024, at the start of Transcordilleras, completely unaware of what it takes to traverse the Andes mountains in 7 days.' },
+    { src: '/photo-final/01.png', text: <>February 11, 2024, at the start of <a href="https://transcordilleras.cc/" target="_blank" rel="noopener noreferrer" className="underline hover:opacity-70 transition-opacity">Transcordilleras</a>, completely unaware of what it takes to traverse the Andes mountains in 7 days.</> },
     { src: '/photo-final/02.png', text: 'The sunset I saw before riding into Charala, not knowing what new adventure awaited.' },
     { src: '/photo-final/03.png', text: 'I turned in my tracker and withdrew from the race. Without a plan I decided to stay in town for a bit. Charalá, Santander is a quiet town nestled in Colombia\'s eastern Andes mountains, known for its rich coffee and a spirit of resilience that lingers in the land and its people.' },
     { src: '/photo-final/04.png', text: 'So much coffee being traded in the town square' },

@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 
 // Circle animation states for different pages
-export type CircleMode = 'front' | 'timer' | 'coffee' | 'contact' | 'calm' | 'origen';
+export type CircleMode = 'front' | 'timer' | 'coffee' | 'contact' | 'calm' | 'origen' | 'gallery';
 
 interface AnimationConfig {
   width: number;
@@ -56,7 +56,8 @@ export const CircleTransitionProvider: React.FC<{ children: React.ReactNode }> =
   // Map routes to circle modes
   const getCircleModeFromPath = (path: string): CircleMode => {
     switch (path) {
-      case '/': return 'front';
+      case '/': return 'gallery';
+      case '/home': return 'front';
       case '/timer': return 'timer';
       case '/coffee': return 'coffee';
       case '/contact': return 'contact';
@@ -80,6 +81,7 @@ export const CircleTransitionProvider: React.FC<{ children: React.ReactNode }> =
     };
 
     const configs: Record<CircleMode, AnimationConfig> = {
+      gallery: { ...baseConfig, width: 240, height: 240, scale: 0.5 },
       front: { ...baseConfig, width: 240, height: 240, scale: 0.5 },
       origen: { ...baseConfig, width: 384, height: 384, scale: 0.8 },
       coffee: { ...baseConfig, width: 576, height: 576, scale: 1.2 },

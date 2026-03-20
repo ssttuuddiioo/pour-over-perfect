@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import BrewingApp from './components/BrewingApp';
 import HomePage from './components/HomePage';
+import GalleryPage from './components/GalleryPage';
+import CoffeePage from './components/CoffeePage';
 import StoryPage from './components/StoryPage';
 import { ThemeProvider } from './context/ThemeContext';
 import { CircleTransitionProvider } from './context/CircleTransitionContext';
@@ -33,15 +35,31 @@ const AppContent: React.FC = () => {
       <CircleTransition />
       <div className="relative z-20">
         <Routes location={location} key={location.pathname}>
-          <Route 
-            path="/" 
+          <Route
+            path="/"
+            element={
+              <ErrorBoundary fallback={<PageErrorFallback />}>
+                <GalleryPage />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/home"
             element={
               <ErrorBoundary fallback={<PageErrorFallback />}>
                 <HomePage />
               </ErrorBoundary>
-            } 
+            }
           />
-          <Route 
+          <Route
+            path="/coffee"
+            element={
+              <ErrorBoundary fallback={<PageErrorFallback />}>
+                <CoffeePage />
+              </ErrorBoundary>
+            }
+          />
+          <Route
             path="/timer" 
             element={
               <ErrorBoundary fallback={<PageErrorFallback />}>
