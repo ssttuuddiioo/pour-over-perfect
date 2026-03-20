@@ -46,6 +46,12 @@ const ORIGINAL_SIZE = { w: 5100, h: 4400 };
 
 const PHOTO_SOURCES = Array.from({ length: 28 }, (_, i) => `/photo-final/web/${i + 1}.jpg`);
 
+interface PhotoMeta {
+  id: number;
+  title: string;
+  blurb: string;
+}
+
 interface TileItem {
   el: HTMLDivElement | null;
   x: number;
@@ -56,17 +62,25 @@ interface TileItem {
   extraY: number;
   ease: number;
   src: string;
+  photoIndex: number;
 }
 
 const GalleryPage: React.FC = () => {
   const { circleRef } = useCircleTransition();
   const containerRef = useRef<HTMLDivElement>(null);
+  const hoverTitleRef = useRef<HTMLDivElement>(null);
+  const detailTitleRef = useRef<HTMLDivElement>(null);
+  const detailBlurbRef = useRef<HTMLDivElement>(null);
+  const arrowLeftRef = useRef<HTMLButtonElement>(null);
+  const arrowRightRef = useRef<HTMLButtonElement>(null);
   const activeItemRef = useRef<TileItem | null>(null);
+  const currentSlideRef = useRef(0);
   const isZoomed = useRef(false);
   const isCentering = useRef(false);
   const itemsRef = useRef<TileItem[]>([]);
   const tileSizeRef = useRef({ w: 0, h: 0 });
   const winRef = useRef({ w: 0, h: 0 });
+  const photoMetaRef = useRef<PhotoMeta[]>([]);
 
   // Scroll state
   const scrollRef = useRef({
@@ -105,6 +119,96 @@ const GalleryPage: React.FC = () => {
   const circleIsPinned = useRef(false);
   const circlePinnedPos = useRef({ x: 0, y: 0 });
 
+  // Load photo metadata
+  useEffect(() => {
+    fetch('/photo-final/web/photo-content.json')
+      .then((res) => res.json())
+      .then((data: PhotoMeta[]) => {
+        photoMetaRef.current = data;
+      })
+      .catch(() => {});
+  }, []);
+
+  const showHoverTitle = useCallback((title: string) => {
+    const el = hoverTitleRef.current;
+    if (!el || isZoomed.current) return;
+    el.textContent = title;
+    gsap.killTweensOf(el);
+    gsap.to(el, { opacity: 1, duration: 0.3, ease: 'sine.out' });
+  }, []);
+
+  const hideHoverTitle = useCallback(() => {
+    const el = hoverTitleRef.current;
+    if (!el) return;
+    gsap.killTweensOf(el);
+    gsap.to(el, { opacity: 0, duration: 0.3, ease: 'sine.out' });
+  }, []);
+
+  const showArrows = useCallback(() => {
+    const l = arrowLeftRef.current;
+    const r = arrowRightRef.current;
+    if (l) gsap.fromTo(l, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'sine.out', delay: 0.2 });
+    if (r) gsap.fromTo(r, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'sine.out', delay: 0.2 });
+  }, []);
+
+  const hideArrows = useCallback(() => {
+    const l = arrowLeftRef.current;
+    const r = arrowRightRef.current;
+    if (l) gsap.to(l, { opacity: 0, duration: 0.3, ease: 'sine.in' });
+    if (r) gsap.to(r, { opacity: 0, duration: 0.3, ease: 'sine.in' });
+  }, []);
+
+  const showDetail = useCallback((meta: PhotoMeta) => {
+    const titleEl = detailTitleRef.current;
+    const blurbEl = detailBlurbRef.current;
+    if (!titleEl || !blurbEl) return;
+    titleEl.textContent = meta.title;
+    blurbEl.textContent = meta.blurb;
+    gsap.killTweensOf(titleEl);
+    gsap.killTweensOf(blurbEl);
+    gsap.fromTo(titleEl, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'sine.out' });
+    gsap.fromTo(blurbEl, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'sine.out', delay: 0.15 });
+    showArrows();
+  }, [showArrows]);
+
+  const hideDetail = useCallback(() => {
+    const titleEl = detailTitleRef.current;
+    const blurbEl = detailBlurbRef.current;
+    if (!titleEl || !blurbEl) return;
+    gsap.killTweensOf(titleEl);
+    gsap.killTweensOf(blurbEl);
+    gsap.to(titleEl, { opacity: 0, duration: 0.3, ease: 'sine.in' });
+    gsap.to(blurbEl, { opacity: 0, duration: 0.3, ease: 'sine.in' });
+    hideArrows();
+  }, [hideArrows]);
+
+  const navigateSlide = useCallback((direction: 1 | -1) => {
+    if (!isZoomed.current || !activeItemRef.current) return;
+    const next = (currentSlideRef.current + direction + PHOTO_SOURCES.length) % PHOTO_SOURCES.length;
+    const titleEl = detailTitleRef.current;
+    const blurbEl = detailBlurbRef.current;
+    const item = activeItemRef.current;
+    if (!titleEl || !blurbEl || !item?.el) return;
+
+    // Fade out title + blurb + image
+    const img = item.el.querySelector('img');
+    gsap.to([titleEl, blurbEl], {
+      opacity: 0, duration: 0.25, ease: 'sine.in',
+      onComplete: () => {
+        // Swap content
+        if (img) img.src = PHOTO_SOURCES[next];
+        item.photoIndex = next;
+        item.src = PHOTO_SOURCES[next];
+        currentSlideRef.current = next;
+        const meta = photoMetaRef.current[next];
+        titleEl.textContent = meta?.title || `Photo ${next + 1}`;
+        blurbEl.textContent = meta?.blurb || '';
+        // Fade back in
+        gsap.to([titleEl, blurbEl], { opacity: 1, duration: 0.35, ease: 'sine.out' });
+      },
+    });
+  }, []);
+
   const buildGrid = useCallback(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -126,6 +230,7 @@ const GalleryPage: React.FC = () => {
     // Scale base items
     const baseItems = LAYOUT_DATA.map((d, i) => ({
       src: PHOTO_SOURCES[i % PHOTO_SOURCES.length],
+      photoIndex: i % PHOTO_SOURCES.length,
       x: d.x * scaleX,
       y: d.y * scaleY,
       w: d.w * scaleX,
@@ -141,6 +246,7 @@ const GalleryPage: React.FC = () => {
         repsY.forEach((offsetY) => {
           const el = document.createElement('div');
           el.className = 'item';
+          el.dataset.photoIndex = String(base.photoIndex);
           el.style.cssText = `
             position: absolute;
             top: 0;
@@ -173,6 +279,16 @@ const GalleryPage: React.FC = () => {
 
           // Caption — sits below image, slides out on hover
           el.appendChild(imgWrap);
+
+          // Hover events for title display
+          el.addEventListener('mouseenter', () => {
+            const meta = photoMetaRef.current[base.photoIndex];
+            if (meta) showHoverTitle(meta.title);
+          });
+          el.addEventListener('mouseleave', () => {
+            hideHoverTitle();
+          });
+
           container.appendChild(el);
 
           itemsRef.current.push({
@@ -185,6 +301,7 @@ const GalleryPage: React.FC = () => {
             extraY: 0,
             ease: Math.random() * 0.5 + 0.5,
             src: base.src,
+            photoIndex: base.photoIndex,
           });
         });
       });
@@ -203,7 +320,7 @@ const GalleryPage: React.FC = () => {
       item.extraX = 0;
       item.extraY = 0;
     });
-  }, []);
+  }, [showHoverTitle, hideHoverTitle]);
 
   useEffect(() => {
     buildGrid();
@@ -306,6 +423,9 @@ const GalleryPage: React.FC = () => {
       activeItemRef.current = item;
       isCentering.current = true;
 
+      // Hide hover title immediately
+      hideHoverTitle();
+
       // Step 1: Calculate scroll needed to center the clicked tile
       const rect = item.el.getBoundingClientRect();
       const centerX = window.innerWidth / 2;
@@ -348,6 +468,13 @@ const GalleryPage: React.FC = () => {
               gsap.to(other.el, { opacity: 0, duration: 0.5, ease: 'sine.out' });
             }
           });
+
+          // Step 3: Show title + blurb + arrows after fade
+          currentSlideRef.current = item.photoIndex;
+          const meta = photoMetaRef.current[item.photoIndex];
+          if (meta) {
+            setTimeout(() => showDetail(meta), 500);
+          }
         },
       });
     };
@@ -356,26 +483,35 @@ const GalleryPage: React.FC = () => {
       const item = activeItemRef.current;
       if (!item?.el) return;
 
-      // Zoom back to 1x
-      gsap.to(item.el, {
-        scale: 1,
-        duration: 0.7,
-        ease: 'sine.inOut',
-      });
+      // Hide detail text first
+      hideDetail();
 
-      // Fade all others back in
-      itemsRef.current.forEach((other) => {
-        if (other.el && other !== item) {
-          gsap.to(other.el, { opacity: 1, duration: 0.5, ease: 'sine.inOut' });
+      // After detail fades, restore tiles
+      setTimeout(() => {
+        // Zoom back to 1x
+        if (item.el) {
+          gsap.to(item.el, {
+            scale: 1,
+            duration: 0.7,
+            ease: 'sine.inOut',
+          });
         }
-      });
 
-      activeItemRef.current = null;
-      isZoomed.current = false;
+        // Fade all others back in
+        itemsRef.current.forEach((other) => {
+          if (other.el && other !== item) {
+            gsap.to(other.el, { opacity: 1, duration: 0.5, ease: 'sine.inOut' });
+          }
+        });
+
+        activeItemRef.current = null;
+        isZoomed.current = false;
+      }, 300);
     };
 
     const onClick = (e: MouseEvent) => {
       if ((e.target as HTMLElement).closest('nav')) return;
+      if ((e.target as HTMLElement).closest('.detail-arrow')) return;
 
       // Close spotlight if zoomed
       if (isZoomed.current) {
@@ -401,6 +537,14 @@ const GalleryPage: React.FC = () => {
         circlePinnedPos.current = { ...circleMousePos.current };
         circleTargetPos.current = { ...circlePinnedPos.current };
       }
+    };
+
+    // Keyboard navigation for slideshow
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!isZoomed.current) return;
+      if (e.key === 'ArrowRight') navigateSlide(1);
+      else if (e.key === 'ArrowLeft') navigateSlide(-1);
+      else if (e.key === 'Escape') closeSpotlight();
     };
 
     // Touch support
@@ -524,6 +668,7 @@ const GalleryPage: React.FC = () => {
     window.addEventListener('mouseup', onMouseUp);
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('click', onClick);
+    window.addEventListener('keydown', onKeyDown);
     window.addEventListener('touchstart', onTouchStart, { passive: true });
     window.addEventListener('touchmove', onTouchMove, { passive: true });
     window.addEventListener('touchend', onTouchEnd);
@@ -537,18 +682,122 @@ const GalleryPage: React.FC = () => {
       window.removeEventListener('mouseup', onMouseUp);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('click', onClick);
+      window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('resize', buildGrid);
       cancelAnimationFrame(frameId);
     };
-  }, [circleRef, buildGrid]);
+  }, [circleRef, buildGrid, showDetail, hideDetail, hideHoverTitle, navigateSlide]);
 
   return (
     <div className="fixed inset-0 overflow-hidden cursor-grab active:cursor-grabbing select-none" style={{ background: 'transparent' }}>
       <Navigation variant="homepage" />
       <div ref={containerRef} className="w-full h-full relative" style={{ zIndex: 20 }} />
+
+      {/* Hover title — centered on page */}
+      <div
+        ref={hoverTitleRef}
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          opacity: 0,
+          zIndex: 15,
+          pointerEvents: 'none',
+          fontFamily: 'serif',
+          fontSize: 'clamp(1.25rem, 2.5vw, 2rem)',
+          color: '#000',
+          textAlign: 'center',
+          whiteSpace: 'nowrap',
+          letterSpacing: '0.02em',
+        }}
+      />
+
+      {/* Detail title — top left, visible after click zoom */}
+      <div
+        ref={detailTitleRef}
+        style={{
+          position: 'fixed',
+          top: '12vh',
+          left: '6%',
+          opacity: 0,
+          zIndex: 25,
+          pointerEvents: 'none',
+          fontFamily: 'serif',
+          fontSize: 'clamp(0.95rem, 1.3vw, 1.15rem)',
+          fontWeight: 'bold',
+          color: '#000',
+          letterSpacing: '0.01em',
+        }}
+      />
+
+      {/* Detail blurb — bottom right, visible after click zoom */}
+      <div
+        ref={detailBlurbRef}
+        style={{
+          position: 'fixed',
+          bottom: '8vh',
+          right: '6%',
+          opacity: 0,
+          zIndex: 25,
+          pointerEvents: 'none',
+          fontFamily: 'serif',
+          fontSize: 'clamp(0.78rem, 0.95vw, 0.88rem)',
+          color: '#555',
+          lineHeight: 1.5,
+          maxWidth: '300px',
+          textAlign: 'left',
+          letterSpacing: '0.04em',
+        }}
+      />
+      {/* Slideshow arrows */}
+      <button
+        ref={arrowLeftRef}
+        className="detail-arrow"
+        onClick={() => navigateSlide(-1)}
+        style={{
+          position: 'fixed',
+          left: '20px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          opacity: 0,
+          zIndex: 30,
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          fontFamily: 'serif',
+          fontSize: '1.5rem',
+          color: '#000',
+          padding: '10px',
+        }}
+      >
+        &larr;
+      </button>
+      <button
+        ref={arrowRightRef}
+        className="detail-arrow"
+        onClick={() => navigateSlide(1)}
+        style={{
+          position: 'fixed',
+          right: '20px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          opacity: 0,
+          zIndex: 30,
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          fontFamily: 'serif',
+          fontSize: '1.5rem',
+          color: '#000',
+          padding: '10px',
+        }}
+      >
+        &rarr;
+      </button>
     </div>
   );
 };
