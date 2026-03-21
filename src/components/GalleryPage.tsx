@@ -402,7 +402,7 @@ const GalleryPage: React.FC = () => {
       if (idle.idleTimer !== null) clearTimeout(idle.idleTimer);
       idle.idleTimer = window.setTimeout(() => {
         idle.isIdle = true;
-      }, 5);
+      }, 800);
 
       // Drag
       if (dragRef.current.isDragging) {
@@ -611,12 +611,13 @@ const GalleryPage: React.FC = () => {
       // Update tiles
       const zoomed = isZoomed.current;
       const activeEl = activeItemRef.current?.el;
+      const isMobileView = win.w < 768;
       itemsRef.current.forEach((item) => {
         if (!item.el) return;
 
-        // Parallax: scroll velocity + mouse position
-        const parX = 3 * dx * item.ease + (mx - 0.5) * item.w * 0.15;
-        const parY = 3 * dy * item.ease + (my - 0.5) * item.h * 0.15;
+        // Parallax: on mobile skip mouse-position component (no cursor)
+        const parX = 3 * dx * item.ease + (isMobileView ? 0 : (mx - 0.5) * item.w * 0.15);
+        const parY = 3 * dy * item.ease + (isMobileView ? 0 : (my - 0.5) * item.h * 0.15);
 
         const posX = item.x + scroll.current.x + item.extraX + parX;
         const posY = item.y + scroll.current.y + item.extraY + parY;
@@ -632,6 +633,13 @@ const GalleryPage: React.FC = () => {
         const finalX = item.x + scroll.current.x + item.extraX + parX;
         const finalY = item.y + scroll.current.y + item.extraY + parY;
 
+        // Skip DOM write for tiles fully offscreen (±200px buffer)
+        if (!zoomed &&
+            (finalX + item.w < -200 || finalX > win.w + 200 ||
+             finalY + item.h < -200 || finalY > win.h + 200)) {
+          return;
+        }
+
         // When zoomed, let GSAP control scale on the active item
         if (zoomed && item.el === activeEl) {
           gsap.set(item.el, { x: finalX, y: finalY });
@@ -643,8 +651,8 @@ const GalleryPage: React.FC = () => {
       scroll.last.x = scroll.current.x;
       scroll.last.y = scroll.current.y;
 
-      // Circle follow
-      if (circleRef.current) {
+      // Circle follow — skip on mobile (no cursor)
+      if (circleRef.current && win.w >= 768) {
         const targetX = circleIsPinned.current ? circlePinnedPos.current.x : circleMousePos.current.x;
         const targetY = circleIsPinned.current ? circlePinnedPos.current.y : circleMousePos.current.y;
         circleTargetPos.current.x = lerp(circleTargetPos.current.x, targetX, circleIsPinned.current ? 1 : 0.1);
@@ -670,7 +678,7 @@ const GalleryPage: React.FC = () => {
     window.addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('mousedown', onMouseDown);
     window.addEventListener('mouseup', onMouseUp);
-    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
     window.addEventListener('click', onClick);
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('touchstart', onTouchStart, { passive: true });

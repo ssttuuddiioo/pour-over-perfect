@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { calculateBrewTiming } from '../utils/brewingCalculations';
 import { CoffeeSettings } from '../types/brewing';
 
@@ -51,15 +51,15 @@ export function useBrewTimer({
   const previousStep = useRef(0);
 
   // Calculate brewing timings based on settings
-  const brewingTimings = calculateBrewTiming(
+  const brewingTimings = useMemo(() => calculateBrewTiming(
     grindSize,
     coffeeSettings.amount,
     coffeeSettings.ratio,
     coffeeSettings.bloomRatio
-  );
+  ), [grindSize, coffeeSettings.amount, coffeeSettings.ratio, coffeeSettings.bloomRatio]);
 
   // Build step sequence
-  const stepSequence: StepInfo[] = [
+  const stepSequence: StepInfo[] = useMemo(() => [
     { label: 'Bloom', water: `Pour to ${brewingTimings.bloomWater}g`, duration: brewingTimings.bloomDuration },
     { label: 'First Pour', water: `Pour to ${brewingTimings.firstPourTarget}g`, duration: brewingTimings.firstPourDuration },
     { label: 'Rest', water: 'Let it steep', duration: brewingTimings.restDuration },
@@ -68,13 +68,13 @@ export function useBrewTimer({
     { label: 'Third Pour', water: `Pour to ${brewingTimings.thirdPourTarget}g`, duration: brewingTimings.thirdPourDuration },
     { label: 'Drawdown', water: 'Let coffee drip', duration: brewingTimings.drawdownDuration },
     { label: 'Finish', water: 'Enjoy your coffee!', duration: 0 }
-  ];
+  ], [brewingTimings]);
 
   // Calculate cumulative end times for each step
-  const stepEndTimes = stepSequence.reduce((acc, step, i) => {
+  const stepEndTimes = useMemo(() => stepSequence.reduce((acc, step, i) => {
     acc.push((acc[i - 1] || 0) + step.duration);
     return acc;
-  }, [] as number[]);
+  }, [] as number[]), [stepSequence]);
 
   const totalTime = stepEndTimes[stepEndTimes.length - 1] || 0;
   const isFinished = elapsed >= totalTime;

@@ -12,6 +12,8 @@ const CoffeePage: React.FC = () => {
 
   useEffect(() => {
     if (!circleRef.current) return;
+    // Skip circle animation on mobile — no cursor to follow
+    if (window.innerWidth < 768) return;
 
     gsap.set(circleRef.current, {
       width: 840,
@@ -79,7 +81,7 @@ const CoffeePage: React.FC = () => {
       frameId = requestAnimationFrame(animate);
     };
 
-    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
     window.addEventListener('click', onClick);
     frameId = requestAnimationFrame(animate);
 
@@ -91,21 +93,23 @@ const CoffeePage: React.FC = () => {
   }, [circleRef]);
 
   return (
-    <div className="min-h-screen bg-[#1a1aff] text-white px-8 md:px-16 py-16 md:py-20 relative">
+    <div className="min-h-screen bg-[#1a1aff] text-white px-12 md:px-24 lg:px-32 py-16 md:py-20 relative">
       <Navigation variant="homepage" />
 
       {/* Content layer — above circle */}
       <div className="relative" style={{ zIndex: 20 }}>
+
+      {/* === Section 1: Coffee details === */}
 
       {/* Header */}
       <h1 className="text-3xl md:text-4xl mb-16 md:mb-20 pt-12">
         Origen
       </h1>
 
-      {/* Three column layout */}
-      <div className="grid grid-cols-1 md:grid-cols-[0.5fr_0.67fr_0.73fr] gap-12  text-sm md:text-base leading-relaxed">
+      {/* Two column layout — specs + narrative */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 text-sm md:text-base leading-relaxed">
 
-        {/* Left column — specs */}
+        {/* Left — specs */}
         <div className="space-y-8">
           <div className="space-y-0.5">
             <p>Charal&aacute;, Santander, Colombia &bull; 1900masl</p>
@@ -119,9 +123,11 @@ const CoffeePage: React.FC = () => {
             Delicate florals and chamomile, orchard fruits<br />
             with raisin sweetness, and a crisp, clean finish
           </p>
+
+          <hr className="border-white/40 mt-10" />
         </div>
 
-        {/* Center column — coffee narrative */}
+        {/* Right — coffee narrative */}
         <div className="space-y-10">
           <p>
             Oscar Castro grows coffee at 1,900 meters above sea
@@ -149,9 +155,22 @@ const CoffeePage: React.FC = () => {
             Total cost: $17.92/kg.
           </p>
         </div>
+      </div>
 
-        {/* Right column — about / story */}
-        <div className="space-y-6 md:ml-12">
+      <hr className="border-white/40 my-16 md:my-24" />
+
+      {/* === Section 2: About / Story === */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 text-sm md:text-base leading-relaxed">
+
+        {/* Left — large heading */}
+        <div>
+          <h2 className="text-2xl md:text-3xl lg:text-4xl leading-snug">
+            What is a creative technical director slash experiential artist doing starting a coffee project?
+          </h2>
+        </div>
+
+        {/* Right — story */}
+        <div className="space-y-6">
           <p>
             This coffee is from Charal&aacute;, a quiet town in Colombia&rsquo;s
             eastern Andes. I found myself there by chance two

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { supabase } from '../lib/supabase';
 import Navigation from './shared/Navigation';
+
+const FORMSPREE_URL = 'https://formspree.io/f/mbdzbeyq';
 
 const BuyPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -9,10 +10,12 @@ const BuyPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { error } = await supabase
-        .from('origen emails')
-        .insert([{ email }]);
-      if (error) {
+      const res = await fetch(FORMSPREE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) {
         alert('There was an error subscribing. Please try again.');
         return;
       }
