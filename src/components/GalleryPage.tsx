@@ -6,43 +6,43 @@ import Navigation from './shared/Navigation';
 // Layout positions for 29 tiles in a 2800×3600 coordinate space
 // Scattered with 120–350px gaps, mixed sizes
 const LAYOUT_DATA = [
-  // Row 1
-  { x: 100, y: 80, w: 570, h: 390 },
-  { x: 1020, y: 120, w: 360, h: 270 },
-  { x: 1780, y: 60, w: 480, h: 450 },
-  { x: 2660, y: 100, w: 390, h: 300 },
-  { x: 3450, y: 70, w: 600, h: 420 },
-  { x: 4450, y: 120, w: 330, h: 256 },
-  // Row 2
-  { x: 120, y: 1020, w: 420, h: 300 },
-  { x: 940, y: 940, w: 600, h: 450 },
-  { x: 1940, y: 1000, w: 330, h: 420 },
-  { x: 2670, y: 960, w: 510, h: 360 },
-  { x: 3580, y: 1020, w: 390, h: 286 },
-  { x: 4370, y: 940, w: 450, h: 390 },
-  // Row 3
-  { x: 60, y: 1920, w: 510, h: 376 },
-  { x: 970, y: 1960, w: 390, h: 480 },
-  { x: 1760, y: 2020, w: 570, h: 390 },
-  { x: 2730, y: 1940, w: 300, h: 240 },
-  { x: 3430, y: 1900, w: 480, h: 420 },
-  { x: 4310, y: 1960, w: 420, h: 330 },
-  // Row 4
-  { x: 140, y: 2880, w: 600, h: 420 },
-  { x: 1140, y: 2980, w: 360, h: 270 },
-  { x: 1900, y: 2900, w: 450, h: 510 },
-  { x: 2750, y: 2820, w: 390, h: 300 },
-  { x: 3540, y: 2880, w: 540, h: 390 },
-  // Row 5
-  { x: 100, y: 3860, w: 450, h: 330 },
-  { x: 950, y: 3820, w: 570, h: 420 },
-  { x: 1920, y: 3920, w: 330, h: 256 },
-  { x: 2650, y: 3840, w: 510, h: 390 },
-  { x: 3580, y: 3880, w: 390, h: 300 },
-  { x: 4370, y: 3840, w: 450, h: 360 },
+  // Row 1 (5 tiles, y ~60–80)
+  { x: 60,   y: 60,   w: 500, h: 360 },
+  { x: 760,  y: 80,   w: 380, h: 280 },
+  { x: 1340, y: 50,   w: 460, h: 400 },
+  { x: 2000, y: 70,   w: 350, h: 300 },
+  { x: 2550, y: 60,   w: 520, h: 380 },
+  // Row 2 (5 tiles, y ~580–620)
+  { x: 100,  y: 600,  w: 420, h: 320 },
+  { x: 720,  y: 580,  w: 530, h: 400 },
+  { x: 1450, y: 610,  w: 360, h: 380 },
+  { x: 2010, y: 590,  w: 450, h: 340 },
+  { x: 2660, y: 600,  w: 400, h: 300 },
+  // Row 3 (5 tiles, y ~1140–1180)
+  { x: 80,   y: 1150, w: 480, h: 350 },
+  { x: 760,  y: 1140, w: 400, h: 420 },
+  { x: 1360, y: 1170, w: 500, h: 360 },
+  { x: 2060, y: 1150, w: 340, h: 280 },
+  { x: 2600, y: 1140, w: 460, h: 380 },
+  // Row 4 (5 tiles, y ~1720–1760)
+  { x: 120,  y: 1730, w: 520, h: 380 },
+  { x: 840,  y: 1750, w: 380, h: 300 },
+  { x: 1420, y: 1720, w: 440, h: 420 },
+  { x: 2060, y: 1740, w: 400, h: 320 },
+  { x: 2660, y: 1730, w: 460, h: 360 },
+  // Row 5 (4 tiles, y ~2320–2360)
+  { x: 80,   y: 2330, w: 450, h: 340 },
+  { x: 730,  y: 2320, w: 500, h: 380 },
+  { x: 1430, y: 2350, w: 380, h: 300 },
+  { x: 2030, y: 2330, w: 460, h: 360 },
+  // Row 6 (4 tiles, y ~2900–2940)
+  { x: 100,  y: 2910, w: 420, h: 320 },
+  { x: 720,  y: 2900, w: 480, h: 380 },
+  { x: 1400, y: 2930, w: 400, h: 300 },
+  { x: 2000, y: 2910, w: 520, h: 360 },
 ];
 
-const ORIGINAL_SIZE = { w: 5100, h: 4400 };
+const ORIGINAL_SIZE = { w: 3260, h: 3460 };
 
 const PHOTO_SOURCES = Array.from({ length: 28 }, (_, i) => `/photo-final/web/${i + 1}.jpg`);
 
@@ -58,8 +58,6 @@ interface TileItem {
   y: number;
   w: number;
   h: number;
-  extraX: number;
-  extraY: number;
   ease: number;
   src: string;
   photoIndex: number;
@@ -218,8 +216,11 @@ const GalleryPage: React.FC = () => {
     winRef.current = { w: winW, h: winH };
 
     // Scale tile area to viewport width, maintain aspect ratio
-    const baseTileW = winW;
-    const baseTileH = winW * (ORIGINAL_SIZE.h / ORIGINAL_SIZE.w);
+    // On mobile, 2x larger so tiles are a usable size
+    const isMobile = winW < 768;
+    const mobileScale = isMobile ? 2 : 1;
+    const baseTileW = winW * mobileScale;
+    const baseTileH = winW * mobileScale * (ORIGINAL_SIZE.h / ORIGINAL_SIZE.w);
     const scaleX = baseTileW / ORIGINAL_SIZE.w;
     const scaleY = baseTileH / ORIGINAL_SIZE.h;
 
@@ -297,8 +298,6 @@ const GalleryPage: React.FC = () => {
             y: base.y + offsetY,
             w: base.w,
             h: base.h,
-            extraX: 0,
-            extraY: 0,
             ease: Math.random() * 0.5 + 0.5,
             src: base.src,
             photoIndex: base.photoIndex,
@@ -312,14 +311,9 @@ const GalleryPage: React.FC = () => {
 
     // Reset scroll
     const scroll = scrollRef.current;
-    scroll.current.x = scroll.target.x = scroll.last.x = -winW * 0.1;
-    scroll.current.y = scroll.target.y = scroll.last.y = -winH * 0.1;
+    scroll.current.x = scroll.target.x = scroll.last.x = -baseTileW * 0.35;
+    scroll.current.y = scroll.target.y = scroll.last.y = -baseTileH * 0.35;
 
-    // Reset extra offsets
-    itemsRef.current.forEach((item) => {
-      item.extraX = 0;
-      item.extraY = 0;
-    });
   }, [showHoverTitle, hideHoverTitle]);
 
   useEffect(() => {
@@ -615,32 +609,28 @@ const GalleryPage: React.FC = () => {
       itemsRef.current.forEach((item) => {
         if (!item.el) return;
 
-        // Parallax: on mobile skip mouse-position component (no cursor)
-        const parX = 3 * dx * item.ease + (isMobileView ? 0 : (mx - 0.5) * item.w * 0.15);
-        const parY = 3 * dy * item.ease + (isMobileView ? 0 : (my - 0.5) * item.h * 0.15);
+        // Base position + deterministic modulo wrapping (always runs — cheap)
+        const baseX = item.x + scroll.current.x;
+        const baseY = item.y + scroll.current.y;
+        const halfW = tile.w / 2;
+        const halfH = tile.h / 2;
+        const wrappedX = zoomed ? baseX : ((baseX + halfW) % tile.w + tile.w) % tile.w - halfW;
+        const wrappedY = zoomed ? baseY : ((baseY + halfH) % tile.h + tile.h) % tile.h - halfH;
 
-        const posX = item.x + scroll.current.x + item.extraX + parX;
-        const posY = item.y + scroll.current.y + item.extraY + parY;
+        // Parallax only for onscreen tiles (the expensive per-tile part)
+        const onscreen = wrappedX + item.w > -200 && wrappedX < win.w + 200 &&
+                          wrappedY + item.h > -200 && wrappedY < win.h + 200;
 
-        // Infinite wrapping
-        if (!zoomed) {
-          if (posX > win.w) item.extraX -= tile.w;
-          if (posX + item.w < 0) item.extraX += tile.w;
-          if (posY > win.h) item.extraY -= tile.h;
-          if (posY + item.h < 0) item.extraY += tile.h;
+        let finalX = wrappedX;
+        let finalY = wrappedY;
+        if (onscreen || zoomed) {
+          const parX = 3 * dx * item.ease + (isMobileView ? 0 : (mx - 0.5) * item.w * 0.15);
+          const parY = 3 * dy * item.ease + (isMobileView ? 0 : (my - 0.5) * item.h * 0.15);
+          finalX += parX;
+          finalY += parY;
         }
 
-        const finalX = item.x + scroll.current.x + item.extraX + parX;
-        const finalY = item.y + scroll.current.y + item.extraY + parY;
-
-        // Skip DOM write for tiles fully offscreen (±200px buffer)
-        if (!zoomed &&
-            (finalX + item.w < -200 || finalX > win.w + 200 ||
-             finalY + item.h < -200 || finalY > win.h + 200)) {
-          return;
-        }
-
-        // When zoomed, let GSAP control scale on the active item
+        // Always write transform — wrapping must apply even for offscreen tiles
         if (zoomed && item.el === activeEl) {
           gsap.set(item.el, { x: finalX, y: finalY });
         } else {
