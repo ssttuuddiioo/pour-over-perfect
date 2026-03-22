@@ -30,21 +30,23 @@ const LAYOUT_DATA = [
   { x: 1420, y: 1720, w: 440, h: 420 },
   { x: 2060, y: 1740, w: 400, h: 320 },
   { x: 2660, y: 1730, w: 460, h: 360 },
-  // Row 5 (4 tiles, y ~2320–2360)
+  // Row 5 (5 tiles, y ~2320–2360)
   { x: 80,   y: 2330, w: 450, h: 340 },
   { x: 730,  y: 2320, w: 500, h: 380 },
   { x: 1430, y: 2350, w: 380, h: 300 },
   { x: 2030, y: 2330, w: 460, h: 360 },
-  // Row 6 (4 tiles, y ~2900–2940)
+  { x: 2690, y: 2340, w: 400, h: 320 },
+  // Row 6 (5 tiles, y ~2900–2940)
   { x: 100,  y: 2910, w: 420, h: 320 },
   { x: 720,  y: 2900, w: 480, h: 380 },
   { x: 1400, y: 2930, w: 400, h: 300 },
   { x: 2000, y: 2910, w: 520, h: 360 },
+  { x: 2720, y: 2920, w: 380, h: 300 },
 ];
 
 const ORIGINAL_SIZE = { w: 3260, h: 3460 };
 
-const PHOTO_SOURCES = Array.from({ length: 28 }, (_, i) => `/photo-final/web/${i + 1}.jpg`);
+const PHOTO_SOURCES = Array.from({ length: 30 }, (_, i) => `/photo-final/web/${i + 1}.jpg`);
 
 interface PhotoMeta {
   id: number;
@@ -248,6 +250,7 @@ const GalleryPage: React.FC = () => {
           const el = document.createElement('div');
           el.className = 'item';
           el.dataset.photoIndex = String(base.photoIndex);
+          const fadeDelay = Math.random();
           el.style.cssText = `
             position: absolute;
             top: 0;
@@ -255,6 +258,9 @@ const GalleryPage: React.FC = () => {
             width: ${base.w}px;
             will-change: transform;
             cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+            transition-delay: ${fadeDelay}s;
           `;
 
           const imgWrap = document.createElement('div');
@@ -318,6 +324,13 @@ const GalleryPage: React.FC = () => {
 
   useEffect(() => {
     buildGrid();
+
+    // Staggered fade-in: trigger after layout paint
+    requestAnimationFrame(() => {
+      itemsRef.current.forEach((item) => {
+        if (item.el) item.el.style.opacity = '1';
+      });
+    });
 
     // Initialize circle
     if (circleRef.current) {
