@@ -55,18 +55,40 @@ const LARGE_SOURCES = Array.from({ length: PHOTO_COUNT }, (_, i) => `/photo-fina
 // Wrap a position into [-size/2, size/2) so the 2x2 grid repeats forever
 const wrap = (v: number, size: number) => ((v + size / 2) % size + size) % size - size / 2;
 
-// Show a photo on a tile: the cached thumb right away, then the large copy once decoded
+// Large copies are fetched and decoded once, starting as early as hover
+const largeLoads = new Map<number, Promise<void>>();
+const loadLarge = (index: number) => {
+  let load = largeLoads.get(index);
+  if (!load) {
+    const large = new Image();
+    large.src = LARGE_SOURCES[index];
+    load = large.decode().catch(() => {});
+    largeLoads.set(index, load);
+  }
+  return load;
+};
+
+// Show a photo on a tile: the cached thumb until the large copy is decoded
 const showLargePhoto = (img: HTMLImageElement, index: number) => {
   img.dataset.want = String(index);
-  img.src = THUMB_SOURCES[index];
-  const large = new Image();
-  large.src = LARGE_SOURCES[index];
-  large.decode()
-    .then(() => {
-      if (img.dataset.want === String(index)) img.src = large.src;
-    })
-    .catch(() => {});
+  if (!img.src.endsWith(LARGE_SOURCES[index])) img.src = THUMB_SOURCES[index];
+  loadLarge(index).then(() => {
+    if (img.dataset.want === String(index)) img.src = LARGE_SOURCES[index];
+  });
 };
+
+// Warm up the slideshow's next/previous photos once the current one is in,
+// so they don't compete with it for bandwidth
+const preloadNeighbours = (index: number) => {
+  loadLarge(index).then(() => {
+    loadLarge((index + 1) % PHOTO_COUNT);
+    loadLarge((index - 1 + PHOTO_COUNT) % PHOTO_COUNT);
+  });
+};
+
+// Resolve when the large copy is ready, or after maxWait so opening never stalls
+const waitForLarge = (index: number, maxWait: number) =>
+  Promise.race([loadLarge(index), new Promise<void>((resolve) => setTimeout(resolve, maxWait))]);
 
 interface PhotoMeta {
   id: number;
@@ -222,6 +244,7 @@ const GalleryPage: React.FC = () => {
       onComplete: () => {
         // Swap content
         if (img) showLargePhoto(img, next);
+        preloadNeighbours(next);
         item.photoIndex = next;
         item.src = THUMB_SOURCES[next];
         currentSlideRef.current = next;
@@ -318,6 +341,7 @@ const GalleryPage: React.FC = () => {
 
           // Hover events for title display
           el.addEventListener('mouseenter', () => {
+            loadLarge(base.photoIndex);
             const meta = photoMetaRef.current[base.photoIndex];
             if (meta) showHoverTitle(meta.title);
           });
@@ -478,20 +502,26 @@ const GalleryPage: React.FC = () => {
       // Fit the photo between the slideshow arrows
       const scale = Math.min((win.w * 0.7) / item.w, (win.h * 0.75) / item.h);
 
-      const img = item.el.querySelector('img');
+      const el = item.el;
+      const img = el.querySelector('img');
       if (img) showLargePhoto(img, item.photoIndex);
+      // will-change keeps the tile rasterized at its small size, so a scaled-up
+      // tile would just be a stretched bitmap. Let it re-rasterize while open.
+      el.style.willChange = 'auto';
 
-      // Center, zoom and fade the rest in one motion. The scroll proxy drives
-      // current and target together so the render loop moves every tile.
+      // Zoomed in once both the centering and the scale-up have finished
+      let pending = 2;
+      const settle = () => {
+        if (--pending > 0 || activeItemRef.current !== item) return;
+        isCentering.current = false;
+        isZoomed.current = true;
+      };
+
+      // Center and fade the rest right away. The scroll proxy drives current and
+      // target together so the render loop moves every tile.
       const proxy = { x: scroll.current.x, y: scroll.current.y };
       const ease = 'power3.inOut';
-      const tl = gsap.timeline({
-        onComplete: () => {
-          isCentering.current = false;
-          isZoomed.current = true;
-        },
-      });
-      tl.to(proxy, {
+      gsap.to(proxy, {
         x: scroll.current.x + deltaX,
         y: scroll.current.y + deltaY,
         duration: 0.9,
@@ -504,19 +534,31 @@ const GalleryPage: React.FC = () => {
           scroll.target.y = proxy.y;
           scroll.last.y = proxy.y;
         },
-      }, 0);
-      tl.to(offset, { x: 0, y: 0, duration: 0.9, ease }, 0);
-      tl.to(item.el, { scale, duration: 0.9, ease }, 0.05);
+        onComplete: settle,
+      });
+      gsap.to(offset, { x: 0, y: 0, duration: 0.9, ease });
       itemsRef.current.forEach((other) => {
         if (other.el && other !== item) {
-          tl.to(other.el, { opacity: 0, duration: 0.5, ease: 'sine.out' }, 0);
+          gsap.to(other.el, { opacity: 0, duration: 0.5, ease: 'sine.out' });
         }
       });
 
-      // Title + blurb + arrows as the zoom settles
+      // Scale up once the large copy is in (instant when hover already loaded it),
+      // so the zoom never blows up the small thumb
       currentSlideRef.current = item.photoIndex;
       const meta = photoMetaRef.current[item.photoIndex];
-      if (meta) tl.call(() => showDetail(meta), [], 0.6);
+      waitForLarge(item.photoIndex, 700).then(() => {
+        if (activeItemRef.current !== item) return;
+        gsap.to(el, { scale, duration: 0.8, ease, onComplete: settle });
+        // Title + blurb + arrows as the zoom settles
+        if (meta) {
+          gsap.delayedCall(0.55, () => {
+            if (activeItemRef.current === item) showDetail(meta);
+          });
+        }
+      });
+
+      preloadNeighbours(item.photoIndex);
     };
 
     const closeSpotlight = () => {
@@ -541,6 +583,7 @@ const GalleryPage: React.FC = () => {
           }
           item.photoIndex = item.homeIndex;
           item.src = THUMB_SOURCES[item.homeIndex];
+          el.style.willChange = 'transform';
           activeItemRef.current = null;
         },
       });
