@@ -177,6 +177,8 @@ interface TileItem {
   timeline?: { x: number; y: number; s: number };
   // Last transform and visibility written, so unchanged tiles aren't touched each frame
   drawn?: { x: number; y: number; s: number; hidden: boolean };
+  // While a photo is open its tile is laid out this many times bigger (see setTileSize)
+  k?: number;
 }
 
 const GalleryPage: React.FC = () => {
@@ -536,6 +538,22 @@ const GalleryPage: React.FC = () => {
       circleMousePos.current = { x: e.clientX, y: e.clientY };
     };
 
+    // An opened photo's tile is laid out at its full open size (k times its grid
+    // size) and drawn scaled down by 1/k, so zooming in shrinks that scale-down
+    // rather than stretching a small tile. Browsers (Safari especially) keep a
+    // stretched tile at its small resolution; a shrunk one stays sharp.
+    const setTileSize = (item: TileItem, k: number) => {
+      const el = item.el;
+      if (!el) return;
+      const box = el.firstElementChild as HTMLElement | null;
+      el.style.width = `${item.w * k}px`;
+      if (box) {
+        box.style.width = `${item.w * k}px`;
+        box.style.height = `${item.h * k}px`;
+      }
+      item.k = k;
+    };
+
     // activeItemRef stays set from the moment a tile opens until it has fully closed,
     // so a new spotlight can't start mid-animation
     const openSpotlight = (item: TileItem) => {
@@ -574,6 +592,9 @@ const GalleryPage: React.FC = () => {
       // will-change keeps the tile rasterized at its small size, so a scaled-up
       // tile would just be a stretched bitmap. Let it re-rasterize while open.
       el.style.willChange = 'auto';
+      // Full open size in layout, drawn at grid size until the zoom
+      setTileSize(item, scale);
+      gsap.set(el, { scale: 1 / scale });
 
       // Zoomed in once both the centering and the scale-up have finished
       let pending = 2;
@@ -615,7 +636,7 @@ const GalleryPage: React.FC = () => {
       const meta = photoMetaRef.current[item.photoIndex];
       waitForLarge(item.photoIndex, 700).then(() => {
         if (activeItemRef.current !== item) return;
-        gsap.to(el, { scale, duration: 0.8, ease, onComplete: settle });
+        gsap.to(el, { scale: 1, duration: 0.8, ease, onComplete: settle });
         // Title + blurb + arrows as the zoom settles
         if (meta) {
           gsap.delayedCall(0.55, () => {
@@ -648,6 +669,8 @@ const GalleryPage: React.FC = () => {
       if (img) showLargePhoto(img, item.photoIndex);
       el.style.willChange = 'auto';
       el.style.zIndex = '1';
+      // Full open size in layout; the render loop scales it to match
+      setTileSize(item, spot.s);
 
       let pending = 2;
       const settle = () => {
@@ -692,7 +715,10 @@ const GalleryPage: React.FC = () => {
         }
         el.style.willChange = COARSE_POINTER ? '' : 'transform';
         el.style.zIndex = '';
-        // Its transform was set through GSAP; have the render loop rewrite it
+        // Back to grid size; its transform was set through GSAP, so have the
+        // render loop rewrite it
+        setTileSize(item, 1);
+        gsap.set(el, { scale: 1 });
         item.drawn = undefined;
       }
       item.photoIndex = item.homeIndex;
@@ -725,8 +751,9 @@ const GalleryPage: React.FC = () => {
         return;
       }
 
+      // Shrink back to grid size (its layout is still the full open size)
       gsap.to(item.el, {
-        scale: 1,
+        scale: 1 / (item.k ?? 1),
         duration: 0.7,
         ease: 'power3.inOut',
         delay: 0.1,
@@ -1070,7 +1097,12 @@ const GalleryPage: React.FC = () => {
         // In the scattered grid the opened tile ignores parallax and is positioned
         // through GSAP so it composes with its scale tween
         if (item.el === activeEl && layout.t === 0) {
-          gsap.set(item.el, { x: finalX + activeOffset.x, y: finalY + activeOffset.y });
+          // Its layout box is k times bigger around the same centre (setTileSize)
+          const k = item.k ?? 1;
+          gsap.set(item.el, {
+            x: finalX + activeOffset.x + (item.w * (1 - k)) / 2,
+            y: finalY + activeOffset.y + (item.h * (1 - k)) / 2,
+          });
           if (item.drawn) {
             item.el.style.visibility = '';
             item.drawn = undefined;
@@ -1110,6 +1142,15 @@ const GalleryPage: React.FC = () => {
           cx + halfW < -OFFSCREEN_MARGIN || cx - halfW > win.w + OFFSCREEN_MARGIN ||
           cy + halfH < -OFFSCREEN_MARGIN || cy - halfH > win.h + OFFSCREEN_MARGIN
         );
+
+        // An opened tile is laid out k times bigger around the same centre
+        // (setTileSize), so draw it that much smaller
+        const k = item.k ?? 1;
+        if (k !== 1) {
+          finalX += (item.w * (1 - k)) / 2;
+          finalY += (item.h * (1 - k)) / 2;
+          scale /= k;
+        }
 
         // Write only what changed: in the single-layer case most tiles keep the
         // same position inside the container until they wrap
