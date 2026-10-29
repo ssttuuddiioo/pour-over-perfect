@@ -109,50 +109,38 @@ const CoffeePage: React.FC = () => {
       {/* Two column layout — specs + narrative */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 text-sm md:text-base leading-relaxed">
 
-        {/* Left — specs */}
+        {/* Left — at a glance */}
         <div className="space-y-8">
           <div className="space-y-0.5">
             <p>Charal&aacute;, Santander, Colombia &bull; 1900masl</p>
-            <p>Castillo &bull; Hand-picked, fermented 36 hours,</p>
-            <p>dried on raised beds</p>
+            <p>Grown by Oscar Castro at Finca Bellavista</p>
           </div>
 
           <p>Roasted at <a href="https://www.multimodalroasting.com/" target="_blank" rel="noopener noreferrer" className="underline hover:opacity-70 transition-opacity">Multimodal</a></p>
 
           <p className="italic">
-            Delicate florals and chamomile, orchard fruits<br />
-            with raisin sweetness, and a crisp, clean finish
+            Three new coffees, coming soon
           </p>
 
           <hr className="border-white/40 mt-10" />
         </div>
 
-        {/* Right — coffee narrative */}
+        {/* Right — about the project */}
         <div className="space-y-10">
           <p>
-            Oscar Castro grows coffee at 1,900 meters above sea
-            level in Charal&aacute;, Santander, a quiet town in
-            Colombia&rsquo;s eastern Andes. He works a few hectares
-            alongside his family and neighbors, pooling their
-            harvests together. This lot is from the April 2025
-            harvest.
+            Every Origen coffee comes from Oscar Castro, who grows
+            coffee at 1,900 meters above sea level in Charal&aacute;,
+            Santander, a quiet town in Colombia&rsquo;s eastern Andes.
+            He works a few hectares at Finca Bellavista alongside
+            his family and neighbors, pooling their harvests
+            together.
           </p>
 
           <p>
-            Castillo is a hardy hybrid that thrives at altitude &ndash;
-            resilient in the field and delicate in the cup. These
-            beans were hand-picked and sorted at Finca
-            Bellavista, fermented for 36 hours, and dried on
-            raised beds on the farm before being hulled and
-            exported by Semilla Caf&eacute; in Bogot&aacute;.
-          </p>
-
-          <p>
-            We paid Oscar $8.69/kg for 50kg of the coffee in
-            parchment in June, 2025 &ndash; about 15% above the global
-            commodity price that season. Hulling, milling, and
-            export added $8.88/kg. Packaging added $0.35/kg.
-            Total cost: $17.92/kg.
+            Three new coffees from Oscar&rsquo;s farm are on the way.
+            The details for each one &ndash; how it was grown and
+            processed, and how it tastes &ndash; will be posted here
+            when they arrive.
           </p>
         </div>
       </div>
@@ -165,14 +153,14 @@ const CoffeePage: React.FC = () => {
         {/* Left — large heading */}
         <div>
           <h2 className="text-2xl md:text-3xl lg:text-4xl leading-snug">
-            What is a creative technical director slash experiential artist doing starting a coffee project?
+            About
           </h2>
         </div>
 
         {/* Right — story */}
         <div className="space-y-6">
           <p>
-            This coffee is from Charal&aacute;, a quiet town in Colombia&rsquo;s
+            Our coffee is from Charal&aacute;, a quiet town in Colombia&rsquo;s
             eastern Andes. I found myself there by chance two
             years ago &ndash; I was born in Bogot&aacute; but grew up in the
             States, and had taken on a 1,000-kilometer bikepacking
