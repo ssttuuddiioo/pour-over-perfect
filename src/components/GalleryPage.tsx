@@ -92,6 +92,11 @@ const LARGE_SOURCES = Array.from({ length: PHOTO_COUNT }, (_, i) => `/photo-fina
 // Grid drift per frame (px), always in the same direction
 const DRIFT = { x: 0.3, y: 0.15 };
 
+// Touch fling: velocity kept per 60fps frame after release, and the speed (px/ms)
+// below which it stops
+const FLING_FRICTION = 0.95;
+const FLING_MIN_SPEED = 0.01;
+
 // Wrap a position into [-size/2, size/2) so the 2x2 grid repeats forever
 const wrap = (v: number, size: number) => ((v + size / 2) % size + size) % size - size / 2;
 
@@ -196,15 +201,28 @@ const GalleryPage: React.FC = () => {
   const mouseRef = useRef({ x: 0.5, y: 0.5 });
   const smoothMouseRef = useRef({ x: 0.5, y: 0.5 });
 
-  // Drag state
+  // Drag state. Touch drags follow the finger exactly (no easing) and track the
+  // finger's velocity (px/ms) for the fling on release
   const dragRef = useRef({
     isDragging: false,
+    isTouch: false,
     startX: 0,
     startY: 0,
     scrollX: 0,
     scrollY: 0,
     moved: false,
+    lastX: 0,
+    lastY: 0,
+    lastT: 0,
+    vx: 0,
+    vy: 0,
+    touchEndedAt: 0,
   });
+
+  // Momentum after a touch drag (px/ms), and how much of the drift is applied
+  // (eased back in after a touch so it doesn't fight the finger)
+  const flingRef = useRef({ vx: 0, vy: 0 });
+  const driftBlendRef = useRef(1);
 
   // Orange circle state
   const circleMousePos = useRef({ x: 0, y: 0 });
@@ -467,7 +485,10 @@ const GalleryPage: React.FC = () => {
     const onMouseDown = (e: MouseEvent) => {
       if (isZoomed.current || isCentering.current || layoutRef.current.t > 0) return;
       if ((e.target as HTMLElement).closest('nav')) return;
+      // Phones send a fake mousedown after a tap; it must not reset the touch drag
+      if (performance.now() - dragRef.current.touchEndedAt < 800) return;
       dragRef.current.isDragging = true;
+      dragRef.current.isTouch = false;
       dragRef.current.startX = e.clientX;
       dragRef.current.startY = e.clientY;
       dragRef.current.scrollX = scrollRef.current.target.x;
@@ -877,55 +898,119 @@ const GalleryPage: React.FC = () => {
       else if (e.key === 'Escape') closeSpotlight();
     };
 
-    // Touch support
+    // Touch support: the grid sticks to the finger, then flings with momentum
     const onTouchStart = (e: TouchEvent) => {
       if ((e.target as HTMLElement).closest('nav')) return;
       const touch = e.touches[0];
-      dragRef.current.isDragging = true;
-      dragRef.current.startX = touch.clientX;
-      dragRef.current.startY = touch.clientY;
-      dragRef.current.scrollX = scrollRef.current.target.x;
-      dragRef.current.scrollY = scrollRef.current.target.y;
-      dragRef.current.moved = false;
+      const drag = dragRef.current;
+      const fling = flingRef.current;
+      const scroll = scrollRef.current;
+
+      // Touching during a fling catches it, like native scrolling, and isn't a tap
+      const caughtFling = Math.hypot(fling.vx, fling.vy) > FLING_MIN_SPEED * 5;
+      fling.vx = 0;
+      fling.vy = 0;
+
+      // Start from where the grid is drawn, so it doesn't jump under the finger
+      scroll.target.x = scroll.current.x;
+      scroll.target.y = scroll.current.y;
+
+      drag.isDragging = true;
+      drag.isTouch = true;
+      drag.startX = drag.lastX = touch.clientX;
+      drag.startY = drag.lastY = touch.clientY;
+      drag.lastT = performance.now();
+      drag.vx = 0;
+      drag.vy = 0;
+      drag.scrollX = scroll.target.x;
+      drag.scrollY = scroll.target.y;
+      drag.moved = caughtFling;
     };
 
     const onTouchMove = (e: TouchEvent) => {
-      if (!dragRef.current.isDragging || isZoomed.current || isCentering.current || layoutRef.current.t > 0) return;
+      const drag = dragRef.current;
+      if (!drag.isDragging || isZoomed.current || isCentering.current || layoutRef.current.t > 0) return;
       const touch = e.touches[0];
-      const dx = touch.clientX - dragRef.current.startX;
-      const dy = touch.clientY - dragRef.current.startY;
-      if (Math.abs(dx) + Math.abs(dy) > 5) dragRef.current.moved = true;
-      scrollRef.current.target.x = dragRef.current.scrollX + dx;
-      scrollRef.current.target.y = dragRef.current.scrollY + dy;
+      const dx = touch.clientX - drag.startX;
+      const dy = touch.clientY - drag.startY;
+      if (Math.abs(dx) + Math.abs(dy) > 5) drag.moved = true;
+      scrollRef.current.target.x = drag.scrollX + dx;
+      scrollRef.current.target.y = drag.scrollY + dy;
+
+      // Finger velocity, weighted toward the latest movement
+      const now = performance.now();
+      const dt = Math.max(now - drag.lastT, 1);
+      drag.vx = drag.vx * 0.2 + ((touch.clientX - drag.lastX) / dt) * 0.8;
+      drag.vy = drag.vy * 0.2 + ((touch.clientY - drag.lastY) / dt) * 0.8;
+      drag.lastX = touch.clientX;
+      drag.lastY = touch.clientY;
+      drag.lastT = now;
     };
 
     const onTouchEnd = () => {
-      dragRef.current.isDragging = false;
+      const drag = dragRef.current;
+      // Fling only if the finger was still moving when it lifted
+      if (drag.isDragging && drag.moved && performance.now() - drag.lastT < 80) {
+        flingRef.current.vx = drag.vx;
+        flingRef.current.vy = drag.vy;
+      }
+      drag.isDragging = false;
+      drag.touchEndedAt = performance.now();
     };
 
     // --- Render Loop ---
 
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
     let frameId: number;
+    let lastFrameAt = performance.now();
+    // Touch screens skip the speed-based parallax: under a finger it reads as tiles wobbling
+    const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
 
     const render = () => {
       const scroll = scrollRef.current;
       const win = winRef.current;
       const tile = tileSizeRef.current;
+      const drag = dragRef.current;
+      const fling = flingRef.current;
+      const now = performance.now();
+      const frameMs = Math.min(now - lastFrameAt, 50);
+      lastFrameAt = now;
 
       // When centering, GSAP drives scroll directly — skip lerp but still update tile positions
       // When zoomed or in (or moving to/from) the chronological view, freeze everything
       const layout = layoutRef.current;
       if (!isCentering.current && !isZoomed.current && layout.t === 0) {
-        // Constant gentle drift, paused only while dragging
-        if (!dragRef.current.isDragging) {
-          scroll.target.x += DRIFT.x;
-          scroll.target.y += DRIFT.y;
+        // Fling: carry the release velocity, slowing with friction
+        if (fling.vx || fling.vy) {
+          scroll.target.x += fling.vx * frameMs;
+          scroll.target.y += fling.vy * frameMs;
+          const decay = Math.pow(FLING_FRICTION, frameMs / (1000 / 60));
+          fling.vx *= decay;
+          fling.vy *= decay;
+          if (Math.hypot(fling.vx, fling.vy) < FLING_MIN_SPEED) {
+            fling.vx = 0;
+            fling.vy = 0;
+          }
         }
 
-        // Normal lerp scroll
-        scroll.current.x += (scroll.target.x - scroll.current.x) * scroll.ease;
-        scroll.current.y += (scroll.target.y - scroll.current.y) * scroll.ease;
+        // Constant gentle drift: off while dragging or flinging, then eased back in
+        const flinging = fling.vx !== 0 || fling.vy !== 0;
+        driftBlendRef.current = drag.isDragging || flinging ? 0 : Math.min(driftBlendRef.current + 0.01, 1);
+        scroll.target.x += DRIFT.x * driftBlendRef.current;
+        scroll.target.y += DRIFT.y * driftBlendRef.current;
+
+        if (drag.isTouch) {
+          // Touch: the grid is exactly where the finger (or the fling) puts it
+          scroll.current.x = scroll.target.x;
+          scroll.current.y = scroll.target.y;
+        } else {
+          // Mouse and wheel: ease toward the target
+          scroll.current.x += (scroll.target.x - scroll.current.x) * scroll.ease;
+          scroll.current.y += (scroll.target.y - scroll.current.y) * scroll.ease;
+        }
+      } else {
+        fling.vx = 0;
+        fling.vy = 0;
       }
 
       // Scroll delta for velocity-based parallax
@@ -961,7 +1046,7 @@ const GalleryPage: React.FC = () => {
         // Parallax only for onscreen tiles (the expensive per-tile part)
         const onscreen = finalX + item.w > -200 && finalX < win.w + 200 &&
                           finalY + item.h > -200 && finalY < win.h + 200;
-        if (onscreen) {
+        if (onscreen && !coarsePointer) {
           finalX += 3 * dx * item.ease + (isMobileView ? 0 : (mx - 0.5) * item.w * 0.15);
           finalY += 3 * dy * item.ease + (isMobileView ? 0 : (my - 0.5) * item.h * 0.15);
         }
@@ -1066,7 +1151,12 @@ const GalleryPage: React.FC = () => {
   }, [circleRef, buildGrid, showDetail, hideDetail, hideHoverTitle, navigateSlide, cycleCircleColors]);
 
   return (
-    <div className="fixed inset-0 overflow-hidden cursor-grab active:cursor-grabbing select-none" style={{ background: 'transparent' }}>
+    <div
+      className="fixed inset-0 overflow-hidden cursor-grab active:cursor-grabbing select-none"
+      // touch-action: none — the gallery handles every touch itself, so the browser
+      // doesn't also scroll, bounce, zoom or swipe back
+      style={{ background: 'transparent', touchAction: 'none' }}
+    >
       <Navigation variant="homepage" />
       <div ref={containerRef} className="w-full h-full relative" style={{ zIndex: 20 }} />
       {/* Month labels for the chronological view, filled by computeTimeline */}
