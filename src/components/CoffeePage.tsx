@@ -99,14 +99,12 @@ const CoffeePage: React.FC = () => {
       {/* Content layer — above circle */}
       <div className="relative" style={{ zIndex: 20 }}>
 
-      {/* === Section 1: Coffee details === */}
-
       {/* Header */}
       <h1 className="text-3xl md:text-4xl mb-16 md:mb-20 pt-12">
         Origen
       </h1>
 
-      {/* Two column layout — specs + narrative */}
+      {/* Two column layout — farm details + story */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 text-sm md:text-base leading-relaxed">
 
         {/* Left — at a glance */}
@@ -123,38 +121,6 @@ const CoffeePage: React.FC = () => {
           </p>
 
           <hr className="border-white/40 mt-10" />
-        </div>
-
-        {/* Right — about the project */}
-        <div className="space-y-10">
-          <p>
-            Every Origen coffee comes from Oscar Castro, who grows
-            coffee at 1,900 meters above sea level in Charal&aacute;,
-            Santander, a quiet town in Colombia&rsquo;s eastern Andes.
-            He works a few hectares at Finca Bellavista alongside
-            his family and neighbors, pooling their harvests
-            together.
-          </p>
-
-          <p>
-            Three new coffees from Oscar&rsquo;s farm are on the way.
-            The details for each one &ndash; how it was grown and
-            processed, and how it tastes &ndash; will be posted here
-            when they arrive.
-          </p>
-        </div>
-      </div>
-
-      <hr className="border-white/40 my-16 md:my-24" />
-
-      {/* === Section 2: About / Story === */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 text-sm md:text-base leading-relaxed">
-
-        {/* Left — large heading */}
-        <div>
-          <h2 className="text-2xl md:text-3xl lg:text-4xl leading-snug">
-            About
-          </h2>
         </div>
 
         {/* Right — story */}
