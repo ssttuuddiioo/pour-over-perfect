@@ -10,6 +10,7 @@ interface CircleTransitionProps {
 // trail only shows while the lead circle moves and tucks underneath when it stops.
 // Clicking empty space in the gallery rotates which color leads (circleColorShift).
 const CIRCLE_COLORS = ['#FF6700', '#39FF14', '#1A1AFF']; // orange, bright green, Origen blue
+// How far each trail circle closes on the one ahead per 60fps frame
 const TRAIL_FOLLOW = [0.2, 0.2];
 
 const colorAt = (shift: number, i: number) => CIRCLE_COLORS[(shift + i) % CIRCLE_COLORS.length];
@@ -23,8 +24,13 @@ const CircleTransition: React.FC<CircleTransitionProps> = ({ className = '' }) =
     let wasHidden = true;
     let shownShift = -1;
     let frameId: number;
+    let lastFrameAt = performance.now();
 
     const tick = () => {
+      // This frame's length in 60fps frames, so the trail lags the same on 120Hz screens
+      const now = performance.now();
+      const frames = Math.min(now - lastFrameAt, 50) / (1000 / 60);
+      lastFrameAt = now;
       const lead = circleRef.current;
       const hidden = !lead || lead.style.display === 'none' || Number(lead.style.opacity || 0) === 0;
 
@@ -45,7 +51,8 @@ const CircleTransition: React.FC<CircleTransitionProps> = ({ className = '' }) =
 
         trail.forEach((dot, i) => {
           const ahead = i === 0 ? target : trail[i - 1];
-          const t = wasHidden ? 1 : TRAIL_FOLLOW[i]; // snap into place when the circle reappears
+          // Snap into place when the circle reappears
+          const t = wasHidden ? 1 : 1 - Math.pow(1 - TRAIL_FOLLOW[i], frames);
           dot.x += (ahead.x - dot.x) * t;
           dot.y += (ahead.y - dot.y) * t;
           dot.size += (ahead.size - dot.size) * t;
