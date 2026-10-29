@@ -157,7 +157,7 @@ interface TileItem {
 }
 
 const GalleryPage: React.FC = () => {
-  const { circleRef, circlePosition } = useCircleTransition();
+  const { circleRef, circlePosition, cycleCircleColors } = useCircleTransition();
   const containerRef = useRef<HTMLDivElement>(null);
   const hoverTitleRef = useRef<HTMLDivElement>(null);
   const detailTitleRef = useRef<HTMLDivElement>(null);
@@ -209,8 +209,6 @@ const GalleryPage: React.FC = () => {
   // Orange circle state
   const circleMousePos = useRef({ x: 0, y: 0 });
   const circleTargetPos = useRef({ x: 0, y: 0 });
-  const circleIsPinned = useRef(false);
-  const circlePinnedPos = useRef({ x: 0, y: 0 });
 
   // Load photo metadata
   useEffect(() => {
@@ -498,9 +496,7 @@ const GalleryPage: React.FC = () => {
       }
 
       // Circle tracking
-      if (!circleIsPinned.current) {
-        circleMousePos.current = { x: e.clientX, y: e.clientY };
-      }
+      circleMousePos.current = { x: e.clientX, y: e.clientY };
     };
 
     // activeItemRef stays set from the moment a tile opens until it has fully closed,
@@ -869,14 +865,8 @@ const GalleryPage: React.FC = () => {
         }
       }
 
-      // Otherwise pin/unpin circle
-      if (circleIsPinned.current) {
-        circleIsPinned.current = false;
-      } else {
-        circleIsPinned.current = true;
-        circlePinnedPos.current = { ...circleMousePos.current };
-        circleTargetPos.current = { ...circlePinnedPos.current };
-      }
+      // Otherwise rotate which color leads the circle and its trail
+      cycleCircleColors();
     };
 
     // Keyboard navigation for slideshow
@@ -1001,10 +991,8 @@ const GalleryPage: React.FC = () => {
 
       // Circle follow — skip on mobile (no cursor)
       if (circleRef.current && win.w >= 768) {
-        const targetX = circleIsPinned.current ? circlePinnedPos.current.x : circleMousePos.current.x;
-        const targetY = circleIsPinned.current ? circlePinnedPos.current.y : circleMousePos.current.y;
-        circleTargetPos.current.x = lerp(circleTargetPos.current.x, targetX, circleIsPinned.current ? 1 : 0.1);
-        circleTargetPos.current.y = lerp(circleTargetPos.current.y, targetY, circleIsPinned.current ? 1 : 0.1);
+        circleTargetPos.current.x = lerp(circleTargetPos.current.x, circleMousePos.current.x, 0.1);
+        circleTargetPos.current.y = lerp(circleTargetPos.current.y, circleMousePos.current.y, 0.1);
 
         gsap.set(circleRef.current, {
           left: circleTargetPos.current.x,
@@ -1075,7 +1063,7 @@ const GalleryPage: React.FC = () => {
       clearTimeout(resizeTimer);
       cancelAnimationFrame(frameId);
     };
-  }, [circleRef, buildGrid, showDetail, hideDetail, hideHoverTitle, navigateSlide]);
+  }, [circleRef, buildGrid, showDetail, hideDetail, hideHoverTitle, navigateSlide, cycleCircleColors]);
 
   return (
     <div className="fixed inset-0 overflow-hidden cursor-grab active:cursor-grabbing select-none" style={{ background: 'transparent' }}>

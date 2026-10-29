@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
+import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 
@@ -34,6 +34,9 @@ interface CircleTransitionContextType {
   circleState: CircleState;
   circleRef: React.RefObject<HTMLDivElement>;
   circlePosition: React.MutableRefObject<CirclePosition>;
+  // How many times the circle colors have rotated (CircleTransition maps it to colors)
+  circleColorShift: React.MutableRefObject<number>;
+  cycleCircleColors: () => void;
   navigateWithTransition: (to: string) => void;
   setCircleMode: (mode: CircleMode) => void;
 }
@@ -53,6 +56,11 @@ export const CircleTransitionProvider: React.FC<{ children: React.ReactNode }> =
   const navigate = useNavigate();
   const circleRef = useRef<HTMLDivElement>(null);
   const circlePosition = useRef<CirclePosition>({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
+  // Start each visit on a random one of the three circle colors
+  const circleColorShift = useRef(Math.floor(Math.random() * 3));
+  const cycleCircleColors = useCallback(() => {
+    circleColorShift.current += 1;
+  }, []);
 
   const [circleState, setCircleState] = useState<CircleState>({
     mode: 'front',
@@ -153,6 +161,8 @@ export const CircleTransitionProvider: React.FC<{ children: React.ReactNode }> =
       circleState,
       circleRef,
       circlePosition,
+      circleColorShift,
+      cycleCircleColors,
       navigateWithTransition,
       setCircleMode
     }}>
