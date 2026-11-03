@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { gsap } from 'gsap';
-import { useCircleTransition } from '../context/CircleTransitionContext';
+import { useCircleTransition, circleSize } from '../context/CircleTransitionContext';
 import Navigation from './shared/Navigation';
 
 // Layout positions for 49 tiles (one per photo) in a 3260×5800 coordinate space
@@ -151,6 +151,27 @@ const preloadNeighbours = (index: number) => {
 const waitForLarge = (index: number, maxWait: number) =>
   Promise.race([loadLarge(index), new Promise<void>((resolve) => setTimeout(resolve, maxWait))]);
 
+// Where an open photo goes. Wide screens: off-centre to the left, its right edge
+// on a fixed line with the caption in a column beside it (the photo is
+// right-aligned in its box, so every photo shares that edge). Narrow screens:
+// centred and lifted a little, caption underneath.
+const WIDE_MIN = 900;
+
+// Counter, title and blurb beside/under an open photo. Off until the copy in
+// photo-content.json is written; the layout around it stays the same either way.
+const SHOW_CAPTIONS = false;
+const openLayout = (winW: number, winH: number) => {
+  const wide = winW >= WIDE_MIN;
+  return wide
+    ? { wide, maxW: winW * 0.5, maxH: winH * 0.72, centreY: winH * 0.5, rightEdge: winW * 0.62 }
+    : { wide, maxW: winW * 0.7, maxH: winH * 0.6, centreY: winH * 0.44, rightEdge: 0 };
+};
+// Centre of the open tile's box, given its open width
+const openCentreX = (winW: number, winH: number, boxW: number) => {
+  const l = openLayout(winW, winH);
+  return l.wide ? l.rightEdge - boxW / 2 : winW / 2;
+};
+
 interface PhotoMeta {
   id: number;
   title: string;
@@ -160,8 +181,6 @@ interface PhotoMeta {
   approx?: boolean;
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const formatMonth = (yearMonth: string) => `${MONTHS[Number(yearMonth.slice(5, 7)) - 1]} ${yearMonth.slice(0, 4)}`;
 
 interface TileItem {
   el: HTMLDivElement | null;
@@ -185,6 +204,8 @@ const GalleryPage: React.FC = () => {
   const { circleRef, circlePosition, cycleCircleColors } = useCircleTransition();
   const containerRef = useRef<HTMLDivElement>(null);
   const hoverTitleRef = useRef<HTMLDivElement>(null);
+  const captionRef = useRef<HTMLDivElement>(null);
+  const detailIndexRef = useRef<HTMLDivElement>(null);
   const detailTitleRef = useRef<HTMLDivElement>(null);
   const detailBlurbRef = useRef<HTMLDivElement>(null);
   const arrowLeftRef = useRef<HTMLButtonElement>(null);
@@ -192,6 +213,9 @@ const GalleryPage: React.FC = () => {
   const activeItemRef = useRef<TileItem | null>(null);
   const currentSlideRef = useRef(0);
   const isZoomed = useRef(false);
+  // Bumped on every next/previous press and on close; a swap still waiting on its
+  // photo bails if a newer one has started
+  const slideTokenRef = useRef(0);
   const isCentering = useRef(false);
   const itemsRef = useRef<TileItem[]>([]);
   const tileSizeRef = useRef({ w: 0, h: 0 });
@@ -203,9 +227,10 @@ const GalleryPage: React.FC = () => {
   // Chronological view: t blends every tile from the scattered grid (0) to its
   // timeline cell (1); scroll, drift and drag are frozen while t > 0
   const layoutRef = useRef({ mode: 'scatter' as 'scatter' | 'timeline', t: 0, animating: false });
-  const labelsRef = useRef<HTMLDivElement>(null);
   const toggleLayoutRef = useRef<() => void>();
   const [chronological, setChronological] = useState(false);
+  // A photo is open: the layout toggle becomes "See all" and closes it
+  const [photoOpen, setPhotoOpen] = useState(false);
   // Opening a photo from the timeline: p blends position, z blends scale, toward x/y/s
   const spotRef = useRef({ x: 0, y: 0, s: 1, p: 0, z: 0 });
 
@@ -269,9 +294,16 @@ const GalleryPage: React.FC = () => {
     gsap.to(el, { opacity: 0, duration: 0.3, ease: 'sine.out' });
   }, []);
 
+  // Fixed spots, so you can click straight through. Wide: left arrow halfway
+  // between the window edge and where the widest photo starts, right arrow past
+  // the caption column. Narrow: halfway between the widest photo and each edge.
   const showArrows = useCallback(() => {
     const l = arrowLeftRef.current;
     const r = arrowRightRef.current;
+    const layout = openLayout(window.innerWidth, window.innerHeight);
+    const top = `${layout.centreY}px`;
+    if (l) Object.assign(l.style, { top, left: layout.wide ? '6%' : '7.5%' });
+    if (r) Object.assign(r.style, { top, right: layout.wide ? '4%' : '7.5%' });
     if (l) gsap.fromTo(l, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'sine.out', delay: 0.2 });
     if (r) gsap.fromTo(r, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'sine.out', delay: 0.2 });
   }, []);
@@ -283,57 +315,144 @@ const GalleryPage: React.FC = () => {
     if (r) gsap.to(r, { opacity: 0, duration: 0.3, ease: 'sine.in' });
   }, []);
 
-  const showDetail = useCallback((meta: PhotoMeta) => {
-    const titleEl = detailTitleRef.current;
-    const blurbEl = detailBlurbRef.current;
-    if (!titleEl || !blurbEl) return;
-    titleEl.textContent = meta.title;
-    blurbEl.textContent = meta.blurb;
-    gsap.killTweensOf(titleEl);
-    gsap.killTweensOf(blurbEl);
-    gsap.fromTo(titleEl, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'sine.out' });
-    gsap.fromTo(blurbEl, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'sine.out', delay: 0.15 });
+  // Caption parts in reading order: counter, title, blurb
+  const captionParts = () =>
+    [detailIndexRef.current, detailTitleRef.current, detailBlurbRef.current]
+      .filter((el): el is HTMLDivElement => !!el);
+
+  const fillCaption = (index: number) => {
+    const meta = photoMetaRef.current[index];
+    if (detailIndexRef.current) {
+      detailIndexRef.current.textContent = `${String(index + 1).padStart(2, '0')} / ${PHOTO_COUNT}`;
+    }
+    if (detailTitleRef.current) detailTitleRef.current.textContent = meta?.title || '';
+    if (detailBlurbRef.current) detailBlurbRef.current.textContent = meta?.blurb || '';
+  };
+
+  // Hang the caption just under the open photo. The open tile is a box with the
+  // photo letterboxed inside, so measure the photo's own height; re-measure once a
+  // swapped photo has loaded.
+  const placeCaption = useCallback(() => {
+    const item = activeItemRef.current;
+    const img = item?.el?.querySelector('img');
+    const caption = captionRef.current;
+    if (!item || !img || !caption) return;
+    const place = () => {
+      const boxW = item.w * (item.k ?? 1);
+      const boxH = item.h * (item.k ?? 1);
+      const aspect = img.naturalWidth ? img.naturalWidth / img.naturalHeight : boxW / boxH;
+      const photoH = Math.min(boxH, boxW / aspect);
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
+      const layout = openLayout(winW, winH);
+      const photoBottom = layout.centreY + photoH / 2;
+      if (layout.wide) {
+        // Column beside the photo, bottom edges lined up
+        const left = layout.rightEdge + 40;
+        Object.assign(caption.style, {
+          top: '', bottom: `${winH - photoBottom}px`, left: `${left}px`,
+          width: `${Math.min(320, winW * 0.9 - left)}px`, transform: 'none', textAlign: 'left',
+        });
+      } else {
+        // Centred under the photo
+        Object.assign(caption.style, {
+          top: `${photoBottom + 24}px`, bottom: '', left: '50%',
+          width: 'min(34rem, 84vw)', transform: 'translateX(-50%)', textAlign: 'center',
+        });
+      }
+    };
+    place();
+    img.addEventListener('load', place, { once: true });
+  }, []);
+
+  const showDetail = useCallback((index: number) => {
+    const parts = captionParts();
+    fillCaption(index);
+    placeCaption();
+    gsap.killTweensOf(parts);
+    gsap.fromTo(parts,
+      { opacity: 0, y: 10 },
+      { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out', stagger: 0.08 });
     showArrows();
-  }, [showArrows]);
+  }, [showArrows, placeCaption]);
 
   const hideDetail = useCallback(() => {
-    const titleEl = detailTitleRef.current;
-    const blurbEl = detailBlurbRef.current;
-    if (!titleEl || !blurbEl) return;
-    gsap.killTweensOf(titleEl);
-    gsap.killTweensOf(blurbEl);
-    gsap.to(titleEl, { opacity: 0, duration: 0.3, ease: 'sine.in' });
-    gsap.to(blurbEl, { opacity: 0, duration: 0.3, ease: 'sine.in' });
+    const parts = captionParts();
+    gsap.killTweensOf(parts);
+    gsap.to(parts, { opacity: 0, duration: 0.3, ease: 'sine.in' });
     hideArrows();
+    const el = activeItemRef.current?.el;
+    const img = el?.querySelector('img');
+    if (img) {
+      gsap.killTweensOf(img);
+      gsap.set(img, { x: 0, opacity: 1 });
+    }
+    el?.querySelectorAll('.slide-ghost').forEach((ghost) => ghost.remove());
+    slideTokenRef.current++;
+    setPhotoOpen(false);
   }, [hideArrows]);
 
+  // Next/previous: the old photo drifts out the side you're leaving while the new
+  // one eases in from the other, and the caption lifts out and settles back in.
+  // Every press interrupts the one before, so you can click straight through.
+  // The swap waits a moment for the large copy, then falls back to the thumb.
   const navigateSlide = useCallback((direction: 1 | -1) => {
     if (!isZoomed.current || !activeItemRef.current) return;
     const next = (currentSlideRef.current + direction + PHOTO_COUNT) % PHOTO_COUNT;
-    const titleEl = detailTitleRef.current;
-    const blurbEl = detailBlurbRef.current;
+    const parts = captionParts();
     const item = activeItemRef.current;
-    if (!titleEl || !blurbEl || !item?.el) return;
+    const img = item?.el?.querySelector('img');
+    if (!item?.el || !img) return;
+    const token = ++slideTokenRef.current;
+    currentSlideRef.current = next;
+    const shift = 40;
 
-    // Fade out title + blurb + image
-    const img = item.el.querySelector('img');
-    gsap.to([titleEl, blurbEl], {
-      opacity: 0, duration: 0.25, ease: 'sine.in',
-      onComplete: () => {
-        // Swap content
-        if (img) showLargePhoto(img, next);
-        preloadNeighbours(next);
-        item.photoIndex = next;
-        item.src = THUMB_SOURCES[next];
-        currentSlideRef.current = next;
-        const meta = photoMetaRef.current[next];
-        titleEl.textContent = meta?.title || `Photo ${next + 1}`;
-        blurbEl.textContent = meta?.blurb || '';
-        // Fade back in
-        gsap.to([titleEl, blurbEl], { opacity: 1, duration: 0.35, ease: 'sine.out' });
-      },
+    gsap.killTweensOf(parts);
+    gsap.to(parts, { opacity: 0, y: -6, duration: 0.2, ease: 'power2.in' });
+
+    waitForLarge(next, 150).then(() => {
+      if (slideTokenRef.current !== token || activeItemRef.current !== item || !item.el) return;
+
+      // Only one outgoing copy at a time: clear any left from a quick earlier press
+      item.el.querySelectorAll('.slide-ghost').forEach((old) => {
+        gsap.killTweensOf(old);
+        old.remove();
+      });
+
+      // Outgoing copy sits over the tile (outside its clipping box) and drifts away,
+      // starting from wherever the photo is mid-transition
+      const ghost = img.cloneNode() as HTMLImageElement;
+      ghost.className = 'slide-ghost';
+      ghost.style.cssText = `
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        object-fit: contain; object-position: ${img.style.objectPosition || 'center'};
+        pointer-events: none;
+      `;
+      gsap.set(ghost, { x: gsap.getProperty(img, 'x'), opacity: gsap.getProperty(img, 'opacity') });
+      item.el.appendChild(ghost);
+      gsap.to(ghost, {
+        x: -direction * shift, opacity: 0, duration: 0.45, ease: 'power2.inOut',
+        onComplete: () => ghost.remove(),
+      });
+
+      // Incoming photo
+      gsap.killTweensOf(img);
+      showLargePhoto(img, next);
+      item.photoIndex = next;
+      item.src = THUMB_SOURCES[next];
+      preloadNeighbours(next);
+      gsap.fromTo(img,
+        { x: direction * shift, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.6, ease: 'power3.out', delay: 0.08 });
+
+      fillCaption(next);
+      placeCaption();
+      gsap.killTweensOf(parts);
+      gsap.fromTo(parts,
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out', delay: 0.2, stagger: 0.08 });
     });
-  }, []);
+  }, [placeCaption]);
 
   const buildGrid = useCallback(() => {
     const container = containerRef.current;
@@ -466,9 +585,8 @@ const GalleryPage: React.FC = () => {
     // Initialize circle
     if (circleRef.current) {
       gsap.set(circleRef.current, {
-        width: 840,
-        height: 840,
-        scale: 0.6,
+        width: circleSize(),
+        height: circleSize(),
         position: 'fixed',
         left: circlePosition.current.x,
         top: circlePosition.current.y,
@@ -564,6 +682,7 @@ const GalleryPage: React.FC = () => {
       }
       activeItemRef.current = item;
       isCentering.current = true;
+      setPhotoOpen(true);
 
       // Hide hover title immediately
       hideHoverTitle();
@@ -581,14 +700,17 @@ const GalleryPage: React.FC = () => {
       offset.x = rect.left - x;
       offset.y = rect.top - y;
 
-      const deltaX = win.w / 2 - (x + item.w / 2);
-      const deltaY = win.h / 2 - (y + item.h / 2);
-      // Fit the photo between the slideshow arrows
-      const scale = Math.min((win.w * 0.7) / item.w, (win.h * 0.75) / item.h);
+      const layout = openLayout(win.w, win.h);
+      const scale = Math.min(layout.maxW / item.w, layout.maxH / item.h);
+      const deltaX = openCentreX(win.w, win.h, item.w * scale) - (x + item.w / 2);
+      const deltaY = layout.centreY - (y + item.h / 2);
 
       const el = item.el;
       const img = el.querySelector('img');
-      if (img) showLargePhoto(img, item.photoIndex);
+      if (img) {
+        img.style.objectPosition = layout.wide ? 'right center' : '';
+        showLargePhoto(img, item.photoIndex);
+      }
       // will-change keeps the tile rasterized at its small size, so a scaled-up
       // tile would just be a stretched bitmap. Let it re-rasterize while open.
       el.style.willChange = 'auto';
@@ -633,16 +755,13 @@ const GalleryPage: React.FC = () => {
       // Scale up once the large copy is in (instant when hover already loaded it),
       // so the zoom never blows up the small thumb
       currentSlideRef.current = item.photoIndex;
-      const meta = photoMetaRef.current[item.photoIndex];
       waitForLarge(item.photoIndex, 700).then(() => {
         if (activeItemRef.current !== item) return;
         gsap.to(el, { scale: 1, duration: 0.8, ease, onComplete: settle });
-        // Title + blurb + arrows as the zoom settles
-        if (meta) {
-          gsap.delayedCall(0.55, () => {
-            if (activeItemRef.current === item) showDetail(meta);
-          });
-        }
+        // Caption + arrows as the zoom settles
+        gsap.delayedCall(0.55, () => {
+          if (activeItemRef.current === item) showDetail(item.photoIndex);
+        });
       });
 
       preloadNeighbours(item.photoIndex);
@@ -655,18 +774,23 @@ const GalleryPage: React.FC = () => {
       if (!el) return;
       activeItemRef.current = item;
       isCentering.current = true;
+      setPhotoOpen(true);
       hideHoverTitle();
 
       const win = winRef.current;
       const spot = spotRef.current;
-      spot.x = win.w / 2 - item.w / 2;
-      spot.y = win.h / 2 - item.h / 2;
-      spot.s = Math.min((win.w * 0.7) / item.w, (win.h * 0.75) / item.h);
+      const layout = openLayout(win.w, win.h);
+      spot.s = Math.min(layout.maxW / item.w, layout.maxH / item.h);
+      spot.x = openCentreX(win.w, win.h, item.w * spot.s) - item.w / 2;
+      spot.y = layout.centreY - item.h / 2;
       spot.p = 0;
       spot.z = 0;
 
       const img = el.querySelector('img');
-      if (img) showLargePhoto(img, item.photoIndex);
+      if (img) {
+        img.style.objectPosition = layout.wide ? 'right center' : '';
+        showLargePhoto(img, item.photoIndex);
+      }
       el.style.willChange = 'auto';
       el.style.zIndex = '1';
       // Full open size in layout; the render loop scales it to match
@@ -686,18 +810,14 @@ const GalleryPage: React.FC = () => {
           gsap.to(other.el, { opacity: 0, duration: 0.5, ease: 'sine.out' });
         }
       });
-      if (labelsRef.current) gsap.to(labelsRef.current, { opacity: 0, duration: 0.3 });
 
       currentSlideRef.current = item.photoIndex;
-      const meta = photoMetaRef.current[item.photoIndex];
       waitForLarge(item.photoIndex, 700).then(() => {
         if (activeItemRef.current !== item) return;
         gsap.to(spot, { z: 1, duration: 0.8, ease, onComplete: settle });
-        if (meta) {
-          gsap.delayedCall(0.55, () => {
-            if (activeItemRef.current === item) showDetail(meta);
-          });
-        }
+        gsap.delayedCall(0.55, () => {
+          if (activeItemRef.current === item) showDetail(item.photoIndex);
+        });
       });
 
       preloadNeighbours(item.photoIndex);
@@ -712,6 +832,7 @@ const GalleryPage: React.FC = () => {
         if (img) {
           img.dataset.want = '';
           img.src = THUMB_SOURCES[item.homeIndex];
+          img.style.objectPosition = '';
         }
         el.style.willChange = COARSE_POINTER ? '' : 'transform';
         el.style.zIndex = '';
@@ -747,7 +868,6 @@ const GalleryPage: React.FC = () => {
             gsap.to(other.el, { opacity: 1, duration: 0.5, ease: 'sine.inOut', delay: 0.25 });
           }
         });
-        if (labelsRef.current) gsap.to(labelsRef.current, { opacity: 1, duration: 0.4, delay: 0.5 });
         return;
       }
 
@@ -769,28 +889,7 @@ const GalleryPage: React.FC = () => {
 
     // --- Chronological view ---
 
-    const renderLabels = (labels: { x: number; y: number; text: string }[]) => {
-      const box = labelsRef.current;
-      if (!box) return;
-      box.innerHTML = '';
-      labels.forEach((label) => {
-        const el = document.createElement('div');
-        el.textContent = label.text;
-        el.style.cssText = `
-          position: absolute;
-          left: ${label.x}px;
-          top: ${label.y}px;
-          font-size: 13px;
-          font-weight: 700;
-          color: #000;
-          white-space: nowrap;
-        `;
-        box.appendChild(el);
-      });
-    };
-
-    // One copy of each photo, in date order, in a grid sized to fit the screen,
-    // with a month label under the first photo of each month
+    // One copy of each photo, in date order, in a grid sized to fit the screen
     const computeTimeline = () => {
       const win = winRef.current;
       const scroll = scrollRef.current;
@@ -812,51 +911,66 @@ const GalleryPage: React.FC = () => {
         .map((c) => c.item)
         .sort((a, b) => dateOf(a).localeCompare(dateOf(b)) || a.homeIndex - b.homeIndex);
 
-      // Column count that gives the biggest cells
+      // Masonry: equal-width columns, each photo at its own shape, dropped into
+      // the shortest column so the order still reads left to right, top to bottom.
+      // Try every column count and keep the one with the widest columns that fit.
       const isMobile = win.w < 768;
-      const top = 80;
-      const bottom = 80;
-      const side = isMobile ? 16 : win.w * 0.06;
-      const gap = isMobile ? 8 : 16;
-      const labelH = 22;
+      const top = isMobile ? 72 : 96;
+      const bottom = isMobile ? 72 : 96;
+      const side = isMobile ? 16 : win.w * 0.08;
+      const gap = isMobile ? 10 : 22;
       const areaW = win.w - side * 2;
       const areaH = win.h - top - bottom;
       const n = ordered.length;
-      let cols = 1;
-      let cell = 0;
-      for (let c = 1; c <= n; c++) {
-        const r = Math.ceil(n / c);
-        const size = Math.min((areaW - gap * (c - 1)) / c, (areaH - gap * (r - 1)) / r - labelH);
-        if (size > cell) {
-          cols = c;
-          cell = size;
-        }
-      }
-      const rows = Math.ceil(n / cols);
-      const left = (win.w - (cols * cell + gap * (cols - 1))) / 2;
-      const gridTop = top + (areaH - (rows * (cell + labelH) + gap * (rows - 1))) / 2;
-
-      const labels: { x: number; y: number; text: string }[] = [];
-      let lastMonth = '';
-      ordered.forEach((item, i) => {
-        const cellX = left + (i % cols) * (cell + gap);
-        const cellY = gridTop + Math.floor(i / cols) * (cell + labelH + gap);
-        // Fit the photo itself, not its letterboxed box, inside the cell
+      const aspects = ordered.map((item) => {
         const img = item.el?.querySelector('img');
-        const aspect = img?.naturalWidth ? img.naturalWidth / img.naturalHeight : item.w / item.h;
-        const photoW = Math.min(item.w, item.h * aspect);
-        const photoH = photoW / aspect;
-        const s = Math.min(cell / photoW, cell / photoH);
-        // Tiles scale around their centre, so centre the box on the cell
-        item.timeline = { x: cellX + cell / 2 - item.w / 2, y: cellY + cell / 2 - item.h / 2, s };
-
-        const month = dateOf(item).slice(0, 7);
-        if (month !== lastMonth && month !== '9999') {
-          labels.push({ x: cellX, y: cellY + cell + 4, text: formatMonth(month) });
-          lastMonth = month;
-        }
+        return img?.naturalWidth ? img.naturalWidth / img.naturalHeight : item.w / item.h;
       });
-      renderLabels(labels);
+
+      let best = { colW: 0, cols: 1, colOf: [] as number[] };
+      for (let c = 1; c <= n; c++) {
+        const widthFit = (areaW - gap * (c - 1)) / c;
+        if (widthFit <= 0) break;
+        // Shortest-column placement, measured at the width-limited size
+        const heights = new Array(c).fill(0);
+        const inverse = new Array(c).fill(0); // sum of height/width per column
+        const counts = new Array(c).fill(0);
+        const colOf = aspects.map((a) => {
+          const col = heights.indexOf(Math.min(...heights));
+          heights[col] += widthFit / a + gap;
+          inverse[col] += 1 / a;
+          counts[col]++;
+          return col;
+        });
+        // Narrow the columns until the tallest one fits, keeping gaps fixed
+        let colW = widthFit;
+        for (let k = 0; k < c; k++) {
+          if (counts[k]) colW = Math.min(colW, (areaH - gap * (counts[k] - 1)) / inverse[k]);
+        }
+        if (colW > best.colW) best = { colW, cols: c, colOf };
+      }
+
+      const { colW, cols, colOf } = best;
+      const colX = (k: number) => (win.w - (cols * colW + gap * (cols - 1))) / 2 + k * (colW + gap);
+      const colY = new Array(cols).fill(0);
+      const cells = ordered.map((_, i) => {
+        const h = colW / aspects[i];
+        const cell = { x: colX(colOf[i]), y: colY[colOf[i]], h };
+        colY[colOf[i]] += h + gap;
+        return cell;
+      });
+      // Centre the whole block vertically
+      const blockH = Math.max(...colY) - gap;
+      const offsetY = top + (areaH - blockH) / 2;
+
+      ordered.forEach((item, i) => {
+        const { x, y, h } = cells[i];
+        // Scale so the photo itself, not its letterboxed box, fills the cell
+        const photoW = Math.min(item.w, item.h * aspects[i]);
+        const s = colW / photoW;
+        // Tiles scale around their centre, so centre the box on the cell
+        item.timeline = { x: x + colW / 2 - item.w / 2, y: offsetY + y + h / 2 - item.h / 2, s };
+      });
     };
 
     // Copies left out of the timeline are hidden and unclickable while it shows
@@ -872,7 +986,6 @@ const GalleryPage: React.FC = () => {
       const layout = layoutRef.current;
       if (layout.animating || activeItemRef.current || on === (layout.mode === 'timeline')) return;
       layout.animating = true;
-      const labels = labelsRef.current;
       const ease = 'power3.inOut';
 
       if (on) {
@@ -880,10 +993,8 @@ const GalleryPage: React.FC = () => {
         layout.mode = 'timeline';
         hideExtraCopies(0.4);
         gsap.to(layout, { t: 1, duration: 1.1, ease, onComplete: () => { layout.animating = false; } });
-        if (labels) gsap.to(labels, { opacity: 1, duration: 0.4, delay: 0.9 });
       } else {
         layout.mode = 'scatter';
-        if (labels) gsap.to(labels, { opacity: 0, duration: 0.25 });
         itemsRef.current.forEach((item) => {
           if (!item.el || item.timeline) return;
           item.el.style.pointerEvents = '';
@@ -901,7 +1012,10 @@ const GalleryPage: React.FC = () => {
       }
       setChronological(on);
     };
-    toggleLayoutRef.current = () => setTimeline(layoutRef.current.mode !== 'timeline');
+    toggleLayoutRef.current = () => {
+      if (activeItemRef.current) closeSpotlight();
+      else setTimeline(layoutRef.current.mode !== 'timeline');
+    };
 
     const onClick = (e: MouseEvent) => {
       if ((e.target as HTMLElement).closest('nav')) return;
@@ -914,15 +1028,20 @@ const GalleryPage: React.FC = () => {
         return;
       }
 
-      // Close spotlight if zoomed; ignore clicks while it is opening or closing
-      if (isZoomed.current) {
-        closeSpotlight();
+      const tileEl = (e.target as HTMLElement).closest('.item');
+
+      // While a photo is open any click closes it back to the grid. The other tiles
+      // are faded out, so anything but the photo itself is white space, which also
+      // recolors the circle (even mid-animation, when it can't close yet).
+      if (activeItemRef.current) {
+        const onPhoto = !!tileEl && tileEl === activeItemRef.current.el;
+        if (!onPhoto) cycleCircleColors();
+        if (isZoomed.current) closeSpotlight();
         return;
       }
-      if (activeItemRef.current || layoutRef.current.animating) return;
+      if (layoutRef.current.animating) return;
 
       // Check if clicked on a tile
-      const tileEl = (e.target as HTMLElement).closest('.item');
       if (tileEl) {
         const clickedItem = itemsRef.current.find((it) => it.el === tileEl);
         if (clickedItem) {
@@ -1219,7 +1338,6 @@ const GalleryPage: React.FC = () => {
         if (layoutRef.current.mode === 'timeline') {
           computeTimeline();
           hideExtraCopies(0);
-          if (labelsRef.current) gsap.set(labelsRef.current, { opacity: 1 });
         }
       }, 150);
     };
@@ -1261,31 +1379,80 @@ const GalleryPage: React.FC = () => {
       // doesn't also scroll, bounce, zoom or swipe back
       style={{ background: 'transparent', touchAction: 'none' }}
     >
-      <Navigation variant="homepage" />
+      <Navigation variant="spread" hidden={photoOpen} />
       <div
         ref={containerRef}
         className="w-full h-full relative"
         style={{ zIndex: 20, willChange: COARSE_POINTER ? 'transform' : undefined }}
       />
-      {/* Month labels for the chronological view, filled by computeTimeline */}
-      <div ref={labelsRef} className="fixed inset-0 pointer-events-none" style={{ zIndex: 21, opacity: 0 }} />
 
       <button
         className="layout-toggle fixed bottom-6 left-1/2 -translate-x-1/2 text-lg sm:text-xl font-bold text-black hover:opacity-70 transition-opacity"
         style={{ zIndex: 50 }}
         onClick={() => toggleLayoutRef.current?.()}
       >
-        {chronological ? 'Scattered' : 'Chronological'}
+        {photoOpen ? 'See all' : chronological ? 'Scattered' : 'Chronological'}
       </button>
 
-      {/* Slideshow arrows — positioned halfway between image and canvas edge */}
+      {/* Caption — beside or under the open photo, placed by placeCaption */}
+      <div
+        ref={captionRef}
+        style={{
+          display: SHOW_CAPTIONS ? undefined : 'none',
+          position: 'fixed',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 'min(34rem, 84vw)',
+          zIndex: 25,
+          pointerEvents: 'none',
+          textAlign: 'center',
+          color: '#000',
+        }}
+      >
+        <div
+          ref={detailIndexRef}
+          style={{
+            opacity: 0,
+            fontSize: '0.68rem',
+            letterSpacing: '0.18em',
+            color: '#999',
+            fontVariantNumeric: 'tabular-nums',
+            marginBottom: '0.6rem',
+          }}
+        />
+        <div
+          ref={detailTitleRef}
+          style={{
+            opacity: 0,
+            fontSize: 'clamp(1.05rem, 1.5vw, 1.3rem)',
+            fontStyle: 'italic',
+            fontWeight: 400,
+            lineHeight: 1.3,
+            letterSpacing: '0.005em',
+          }}
+        />
+        <div
+          ref={detailBlurbRef}
+          style={{
+            opacity: 0,
+            marginTop: '0.55rem',
+            fontSize: 'clamp(0.8rem, 0.95vw, 0.9rem)',
+            lineHeight: 1.65,
+            color: '#555',
+            textWrap: 'pretty',
+          }}
+        />
+      </div>
+
+      {/* Slideshow arrows — placed by showArrows */}
       <button
         ref={arrowLeftRef}
         className="detail-arrow"
         onClick={() => navigateSlide(-1)}
+        aria-label="Previous photo"
         style={{
           position: 'fixed',
-          left: '12.5%',
+          left: '7.5%',
           top: '50%',
           transform: 'translate(-50%, -50%)',
           opacity: 0,
@@ -1293,20 +1460,23 @@ const GalleryPage: React.FC = () => {
           background: 'none',
           border: 'none',
           cursor: 'pointer',
-          fontSize: '1.5rem',
           color: '#000',
-          padding: '10px',
+          padding: '12px',
+          lineHeight: 0,
         }}
       >
-        &larr;
+        <svg width="28" height="46" viewBox="0 0 12 20" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="square" strokeLinejoin="miter">
+          <polyline points="10,2 2,10 10,18" />
+        </svg>
       </button>
       <button
         ref={arrowRightRef}
         className="detail-arrow"
         onClick={() => navigateSlide(1)}
+        aria-label="Next photo"
         style={{
           position: 'fixed',
-          right: '12.5%',
+          right: '7.5%',
           top: '50%',
           transform: 'translate(50%, -50%)',
           opacity: 0,
@@ -1314,12 +1484,14 @@ const GalleryPage: React.FC = () => {
           background: 'none',
           border: 'none',
           cursor: 'pointer',
-          fontSize: '1.5rem',
           color: '#000',
-          padding: '10px',
+          padding: '12px',
+          lineHeight: 0,
         }}
       >
-        &rarr;
+        <svg width="28" height="46" viewBox="0 0 12 20" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="square" strokeLinejoin="miter">
+          <polyline points="2,2 10,10 2,18" />
+        </svg>
       </button>
     </div>
   );

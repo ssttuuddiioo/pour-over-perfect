@@ -33,8 +33,8 @@ const BuyPage: React.FC = () => {
       {/* Mobile layout — single centered column */}
       <div className="flex md:hidden flex-col items-center px-8 pt-40">
         <img
-          src="/photo-final/web/11.jpg"
-          alt="Coffee Package"
+          src="/photo-final/buy-web.jpg"
+          alt="Three Origen coffee bags with orange, blue and green circles"
           className="object-contain mb-10"
           style={{ width: 300 }}
         />
@@ -74,8 +74,8 @@ const BuyPage: React.FC = () => {
       <div className="hidden md:grid min-h-screen grid-cols-[1.2fr_1fr]">
         <div className="flex items-center justify-center" style={{ padding: '200px' }}>
           <img
-            src="/photo-final/web/11.jpg"
-            alt="Coffee Package"
+            src="/photo-final/buy-web.jpg"
+            alt="Three Origen coffee bags with orange, blue and green circles"
             className="w-full h-full object-contain"
           />
         </div>

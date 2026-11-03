@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
-import { useCircleTransition } from '../context/CircleTransitionContext';
+import { useCircleTransition, circleSize } from '../context/CircleTransitionContext';
 import Navigation from './shared/Navigation';
 
 const CoffeePage: React.FC = () => {
@@ -12,13 +12,12 @@ const CoffeePage: React.FC = () => {
 
   useEffect(() => {
     if (!circleRef.current) return;
+    // Same size as on every other page, phones included
+    gsap.set(circleRef.current, { width: circleSize(), height: circleSize() });
     // Skip circle animation on mobile — no cursor to follow
     if (window.innerWidth < 768) return;
 
     gsap.set(circleRef.current, {
-      width: 840,
-      height: 840,
-      scale: 0.2,
       position: 'fixed',
       left: circlePosition.current.x,
       top: circlePosition.current.y,

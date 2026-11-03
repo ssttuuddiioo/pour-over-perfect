@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
 import { useCircleTransition } from '../../context/CircleTransitionContext';
 
 interface CircleTransitionProps {
@@ -13,6 +14,17 @@ const CIRCLE_COLORS = ['#FF6700', '#39FF14', '#1A1AFF']; // orange, bright green
 // How far each trail circle closes on the one ahead per 60fps frame
 const TRAIL_FOLLOW = [0.2, 0.2];
 
+// Scrolling down grows the circle and scrolling up shrinks it, between half and
+// four times its load size (circleSize). Wheel/trackpad on desktop, finger drags
+// on touch screens, so it works the same on the gallery (custom scroll) and on
+// normal scrolling pages. The scale eases toward its target every frame.
+const SCROLL_SCALE_MIN = 0.5;
+const SCROLL_SCALE_MAX = 4;
+// Growth per pixel scrolled; multiplicative, so up and down feel even.
+// About 2,600px of scrolling takes it from smallest to largest.
+const SCROLL_SCALE_RATE = 0.0008;
+const SCROLL_SCALE_EASE = 0.1;
+
 const colorAt = (shift: number, i: number) => CIRCLE_COLORS[(shift + i) % CIRCLE_COLORS.length];
 
 const CircleTransition: React.FC<CircleTransitionProps> = ({ className = '' }) => {
@@ -21,6 +33,31 @@ const CircleTransition: React.FC<CircleTransitionProps> = ({ className = '' }) =
 
   useEffect(() => {
     const trail = TRAIL_FOLLOW.map(() => ({ x: 0, y: 0, size: 0 }));
+
+    const zoom = { target: 1, current: 1 };
+    const nudge = (deltaY: number) => {
+      zoom.target = Math.min(SCROLL_SCALE_MAX, Math.max(SCROLL_SCALE_MIN,
+        zoom.target * Math.exp(deltaY * SCROLL_SCALE_RATE)));
+    };
+    const onWheel = (e: WheelEvent) => {
+      // Lines/pages to pixels, for mice that report in lines
+      const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1;
+      nudge(e.deltaY * unit);
+    };
+    let touchY: number | null = null;
+    const onTouchStart = (e: TouchEvent) => { touchY = e.touches[0]?.clientY ?? null; };
+    const onTouchMove = (e: TouchEvent) => {
+      const y = e.touches[0]?.clientY;
+      if (y == null || touchY == null) return;
+      // Finger moving up scrolls down
+      nudge(touchY - y);
+      touchY = y;
+    };
+    const onTouchEnd = () => { touchY = null; };
+    window.addEventListener('wheel', onWheel, { passive: true });
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
     let wasHidden = true;
     let shownShift = -1;
     let frameId: number;
@@ -42,6 +79,11 @@ const CircleTransition: React.FC<CircleTransitionProps> = ({ className = '' }) =
           if (el) el.style.backgroundColor = colorAt(shift, i + 1);
         });
         shownShift = shift;
+      }
+
+      if (lead && Math.abs(zoom.target - zoom.current) > 0.0005) {
+        zoom.current += (zoom.target - zoom.current) * (1 - Math.pow(1 - SCROLL_SCALE_EASE, frames));
+        gsap.set(lead, { scale: zoom.current });
       }
 
       if (lead && !hidden) {
@@ -76,7 +118,13 @@ const CircleTransition: React.FC<CircleTransitionProps> = ({ className = '' }) =
     };
 
     frameId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frameId);
+    return () => {
+      cancelAnimationFrame(frameId);
+      window.removeEventListener('wheel', onWheel);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
   }, [circleRef, circleColorShift]);
 
   return (

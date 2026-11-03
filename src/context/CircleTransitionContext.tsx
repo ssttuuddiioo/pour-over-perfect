@@ -41,6 +41,9 @@ interface CircleTransitionContextType {
   setCircleMode: (mode: CircleMode) => void;
 }
 
+// One circle size on every page: medium, shrinking on narrow screens
+export const circleSize = () => Math.round(Math.min(280, window.innerWidth * 0.45));
+
 export const CircleTransitionContext = createContext<CircleTransitionContextType | undefined>(undefined);
 
 export const useCircleTransition = () => {
@@ -141,15 +144,15 @@ export const CircleTransitionProvider: React.FC<{ children: React.ReactNode }> =
       const config = getAnimationConfig(initialMode);
       
       gsap.set(circleRef.current, {
-        width: config.width,
-        height: config.height,
+        width: circleSize(),
+        height: circleSize(),
         left: config.left,
         top: config.top,
         x: config.x,
         y: config.y,
         xPercent: config.xPercent,
         yPercent: config.yPercent,
-        scale: config.scale
+        scale: 1
       });
       
       setCircleState(prev => ({ ...prev, mode: initialMode }));
