@@ -77,7 +77,7 @@ export const CircleTransitionProvider: React.FC<{ children: React.ReactNode }> =
       case '/': return 'gallery';
       case '/home': return 'front';
       case '/timer': return 'timer';
-      case '/origen': return 'coffee';
+      case '/story': return 'coffee';
       case '/about': return 'front';
       case '/buy': return 'front';
       case '/contact': return 'contact';
@@ -126,7 +126,7 @@ export const CircleTransitionProvider: React.FC<{ children: React.ReactNode }> =
     const newMode = getCircleModeFromPath(location.pathname);
 
     // Circle visible on gallery and origen pages only — use GSAP directly, no state updates
-    if (location.pathname === '/' || location.pathname === '/origen') {
+    if (location.pathname === '/' || location.pathname === '/story') {
       if (circleRef.current) {
         gsap.set(circleRef.current, { pointerEvents: 'none', display: 'flex' });
       }

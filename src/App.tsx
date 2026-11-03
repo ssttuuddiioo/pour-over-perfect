@@ -4,8 +4,8 @@ import BrewingApp from './components/BrewingApp';
 import HomePage from './components/HomePage';
 import GalleryPage from './components/GalleryPage';
 import CoffeePage from './components/CoffeePage';
+import OrigenStoryPage from './components/OrigenStoryPage';
 import BuyPage from './components/BuyPage';
-import StoryPage from './components/StoryPage';
 import { ThemeProvider } from './context/ThemeContext';
 import { CircleTransitionProvider } from './context/CircleTransitionContext';
 import CircleTransition from './components/shared/CircleTransition';
@@ -53,13 +53,15 @@ const AppContent: React.FC = () => {
             }
           />
           <Route
-            path="/origen"
+            path="/coffee"
             element={
               <ErrorBoundary fallback={<PageErrorFallback />}>
                 <CoffeePage />
               </ErrorBoundary>
             }
           />
+          {/* The story used to live at /origen */}
+          <Route path="/origen" element={<Navigate to="/story" replace />} />
           <Route
             path="/buy"
             element={
@@ -76,11 +78,11 @@ const AppContent: React.FC = () => {
               </ErrorBoundary>
             } 
           />
-          <Route 
-            path="/story" 
+          <Route
+            path="/story"
             element={
               <ErrorBoundary fallback={<PageErrorFallback />}>
-                <StoryPage />
+                <OrigenStoryPage />
               </ErrorBoundary>
             }
           />

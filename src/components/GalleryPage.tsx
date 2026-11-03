@@ -1379,7 +1379,7 @@ const GalleryPage: React.FC = () => {
       // doesn't also scroll, bounce, zoom or swipe back
       style={{ background: 'transparent', touchAction: 'none' }}
     >
-      <Navigation variant="spread" hidden={photoOpen} />
+      <Navigation variant="spread" />
       <div
         ref={containerRef}
         className="w-full h-full relative"

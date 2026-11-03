@@ -1,192 +1,111 @@
-import React, { useEffect, useRef } from 'react';
-import { gsap } from 'gsap';
-import { useCircleTransition, circleSize } from '../context/CircleTransitionContext';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navigation from './shared/Navigation';
 
+// The coffees we have now: all Castillo from Finca Bellavista, one per process.
+// Each gets a full-height panel in its bag's color. `ink` is the text color that
+// reads on that color (white is unreadable on the neon green).
+const COFFEES = [
+  { color: '#1A1AFF', ink: '#fff', process: 'Natural', notes: 'Red wine, raisin, dark chocolate' },
+  { color: '#39FF14', ink: '#000', process: 'Honey', notes: 'Honeysuckle, apricot, lime' },
+  { color: '#FF6700', ink: '#000', process: 'Washed', notes: 'Hazelnut, clean, classic' },
+];
+
 const CoffeePage: React.FC = () => {
-  const { circleRef, circlePosition } = useCircleTransition();
-  const circleMousePos = useRef({ x: 0, y: 0 });
-  const circleTargetPos = useRef({ x: 0, y: 0 });
-  const circleIsPinned = useRef(false);
-  const circlePinnedPos = useRef({ x: 0, y: 0 });
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!circleRef.current) return;
-    // Same size as on every other page, phones included
-    gsap.set(circleRef.current, { width: circleSize(), height: circleSize() });
-    // Skip circle animation on mobile — no cursor to follow
-    if (window.innerWidth < 768) return;
-
-    gsap.set(circleRef.current, {
-      position: 'fixed',
-      left: circlePosition.current.x,
-      top: circlePosition.current.y,
-      xPercent: -50,
-      yPercent: -50,
-      transformOrigin: 'center center',
-      zIndex: 10,
-      force3D: true,
-      willChange: 'transform, width, height',
-      backfaceVisibility: 'hidden',
-      perspective: 1000,
-      opacity: 1,
-      visibility: 'visible',
-      display: 'flex',
-    });
-
-    const cx = circlePosition.current.x;
-    const cy = circlePosition.current.y;
-    circleTargetPos.current = { x: cx, y: cy };
-    circleMousePos.current = { x: cx, y: cy };
-
-    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (!circleIsPinned.current) {
-        circleMousePos.current = { x: e.clientX, y: e.clientY };
-      }
-    };
-
-    const onClick = (e: MouseEvent) => {
-      if ((e.target as HTMLElement).closest('a')) return;
-      if (circleIsPinned.current) {
-        circleIsPinned.current = false;
-      } else {
-        circleIsPinned.current = true;
-        circlePinnedPos.current = { ...circleMousePos.current };
-        circleTargetPos.current = { ...circlePinnedPos.current };
-      }
-    };
-
-    let frameId: number;
-    const animate = () => {
-      if (circleRef.current) {
-        const targetX = circleIsPinned.current ? circlePinnedPos.current.x : circleMousePos.current.x;
-        const targetY = circleIsPinned.current ? circlePinnedPos.current.y : circleMousePos.current.y;
-        circleTargetPos.current.x = lerp(circleTargetPos.current.x, targetX, circleIsPinned.current ? 1 : 0.1);
-        circleTargetPos.current.y = lerp(circleTargetPos.current.y, targetY, circleIsPinned.current ? 1 : 0.1);
-
-        gsap.set(circleRef.current, {
-          left: circleTargetPos.current.x,
-          top: circleTargetPos.current.y,
-          xPercent: -50,
-          yPercent: -50,
-          opacity: 1,
-        });
-
-        circlePosition.current.x = circleTargetPos.current.x;
-        circlePosition.current.y = circleTargetPos.current.y;
-      }
-      frameId = requestAnimationFrame(animate);
-    };
-
-    window.addEventListener('mousemove', onMouseMove, { passive: true });
-    window.addEventListener('click', onClick);
-    frameId = requestAnimationFrame(animate);
-
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('click', onClick);
-      cancelAnimationFrame(frameId);
-    };
-  }, [circleRef]);
+  const farm = (
+    <>
+      <p>Castillo, grown by Oscar Castro</p>
+      <p>Finca Bellavista, Charal&aacute;, Santander &bull; 1900masl</p>
+      <p>
+        Roasted at{' '}
+        <a href="https://www.multimodalroasting.com/" target="_blank" rel="noopener noreferrer" className="underline hover:opacity-70 transition-opacity">
+          Multimodal
+        </a>
+      </p>
+    </>
+  );
+  const buy = (
+    <>
+      <p>100g &mdash; $10</p>
+      <p>250g &mdash; $20</p>
+      <p className="pt-3">
+        <span className="italic">Coming soon.</span>{' '}
+        <button onClick={() => navigate('/buy')} className="underline hover:opacity-70 transition-opacity">
+          Get notified
+        </button>
+      </p>
+    </>
+  );
+  // What sits on the right of each band
+  const sides = [<p className="italic">Three coffees from one lot</p>, farm, buy];
 
   return (
-    <div className="min-h-screen bg-[#1a1aff] text-white px-12 md:px-24 lg:px-32 py-16 md:py-20 relative">
+    <div className="min-h-screen bg-white">
       <Navigation variant="homepage" />
 
-      {/* Content layer — above circle */}
-      <div className="relative" style={{ zIndex: 20 }}>
-
-      {/* Header */}
-      <h1 className="text-3xl md:text-4xl mb-16 md:mb-20 pt-12">
-        Origen
-      </h1>
-
-      {/* Two column layout — farm details + story */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 text-sm md:text-base leading-relaxed">
-
-        {/* Left — at a glance */}
-        <div className="space-y-8">
-          <div className="space-y-0.5">
-            <p>Charal&aacute;, Santander, Colombia &bull; 1900masl</p>
-            <p>Grown by Oscar Castro at Finca Bellavista</p>
-          </div>
-
-          <p>Roasted at <a href="https://www.multimodalroasting.com/" target="_blank" rel="noopener noreferrer" className="underline hover:opacity-70 transition-opacity">Multimodal</a></p>
-
-          <p className="italic">
-            Three new coffees, coming soon
-          </p>
-
-          <hr className="border-white/40 mt-10" />
+      {/* Desktop — the drying tunnel full height on the left (the menu sits on it),
+          the three coffees as horizontal bands in the bag colors on the right. Each
+          band: the process and notes on the left, what we share on the right. */}
+      <div className="hidden md:grid grid-cols-[2fr_3fr] h-screen">
+        <div className="relative h-full overflow-hidden">
+          <img
+            src="/photo-final/large/29.jpg"
+            alt="Coffee drying on raised beds inside a greenhouse tunnel at Finca Bellavista"
+            className="w-full h-full object-cover"
+          />
+          {/* Darken the top and bottom so the white menu reads over the photo */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 28%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.55) 100%)' }}
+          />
         </div>
 
-        {/* Right — story */}
-        <div className="space-y-6">
-          <p>
-            Our coffee is from Charal&aacute;, a quiet town in Colombia&rsquo;s
-            eastern Andes. I found myself there by chance two
-            years ago &ndash; I was born in Bogot&aacute; but grew up in the
-            States, and had taken on a 1,000-kilometer bikepacking
-            race across the country&rsquo;s cordilleras as a way to see
-            more. By day three, I was exhausted &ndash; physically,
-            emotionally, completely. I turned in my tracker,
-            withdrew from the race, and rolled into Charal&aacute;, spent.
-          </p>
-
-          <p>
-            The next afternoon, on a whim, I asked my hostel
-            manager if he knew anybody with a coffee farm. He
-            made a phone call, and a few hours later, Oscar Castro
-            pulled up in his pickup truck. We spent the next forty
-            minutes rattling up unpaved roads, climbing out above
-            town, to Finca Bellavista.
-          </p>
-
-          <p>
-            He showed me every corner of the operation: the rows
-            of drying beds, the processing area, the particular slope
-            where the soil drained best. His pride in the work, and
-            in the land itself, had a solidity to it.
-          </p>
-
-          <p>
-            I rode back to Bogot&aacute; at my own pace, thinking about
-            how to bring his coffee to New York. A year (and
-            endless WhatsApp voice notes later), a small lot arrived
-            at my apartment, the beans still encased in parchment.
-            I hulled it entirely by hand in Brooklyn, roasted it at
-            Multimodal in Queens, and sold twenty bags to friends
-            and family. I delivered every local order on my bike.
-          </p>
-
-          <p>
-            In October 2025, I went back to the farm, this time with
-            my grandparents. My grandfather is from the
-            Santander region himself, an agriculturist who spent
-            his career traveling all of Colombia. He and Oscar
-            walked the farm together with ease, trading stories
-            about soil and seasons.
-          </p>
-
-          <p>
-            Every trip back to Colombia offers more than I know
-            how to return. This project is one small way of carrying
-            that generosity outward.
-          </p>
-
-          <p>
-            Thank you for trying it.<br />
-            <a href="https://yopablo.com" target="_blank" rel="noopener noreferrer" className="underline hover:opacity-70 transition-opacity">Pablo</a>
-          </p>
+        <div className="grid grid-rows-3 h-full">
+          {COFFEES.map((coffee, i) => (
+            <section
+              key={coffee.process}
+              className="grid grid-cols-[1fr_minmax(0,18rem)] gap-8 items-end text-[1rem] lg:text-[1.125rem] leading-relaxed"
+              style={{
+                backgroundColor: coffee.color,
+                color: coffee.ink,
+                padding: 'clamp(1.25rem, 3.5vh, 2.75rem) clamp(1.5rem, 3vw, 3.5rem)',
+              }}
+            >
+              <div>
+                <h2 className="italic leading-none mb-3" style={{ fontSize: 'var(--nav-word)' }}>
+                  {coffee.process}
+                </h2>
+                <p>{coffee.notes}</p>
+              </div>
+              <div className="space-y-0.5">{sides[i]}</div>
+            </section>
+          ))}
         </div>
       </div>
 
-      {/* Orange circle */}
-      <div className="mt-20 mb-8">
-        <div className="w-16 h-16 rounded-full bg-[#ff6700]" />
-      </div>
+      {/* Phones — the photo, the panels stacked, then the shared details */}
+      <div className="md:hidden pt-[72px]">
+        <img
+          src="/photo-final/large/29.jpg"
+          alt="Coffee drying on raised beds inside a greenhouse tunnel at Finca Bellavista"
+          className="w-full h-[60vh] object-cover"
+        />
+        {COFFEES.map((coffee) => (
+          <section
+            key={coffee.process}
+            className="px-8 py-14 min-h-[42vh]"
+            style={{ backgroundColor: coffee.color, color: coffee.ink }}
+          >
+            <h2 className="text-5xl italic leading-none mb-4">{coffee.process}</h2>
+            <p className="text-base leading-relaxed">{coffee.notes}</p>
+          </section>
+        ))}
+        <div className="px-8 py-12 space-y-6 text-black text-base leading-relaxed">
+          <div className="space-y-0.5">{farm}</div>
+          <div className="space-y-0.5">{buy}</div>
+        </div>
       </div>
     </div>
   );
