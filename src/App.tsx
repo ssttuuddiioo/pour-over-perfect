@@ -5,6 +5,7 @@ import HomePage from './components/HomePage';
 import GalleryPage from './components/GalleryPage';
 import CoffeePage from './components/CoffeePage';
 import OrigenStoryPage from './components/OrigenStoryPage';
+import InventoryPage from './components/InventoryPage';
 import BuyPage from './components/BuyPage';
 import { ThemeProvider } from './context/ThemeContext';
 import { CircleTransitionProvider } from './context/CircleTransitionContext';
@@ -57,6 +58,15 @@ const AppContent: React.FC = () => {
             element={
               <ErrorBoundary fallback={<PageErrorFallback />}>
                 <CoffeePage />
+              </ErrorBoundary>
+            }
+          />
+          {/* Bag reservations for friends; password protected, not in the menu */}
+          <Route
+            path="/inventory"
+            element={
+              <ErrorBoundary fallback={<PageErrorFallback />}>
+                <InventoryPage />
               </ErrorBoundary>
             }
           />
