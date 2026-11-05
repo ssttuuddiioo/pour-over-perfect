@@ -60,6 +60,23 @@ const InventoryPage: React.FC = () => {
     return () => meta.remove();
   }, []);
 
+  // The page fits one phone screen, so the window itself never scrolls or bounces
+  // here (the site's body is otherwise at least 884px tall, a touch taller than an
+  // iPhone screen). Only the page box scrolls, and only if the reserved list
+  // makes it taller than the screen.
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const prev = [html.style.overflow, body.style.overflow, body.style.minHeight, body.style.overscrollBehavior];
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    body.style.minHeight = '0';
+    body.style.overscrollBehavior = 'none';
+    return () => {
+      [html.style.overflow, body.style.overflow, body.style.minHeight, body.style.overscrollBehavior] = prev;
+    };
+  }, []);
+
   const load = async (pw: string) => {
     setStatus('loading');
     setMessage('');
@@ -210,11 +227,11 @@ const InventoryPage: React.FC = () => {
   const reservedList = SLOTS.filter((s) => isReserved(entries[s.slot]));
 
   return (
-    <div className="inventory-paper min-h-screen text-black" style={{ fontFamily: "'Jost', 'Futura', sans-serif" }}>
+    <div className="inventory-paper h-[100dvh] overflow-y-auto overscroll-none text-black" style={{ fontFamily: "'Jost', 'Futura', sans-serif" }}>
     {/* Everything above the reserved list is sized in grid units (--u, one 100g
         cell) so it sits on the paper's lines: text rows are one unit tall, the
         250g row two. See .inventory-paper in index.css. */}
-    <div className="pb-24" style={{ padding: 'var(--u) var(--pad) 6rem', maxWidth: 'calc(var(--gw) + 2 * var(--pad))' }}>
+    <div style={{ padding: 'var(--u) var(--pad)', maxWidth: 'calc(var(--gw) + 2 * var(--pad))' }}>
       <header className="flex items-center justify-between gap-4" style={{ height: 'var(--u)' }}>
         <h1 className="text-3xl md:text-4xl leading-none">Inventory</h1>
         <span className="text-sm text-black/50">
@@ -223,18 +240,12 @@ const InventoryPage: React.FC = () => {
         </span>
       </header>
 
-      {/* Key: big cells 250g, small cells 100g */}
-      <div className="flex items-center gap-4 text-xs text-black/50" style={{ height: 'var(--u)' }}>
-        <span className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 border" style={{ borderColor: RULE }} />250g</span>
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 border" style={{ borderColor: RULE }} />100g</span>
-      </div>
-
       <div style={{ width: 'var(--gw)' }}>
         {STOCK.map(({ coffee }, i) => {
           const mine = SLOTS.filter((s) => s.coffee === coffee);
           const left = mine.filter((s) => !isReserved(entries[s.slot])).length;
           return (
-            <section key={coffee} style={{ marginTop: i === 0 ? 0 : 'var(--u)' }}>
+            <section key={coffee} style={{ marginTop: i === 0 ? 0 : 'calc(var(--u) / 2)' }}>
               <div className="flex items-center justify-between" style={{ height: 'var(--u)' }}>
                 <h2 className="text-xl leading-none">{coffee}</h2>
                 <span className="text-sm text-black/50">{left} of {mine.length} open</span>

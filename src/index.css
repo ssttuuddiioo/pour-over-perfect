@@ -208,6 +208,8 @@
     linear-gradient(to bottom, transparent calc(var(--u) - 1px), rgba(26, 26, 255, 0.13) calc(var(--u) - 1px));
   background-size: var(--u) var(--u);
   background-position: var(--pad) 0;
+  /* The page box is what scrolls (if anything), so move the paper with it */
+  background-attachment: local;
 }
 @media (min-width: 768px) {
   .inventory-paper {
