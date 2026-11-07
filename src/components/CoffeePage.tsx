@@ -45,7 +45,7 @@ const CoffeePage: React.FC = () => {
     <div className="min-h-screen bg-white">
       <Navigation variant="homepage" />
 
-      {/* Desktop — the drying tunnel full height on the left (the menu sits on it),
+      {/* Desktop — the drying tunnel full height on the left,
           the three coffees as horizontal bands in the bag colors on the right. Each
           band: the process and notes on the left, what we share on the right. */}
       <div className="hidden md:grid grid-cols-[2fr_3fr] h-screen">
@@ -54,11 +54,6 @@ const CoffeePage: React.FC = () => {
             src="/photo-final/large/29.jpg"
             alt="Coffee drying on raised beds inside a greenhouse tunnel at Finca Bellavista"
             className="w-full h-full object-cover"
-          />
-          {/* Darken the top and bottom so the white menu reads over the photo */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0) 28%, rgba(0,0,0,0) 50%, rgba(0,0,0,0.55) 100%)' }}
           />
         </div>
 
@@ -86,7 +81,7 @@ const CoffeePage: React.FC = () => {
       </div>
 
       {/* Phones — the photo, the panels stacked, then the shared details */}
-      <div className="md:hidden pt-[72px]">
+      <div className="md:hidden" style={{ paddingTop: 'var(--frame-top)' }}>
         <img
           src="/photo-final/large/29.jpg"
           alt="Coffee drying on raised beds inside a greenhouse tunnel at Finca Bellavista"

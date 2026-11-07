@@ -14,14 +14,14 @@ const CIRCLE_COLORS = ['#FF6700', '#39FF14', '#1A1AFF']; // orange, bright green
 // How far each trail circle closes on the one ahead per 60fps frame
 const TRAIL_FOLLOW = [0.2, 0.2];
 
-// Scrolling down grows the circle and scrolling up shrinks it, between half and
-// four times its load size (circleSize). Wheel/trackpad on desktop, finger drags
+// Scrolling down grows the circle and scrolling up shrinks it, by up to half its
+// load size either way (circleSize). Wheel/trackpad on desktop, finger drags
 // on touch screens, so it works the same on the gallery (custom scroll) and on
 // normal scrolling pages. The scale eases toward its target every frame.
 const SCROLL_SCALE_MIN = 0.5;
-const SCROLL_SCALE_MAX = 4;
+const SCROLL_SCALE_MAX = 1.5;
 // Growth per pixel scrolled; multiplicative, so up and down feel even.
-// About 2,600px of scrolling takes it from smallest to largest.
+// About 1,400px of scrolling takes it from smallest to largest.
 const SCROLL_SCALE_RATE = 0.0008;
 const SCROLL_SCALE_EASE = 0.1;
 

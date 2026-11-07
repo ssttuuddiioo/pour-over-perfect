@@ -41,8 +41,8 @@ interface CircleTransitionContextType {
   setCircleMode: (mode: CircleMode) => void;
 }
 
-// One circle size on every page: medium, shrinking on narrow screens
-export const circleSize = () => Math.round(Math.min(280, window.innerWidth * 0.45));
+// One circle size on every page, shrinking on narrow screens
+export const circleSize = () => Math.round(Math.min(140, window.innerWidth * 0.225));
 
 export const CircleTransitionContext = createContext<CircleTransitionContextType | undefined>(undefined);
 

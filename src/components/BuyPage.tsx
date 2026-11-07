@@ -84,8 +84,8 @@ const BuyPage: React.FC = () => {
             src="/photo-final/buy-web.jpg"
             alt="Three Origen coffee bags with orange, blue and green circles"
             className="w-full object-contain object-left-top"
-            // Never taller than the space between the content top and the link row
-            style={{ maxHeight: 'calc(100vh - var(--content-top) - var(--nav-bottom) - var(--nav-word) - 3rem)' }}
+            // Never taller than the space between the content top and the bottom of the frame
+            style={{ maxHeight: 'calc(100vh - var(--content-top) - var(--frame) - 3rem)' }}
           />
         </div>
 

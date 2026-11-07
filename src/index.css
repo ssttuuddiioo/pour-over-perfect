@@ -19,16 +19,16 @@
     --color-gray-800: 38, 38, 38;
     --color-gray-900: 23, 23, 23;
 
-    /* Big Jost menu (Navigation, spread variant) and the pages laid out around it.
-       --page-x is the left/right margin both the menu and page content line up on. */
+    /* The white frame around every page (Navigation draws it): thin on the sides
+       and bottom, a taller band on top that holds the menu */
+    --frame: clamp(8px, 1.1vw, 16px);
+    --frame-top: clamp(46px, 4vw, 58px);
+    /* Left/right margin for page content inside the frame */
     --page-x: clamp(24px, 6.5vw, 140px);
-    /* By width, but never more than 7% of the height, so short wide screens
-       (laptops) don't get oversized words crowding the content */
+    /* Large display type (the Coffee page's process names) */
     --nav-word: clamp(2.25rem, min(5.2vw, 7vh), 5.5rem);
-    --nav-top: 11vh;     /* centre line of the top-left wordmark */
-    --nav-bottom: 6vh;   /* gap under the Origen page's bottom row of links */
-    /* Where page content starts: under the wordmark, plus breathing room */
-    --content-top: calc(var(--nav-top) + var(--nav-word) * 0.5 + clamp(2.5rem, 7vh, 5rem));
+    /* Where page content starts: under the frame's top band, plus breathing room */
+    --content-top: calc(var(--frame-top) + clamp(2.5rem, 8vh, 5.5rem));
     --grid-gap: clamp(2.5rem, 4vw, 6rem);
   }
 
@@ -164,30 +164,15 @@
   perspective: 1000px;
 }
 
-/* Origen and Buy pages on desktop: margins shared with the big menu, a sticky
-   column on the left, text at a readable measure on the right, and room at the
-   bottom for the fixed row of links */
+/* Story page on desktop: content starts under the frame's top band, room at the
+   bottom above the frame. Right margin equal to the column gap (balanced), so text
+   centred in its column has even space either side. */
 @media (min-width: 768px) {
   .editorial-page {
-    padding: var(--content-top) var(--page-x)
-      calc(var(--nav-bottom) + var(--nav-word) + clamp(3rem, 10vh, 7rem));
+    padding: var(--content-top) var(--page-x) calc(var(--frame) + clamp(3rem, 10vh, 7rem));
   }
-  .editorial-grid {
-    display: grid;
-    /* The left column is as wide as the bottom row of links ("Coffee Buy
-       Timer" is ~7.9em of the menu type), so the row never crosses the text */
-    grid-template-columns: calc(var(--nav-word) * 8) minmax(0, 1fr);
-    column-gap: var(--grid-gap);
-    align-items: start;
-  }
-  /* Right margin equal to the column gap, so text centred in the right column has
-     the same space from the left column's edge as from the window edge */
   .editorial-page--balanced {
     padding-right: var(--grid-gap);
-  }
-  .editorial-aside {
-    position: sticky;
-    top: var(--content-top);
   }
 }
 

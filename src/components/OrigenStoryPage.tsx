@@ -3,31 +3,30 @@ import { gsap } from 'gsap';
 import { useCircleTransition, circleSize } from '../context/CircleTransitionContext';
 import Navigation from './shared/Navigation';
 
-// Photos from the gallery set between the paragraphs they illustrate
-const PHOTO_ALT: Record<number, string> = {
-  1: 'A rider and bike at the start of the bikepacking race',
-  6: 'Two men looking out over the valley at dusk',
-  28: 'Raking coffee on raised drying beds in a greenhouse',
-  9: 'A sack of green coffee in a shipping box',
-  14: 'An Origen bag with an orange circle, held over a crosswalk from a bike',
-  20: 'An older man with a cane standing among drying tarps at the farm',
-  22: 'A woman serving coffee on a porch',
-  42: 'A white coffee flower among dark leaves',
-};
+// The story reads in chapters: each a row with one photo on the left and the text
+// on the right. On desktop the photo fills its chapter's height (at least 18rem),
+// cropped, like a plate beside the text; on phones it sits above, 4:3.
+interface ChapterProps {
+  photo: number;
+  alt: string;
+  // Where to anchor the crop, e.g. 'center 30%' to keep a face in frame
+  focus?: string;
+  children: React.ReactNode;
+}
 
-// One photo full width (tall ones capped in height), or two side by side
-const StoryPhotos: React.FC<{ photos: number[] }> = ({ photos }) => (
-  <div className={`!my-12 ${photos.length > 1 ? 'grid grid-cols-2 gap-3 md:gap-4 items-start' : ''}`}>
-    {photos.map((n) => (
+const Chapter: React.FC<ChapterProps> = ({ photo, alt, focus = 'center', children }) => (
+  <section className="md:grid md:grid-cols-[minmax(14rem,2fr)_minmax(0,3fr)] md:gap-x-[var(--grid-gap)] md:items-stretch">
+    <div className="relative aspect-[4/3] md:aspect-auto md:min-h-[18rem] mb-8 md:mb-0">
       <img
-        key={n}
-        src={`/photo-final/large/${n}.jpg`}
-        alt={PHOTO_ALT[n] ?? ''}
+        src={`/photo-final/large/${photo}.jpg`}
+        alt={alt}
         loading="lazy"
-        className={photos.length > 1 ? 'block w-full h-auto' : 'block w-auto max-w-full h-auto max-h-[75vh]'}
+        className="absolute inset-0 w-full h-full object-cover"
+        style={{ objectPosition: focus }}
       />
-    ))}
-  </div>
+    </div>
+    <div className="space-y-6 md:max-w-[36rem] md:mx-auto md:self-center w-full">{children}</div>
+  </section>
 );
 
 const OrigenStoryPage: React.FC = () => {
@@ -119,7 +118,7 @@ const OrigenStoryPage: React.FC = () => {
   }, [circleRef]);
 
   return (
-    <div className="editorial-page editorial-page--balanced min-h-screen bg-[#1a1aff] text-white px-12 py-16 relative">
+    <div className="editorial-page editorial-page--balanced min-h-screen bg-white text-black px-12 py-16 relative">
       <Navigation variant="homepage" />
 
       {/* Content layer — above circle */}
@@ -130,28 +129,9 @@ const OrigenStoryPage: React.FC = () => {
         Origen
       </h1>
 
-      {/* Two column layout — farm details + story */}
-      <div className="editorial-grid grid grid-cols-1 gap-12 text-base md:text-[1.0625rem] lg:text-[1.1875rem] leading-relaxed">
-
-        {/* Left — at a glance; stays put on desktop while the story scrolls */}
-        <div className="editorial-aside space-y-6">
-          <div className="space-y-0.5">
-            <p>Charal&aacute;, Santander, Colombia &bull; 1900masl</p>
-            <p>Grown by Oscar Castro at Finca Bellavista</p>
-          </div>
-
-          <p>Roasted at <a href="https://www.multimodalroasting.com/" target="_blank" rel="noopener noreferrer" className="underline hover:opacity-70 transition-opacity">Multimodal</a></p>
-
-          <p className="italic">
-            Three new coffees, coming soon
-          </p>
-
-          <hr className="border-white/40 !mt-10" />
-        </div>
-
-        {/* Right — story at a readable measure, centred in whatever room is left so
-            the space either side of it stays even on wide screens */}
-        <div className="space-y-6 md:leading-[1.6] md:max-w-[36rem] md:mx-auto">
+      {/* The story, in chapters */}
+      <div className="space-y-16 md:space-y-24 text-base md:text-[1.0625rem] lg:text-[1.1875rem] leading-relaxed md:leading-[1.6]">
+        <Chapter photo={3} alt="The big tree in the town plaza">
           <p>
             Our coffee is from Charal&aacute;, a quiet town in Colombia&rsquo;s
             eastern Andes. I found myself there by chance two
@@ -162,9 +142,9 @@ const OrigenStoryPage: React.FC = () => {
             emotionally, completely. I turned in my tracker,
             withdrew from the race, and rolled into Charal&aacute;, spent.
           </p>
+        </Chapter>
 
-          <StoryPhotos photos={[1]} />
-
+        <Chapter photo={6} alt="Two men looking out over the valley at dusk">
           <p>
             The next afternoon, on a whim, I asked my hostel
             manager if he knew anybody with a coffee farm. He
@@ -173,18 +153,15 @@ const OrigenStoryPage: React.FC = () => {
             minutes rattling up unpaved roads, climbing out above
             town, to Finca Bellavista.
           </p>
-
-          <StoryPhotos photos={[6]} />
-
           <p>
             He showed me every corner of the operation: the rows
             of drying beds, the processing area, the particular slope
             where the soil drained best. His pride in the work, and
             in the land itself, had a solidity to it.
           </p>
+        </Chapter>
 
-          <StoryPhotos photos={[28]} />
-
+        <Chapter photo={14} alt="An Origen bag with an orange circle, held over a crosswalk from a bike">
           <p>
             I rode back to Bogot&aacute; at my own pace, thinking about
             how to bring his coffee to New York. A year (and
@@ -194,9 +171,9 @@ const OrigenStoryPage: React.FC = () => {
             Multimodal in Queens, and sold twenty bags to friends
             and family. I delivered every local order on my bike.
           </p>
+        </Chapter>
 
-          <StoryPhotos photos={[9, 14]} />
-
+        <Chapter photo={20} alt="An older man with a cane standing among drying tarps at the farm" focus="center 30%">
           <p>
             In October 2025, I went back to the farm, this time with
             my grandparents. My grandfather is from the
@@ -205,22 +182,27 @@ const OrigenStoryPage: React.FC = () => {
             walked the farm together with ease, trading stories
             about soil and seasons.
           </p>
-
-          <StoryPhotos photos={[20, 22]} />
-
           <p>
             Every trip back to Colombia offers more than I know
             how to return. This project is one small way of carrying
             that generosity outward.
           </p>
+        </Chapter>
 
-          <StoryPhotos photos={[42]} />
-
+        <Chapter photo={42} alt="A white coffee flower among dark leaves">
           <p>
             Thank you for trying it.<br />
             <a href="https://yopablo.com" target="_blank" rel="noopener noreferrer" className="underline hover:opacity-70 transition-opacity">Pablo</a>
           </p>
-        </div>
+          <div className="!mt-10 pt-8 border-t border-black/20 space-y-5">
+            <div className="space-y-0.5">
+              <p>Charal&aacute;, Santander, Colombia &bull; 1900masl</p>
+              <p>Grown by Oscar Castro at Finca Bellavista</p>
+            </div>
+            <p>Roasted at <a href="https://www.multimodalroasting.com/" target="_blank" rel="noopener noreferrer" className="underline hover:opacity-70 transition-opacity">Multimodal</a></p>
+            <p className="italic">Three new coffees, coming soon</p>
+          </div>
+        </Chapter>
       </div>
 
       </div>

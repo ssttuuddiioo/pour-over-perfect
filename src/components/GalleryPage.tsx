@@ -1372,6 +1372,8 @@ const GalleryPage: React.FC = () => {
     };
   }, [circleRef, buildGrid, showDetail, hideDetail, hideHoverTitle, navigateSlide, cycleCircleColors]);
 
+  const toggleLabel = photoOpen ? 'See all' : chronological ? 'Scattered' : 'Chronological';
+
   return (
     <div
       className="fixed inset-0 overflow-hidden cursor-grab active:cursor-grabbing select-none"
@@ -1387,11 +1389,38 @@ const GalleryPage: React.FC = () => {
       />
 
       <button
-        className="layout-toggle fixed bottom-6 left-1/2 -translate-x-1/2 text-lg sm:text-xl font-bold text-black hover:opacity-70 transition-opacity"
+        className="layout-toggle fixed bottom-6 left-1/2 -translate-x-1/2 p-2.5 text-black hover:opacity-60 transition-opacity"
         style={{ zIndex: 50 }}
         onClick={() => toggleLayoutRef.current?.()}
+        aria-label={toggleLabel}
+        title={toggleLabel}
       >
-        {photoOpen ? 'See all' : chronological ? 'Scattered' : 'Chronological'}
+        {/* Icons drawn like the slideshow arrows: thick, square-cornered strokes */}
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
+          {photoOpen ? (
+            // See all: back to the grid
+            <>
+              <rect x="3.5" y="3.5" width="7" height="7" />
+              <rect x="13.5" y="3.5" width="7" height="7" />
+              <rect x="3.5" y="13.5" width="7" height="7" />
+              <rect x="13.5" y="13.5" width="7" height="7" />
+            </>
+          ) : chronological ? (
+            // Scattered: loose tiles at odd angles
+            <>
+              <rect x="3" y="4" width="6" height="6" transform="rotate(-12 6 7)" />
+              <rect x="14" y="2.5" width="5" height="5" transform="rotate(10 16.5 5)" />
+              <rect x="12" y="13" width="7" height="7" transform="rotate(-6 15.5 16.5)" />
+              <rect x="3.5" y="15" width="4.5" height="4.5" transform="rotate(14 5.75 17.25)" />
+            </>
+          ) : (
+            // Chronological: a clock
+            <>
+              <circle cx="12" cy="12" r="9" />
+              <polyline points="12,6.5 12,12 15.5,14" />
+            </>
+          )}
+        </svg>
       </button>
 
       {/* Caption — beside or under the open photo, placed by placeCaption */}
